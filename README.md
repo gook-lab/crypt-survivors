@@ -109,7 +109,11 @@ scripts/balance.js  헤드리스 밸런스 하네스
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | 아키텍처 상세 |
 | [CLAUDE.md](CLAUDE.md) | 작업 규칙 + 콘텐츠 확장 체크리스트 + 알려진 함정 (899줄) |
 
-## 라이선스 / 크레딧
+## 라이선스
 
-개인 학습용 토이 프로젝트. 효과음은 [ZzFX](https://github.com/KilledByAPixel/ZzFX),
-픽셀 아트는 PixelLab으로 생성했다.
+**Source-available — 오픈소스가 아닙니다.** 코드를 읽을 수 있게 공개했을 뿐,
+사용 권한을 준 것은 아닙니다. 다른 프로젝트에 가져다 쓰거나 재배포·상업적 이용을
+하려면 사전 서면 허락이 필요합니다. 전문은 [LICENSE](LICENSE) 참조.
+
+효과음은 [ZzFX](https://github.com/KilledByAPixel/ZzFX)(MIT), 픽셀 아트는 PixelLab으로
+생성했다. 서드파티 구성요소는 각자의 라이선스를 따른다.
