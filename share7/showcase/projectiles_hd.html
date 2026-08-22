@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Projectiles HD2 · Crypt Asset Pack</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="../showcase.css" />
+<style>
+  .proj-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 12px;
+  }
+  .proj-card {
+    background: var(--panel);
+    border: 1px solid var(--gold);
+    padding: 12px;
+    text-align: center;
+  }
+  .proj-card.legendary {
+    box-shadow: 0 0 16px rgba(212,160,74,0.25);
+  }
+  .proj-card .row {
+    background-color: #1a1428;
+    background-image:
+      linear-gradient(45deg, #221a36 25%, transparent 25%),
+      linear-gradient(-45deg, #221a36 25%, transparent 25%);
+    background-size: 10px 10px;
+    border: 1px solid var(--line);
+    padding: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    min-height: 90px;
+    margin-bottom: 6px;
+  }
+  .proj-card canvas { image-rendering: pixelated; }
+  .proj-card .arr { color: var(--gold); font-size: 16px; font-weight: 700; }
+  .proj-card .nm {
+    font-family: 'Cinzel', serif;
+    color: var(--ink);
+    font-size: 12px;
+    letter-spacing: 0.04em;
+    font-weight: 700;
+  }
+  .proj-card.legendary .nm { color: var(--gold-hi); }
+  .proj-card .sub {
+    color: var(--ink-dim);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    margin-top: 2px;
+  }
+  .proj-card .tier-tag {
+    display: inline-block;
+    background: var(--gold);
+    color: var(--bg);
+    font-size: 8px;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    padding: 1px 6px;
+    margin-top: 4px;
+  }
+  .proj-card .tier-tag.legendary { background: var(--gold-hi); }
+</style>
+</head>
+<body>
+<header class="masthead">
+  <div class="eyebrow">PAGE · 28 · PROJECTILES HD2 · 정교 패스</div>
+  <h1>Projectiles <span class="accent">HD2</span> · 무기 투사체 정교 패스</h1>
+  <p class="lede">
+    14가지 기본 무기 + 3가지 전설 무기를 부드러운 그라데이션 + 외곽선 + 다중-톤 셰이딩으로 다시 그렸어요.
+    원본 사이즈 유지, 같은 키 + <code>_hd2</code> 접미사. 좌측 원본 → 우측 HD2 비교.
+    데이터: <code>art/projectiles_hd.js</code>.
+  </p>
+</header>
+<main id="content"></main>
+
+<script src="../palette.js"></script>
+<script src="../sprites.js"></script>
+<script src="../projectiles_hd.js"></script>
+<script src="../heroes_hd.js"></script>
+<script src="../heroes_hd3.js"></script>
+<script src="../heroes_smooth_walk.js"></script>
+<script src="../heroes_xhd.js"></script>
+<script src="../bosses_hd.js"></script>
+<script src="../enemies_hd.js"></script>
+<script src="../enemies_hd2.js"></script>
+<script src="../weapons_hd.js"></script>
+<script src="../skills_hd.js"></script>
+<script src="../pickups_hd2.js"></script>
+<script src="../chests_polished.js"></script>
+<script src="../structures.js"></script>
+<script src="../structures_extra.js"></script>
+<script src="../tiles_unified.js"></script>
+<script src="../tiles_natural.js"></script>
+<script src="../hd2_apply.js"></script>
+<script src="../effects_hd3.js"></script>
+<script src="../lightning_polish.js"></script>
+<script src="../atlas.js"></script>
+<script src="../showcase.js"></script>
+<script>
+Showcase.renderNav('projectiles_hd');
+
+function paint(canvas, name, scale) {
+  if (!SPRITES[name]) return;
+  const f = SPRITES[name][0];
+  canvas.width = f[0].length * scale;
+  canvas.height = f.length * scale;
+  const ctx = canvas.getContext('2d');
+  ctx.imageSmoothingEnabled = false;
+  ctx.drawImage(AtlasBuilder.renderFrame(name, 0), 0, 0, canvas.width, canvas.height);
+}
+
+const PAIRS = [
+  { orig: 'proj_wand', hd: 'proj_wand_hd2', name: '매직 완드', sub: 'BASIC · 마법 탄환' },
+  { orig: 'proj_nova', hd: 'proj_nova_hd2', name: '노바', sub: 'BASIC · 아케인 구' },
+  { orig: 'proj_prism', hd: 'proj_prism_hd2', name: '프리즘', sub: 'BASIC · 결정 가시' },
+  { orig: 'proj_spear', hd: 'proj_spear_hd2', name: '창', sub: 'BASIC · 관통' },
+  { orig: 'proj_axe', hd: 'proj_axe_hd2', name: '도끼', sub: 'BASIC · 부메랑' },
+  { orig: 'proj_mace', hd: 'proj_mace_hd2', name: '철퇴', sub: 'BASIC · 궤도' },
+  { orig: 'proj_holywater', hd: 'proj_holywater_hd2', name: '성수병', sub: 'BASIC · 신성' },
+  { orig: 'proj_arrow', hd: 'proj_arrow_hd2', name: '화살', sub: 'BASIC · 직선' },
+  { orig: 'proj_garlic', hd: 'proj_garlic_hd2', name: '마늘', sub: 'BASIC · 오라' },
+  { orig: 'proj_bible', hd: 'proj_bible_hd2', name: '성서', sub: 'BASIC · 궤도' },
+  { orig: 'proj_cross', hd: 'proj_cross_hd2', name: '십자가', sub: 'BASIC · 부메랑' },
+  { orig: 'proj_whip', hd: 'proj_whip_hd2', name: '채찍', sub: 'BASIC · 라인' },
+  { orig: 'proj_knives', hd: 'proj_knives_hd2', name: '단검 투척', sub: 'BASIC · 부채꼴' },
+  { orig: 'proj_scythe', hd: 'proj_scythe_hd2', name: '낫', sub: 'BASIC · 호' },
+  { orig: 'proj_leg_blade', hd: 'proj_leg_blade_hd2', name: '여명의 검기', sub: 'LEGENDARY · 빔', legendary: true },
+  { orig: 'proj_leg_arrow', hd: 'proj_leg_arrow_hd2', name: '은룡의 화살', sub: 'LEGENDARY · 호밍', legendary: true },
+  { orig: 'proj_leg_nova',  hd: 'proj_leg_nova_hd2',  name: '황금 태양', sub: 'LEGENDARY · 12방향', legendary: true },
+];
+
+const content = document.getElementById('content');
+const section = document.createElement('section');
+section.className = 'bay';
+section.innerHTML = '<h2>01 · Projectile Polish · Before vs After</h2><p class="bay-sub">' + PAIRS.length + '개 투사체. 좌측 원본 / 우측 HD2 (외곽선 + 다중-톤).</p>';
+const grid = document.createElement('div'); grid.className = 'proj-grid';
+section.appendChild(grid);
+content.appendChild(section);
+
+for (const p of PAIRS) {
+  const card = document.createElement('div');
+  card.className = 'proj-card' + (p.legendary ? ' legendary' : '');
+  const row = document.createElement('div'); row.className = 'row';
+
+  // Original
+  const c1 = document.createElement('canvas');
+  const f1 = SPRITES[p.orig] && SPRITES[p.orig][0];
+  if (f1) {
+    const s1 = Math.max(3, Math.floor(70 / Math.max(f1.length, f1[0].length)));
+    paint(c1, p.orig, s1);
+    Showcase.animState.push({ canvas: c1, name: p.orig, elapsed: 0 });
+    row.appendChild(c1);
+  }
+  const arr = document.createElement('span'); arr.className = 'arr'; arr.textContent = '→';
+  row.appendChild(arr);
+
+  // HD2
+  const c2 = document.createElement('canvas');
+  const f2 = SPRITES[p.hd] && SPRITES[p.hd][0];
+  if (f2) {
+    const s2 = Math.max(3, Math.floor(70 / Math.max(f2.length, f2[0].length)));
+    paint(c2, p.hd, s2);
+    Showcase.animState.push({ canvas: c2, name: p.hd, elapsed: 0 });
+    row.appendChild(c2);
+  }
+  card.appendChild(row);
+  card.innerHTML += '<div class="nm">' + p.name + '</div>' +
+                    '<div class="sub">' + p.sub + '</div>' +
+                    '<span class="tier-tag' + (p.legendary ? ' legendary' : '') + '">' +
+                    (p.legendary ? 'LEGENDARY HD2' : 'BASIC HD2') + '</span>';
+  grid.appendChild(card);
+}
+</script>
+</body>
+</html>

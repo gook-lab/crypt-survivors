@@ -1,0 +1,382 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Achievements · Crypt Asset Pack</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="../showcase.css" />
+<style>
+  .ach-stage {
+    background: #07060c;
+    border: 1px solid var(--line);
+    padding: 14px;
+  }
+  .ach-frame {
+    padding: 26px 30px 22px;
+  }
+  .ach-head {
+    display: flex;
+    align-items: baseline;
+    gap: 20px;
+    margin-bottom: 18px;
+  }
+  .ach-head h2 {
+    margin: 0;
+    font-family: 'Cinzel', serif;
+    font-size: 28px;
+    color: var(--gold-hi);
+    letter-spacing: 0.14em;
+  }
+  .ach-progress {
+    margin-left: auto;
+    color: var(--ink-dim);
+    font-size: 12px;
+    letter-spacing: 0.08em;
+  }
+  .ach-progress b {
+    color: var(--gold-hi);
+    font-size: 18px;
+    font-family: 'Cinzel', serif;
+  }
+  .ach-progress .bar {
+    margin-top: 6px;
+    width: 220px;
+    height: 6px;
+    background: var(--bg-2);
+    border: 1px solid var(--line);
+    overflow: hidden;
+  }
+  .ach-progress .fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--gold), var(--gold-hi));
+  }
+  /* Tab bar (categories) */
+  .cat-bar {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 14px;
+    border-bottom: 1px solid var(--line);
+    flex-wrap: wrap;
+  }
+  .cat-tab {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-bottom: none;
+    padding: 9px 16px;
+    color: var(--ink-dim);
+    font-size: 10px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .cat-tab canvas { image-rendering: pixelated; width: 16px; height: 16px; }
+  .cat-tab.active {
+    background: var(--bg-2);
+    color: var(--gold-hi);
+    border-bottom: 1px solid var(--bg-2);
+    margin-bottom: -1px;
+  }
+  .cat-tab .count {
+    background: var(--bg-2);
+    color: var(--gold-hi);
+    padding: 1px 6px;
+    border: 1px solid var(--line);
+    font-size: 9px;
+  }
+  .cat-tab.active .count {
+    background: var(--gold);
+    color: var(--bg);
+    border-color: var(--gold);
+  }
+  /* Achievement grid */
+  .ach-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
+    gap: 10px;
+  }
+  .ach-card {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-left: 4px solid var(--tier-color);
+    padding: 12px 14px;
+    display: flex;
+    gap: 12px;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.1s, box-shadow 0.15s;
+  }
+  .ach-card.unlocked {
+    background: linear-gradient(135deg, var(--panel) 60%, rgba(212,160,74,0.10));
+  }
+  .ach-card.locked {
+    opacity: 0.55;
+  }
+  .ach-card.secret {
+    background: linear-gradient(135deg, var(--panel) 60%, rgba(110,58,138,0.16));
+    border-left-color: var(--arcane);
+  }
+  .ach-card .ic-wrap {
+    background-color: #1a1428;
+    background-image:
+      linear-gradient(45deg, #221a36 25%, transparent 25%),
+      linear-gradient(-45deg, #221a36 25%, transparent 25%);
+    background-size: 8px 8px;
+    border: 1px solid var(--tier-color);
+    padding: 6px;
+    flex-shrink: 0;
+    width: 56px;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .ach-card .ic-wrap canvas { image-rendering: pixelated; }
+  .ach-card.locked .ic-wrap { filter: grayscale(0.8); }
+  .ach-card.locked .ic-wrap::after {
+    content: '🔒';
+    position: absolute;
+    font-size: 22px;
+    color: var(--ink-dim);
+  }
+  .ach-card .body { flex: 1; min-width: 0; }
+  .ach-card .top-row {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    margin-bottom: 4px;
+  }
+  .ach-card .name {
+    font-family: 'Cinzel', serif;
+    font-weight: 700;
+    color: var(--ink);
+    font-size: 13px;
+    letter-spacing: 0.04em;
+  }
+  .ach-card.unlocked .name { color: var(--gold-hi); }
+  .ach-card .tier-tag {
+    margin-left: auto;
+    background: var(--bg-2);
+    color: var(--tier-color);
+    border: 1px solid var(--tier-color);
+    padding: 1px 6px;
+    font-size: 8px;
+    letter-spacing: 0.16em;
+    font-weight: 700;
+  }
+  .ach-card .blurb {
+    color: var(--ink-dim);
+    font-size: 10px;
+    line-height: 1.5;
+    margin-bottom: 8px;
+  }
+  .ach-card .target {
+    color: var(--ink);
+    font-size: 10px;
+    letter-spacing: 0.06em;
+    padding: 4px 6px;
+    background: var(--bg-2);
+    border: 1px dashed var(--line);
+    margin-bottom: 6px;
+    display: inline-block;
+  }
+  .ach-card .reward {
+    color: var(--gold-hi);
+    font-size: 10px;
+    border-top: 1px dashed var(--line);
+    padding-top: 6px;
+    margin-top: 4px;
+  }
+  .ach-card.unlocked .reward { color: var(--gold-hi); font-weight: 500; }
+  .ach-card .badge {
+    position: absolute;
+    top: 6px;
+    right: 8px;
+    font-size: 16px;
+  }
+  .ach-card.unlocked .badge { color: var(--gold); }
+  /* recently-unlocked pop */
+  @keyframes pop {
+    0% { box-shadow: 0 0 0 0 var(--tier-color); }
+    100% { box-shadow: 0 0 0 8px transparent; }
+  }
+  .ach-card.unlocked { animation: pop 2.4s ease-out infinite; }
+</style>
+</head>
+<body>
+<header class="masthead">
+  <div class="eyebrow">PAGE · 15 · ACHIEVEMENTS</div>
+  <h1>Trophy <span class="accent">Hall</span> · 도전 과제</h1>
+  <p class="lede">
+    <b>53가지 업적</b> — 7개 카테고리(전투/영웅/무기/보스/숙련/메타/도전) × 4 등급(Bronze/Silver/Gold/Platinum).
+    잠금/해금 상태를 시각적으로 구분하고, 비밀 업적은 해금 전까지 숨겨집니다.
+    데이터: <code>art/achievements.js</code>.
+  </p>
+</header>
+<main>
+
+<section class="bay">
+  <h2>01 · Achievement Hall</h2>
+  <p class="bay-sub">실제 게임에서 메뉴 → "도전 과제" 진입 시 보일 화면. 카테고리 탭으로 필터링.</p>
+  <div class="ach-stage">
+    <div class="ach-frame">
+      <div class="ach-head">
+        <h2>TROPHY HALL</h2>
+        <div class="ach-progress">
+          <div>해금 <b id="unlock-count">18</b> / <b id="total-count">53</b></div>
+          <div class="bar"><div class="fill" id="fill-bar" style="width: 34%"></div></div>
+        </div>
+      </div>
+      <div class="cat-bar" id="cats"></div>
+      <div class="ach-grid" id="grid"></div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<script src="../palette.js"></script>
+<script src="../sprites.js"></script>
+<script src="../heroes_hd.js"></script>
+<script src="../heroes_hd3.js"></script>
+<script src="../heroes_smooth_walk.js"></script>
+<script src="../heroes_xhd.js"></script>
+<script src="../bosses_hd.js"></script>
+<script src="../enemies_hd.js"></script>
+<script src="../enemies_hd2.js"></script>
+<script src="../weapons_hd.js"></script>
+<script src="../projectiles_hd.js"></script>
+<script src="../skills_hd.js"></script>
+<script src="../pickups_hd2.js"></script>
+<script src="../chests_polished.js"></script>
+<script src="../structures.js"></script>
+<script src="../structures_extra.js"></script>
+<script src="../tiles_unified.js"></script>
+<script src="../tiles_natural.js"></script>
+<script src="../hd2_apply.js"></script>
+<script src="../effects_hd3.js"></script>
+<script src="../lightning_polish.js"></script>
+<script src="../atlas.js"></script>
+<script src="../achievements.js"></script>
+<script src="../showcase.js"></script>
+<script>
+Showcase.renderNav('achievements');
+
+const A = window.ACHIEVEMENTS;
+const C = window.ACHIEVEMENT_CATEGORIES;
+const T = window.ACHIEVEMENT_TIERS;
+
+function paint(canvas, name, size) {
+  canvas.width = size; canvas.height = size;
+  const ctx = canvas.getContext('2d');
+  ctx.imageSmoothingEnabled = false;
+  if (SPRITES[name]) ctx.drawImage(AtlasBuilder.renderFrame(name, 0), 0, 0, size, size);
+}
+
+// Fake unlock state for the mock (deterministic by id hash)
+function hash(s) { let h = 0; for (const c of s) h = (h * 31 + c.charCodeAt(0)) >>> 0; return h; }
+function isUnlocked(a) {
+  if (a.secret) return false;
+  return hash(a.id) % 3 === 0;  // ~33% unlocked
+}
+
+let activeCat = 'all';
+
+function buildTabs() {
+  const cats = document.getElementById('cats');
+  cats.innerHTML = '';
+  // "All" tab
+  const allTab = document.createElement('div');
+  allTab.className = 'cat-tab' + (activeCat === 'all' ? ' active' : '');
+  allTab.innerHTML = '<span>전체</span> <span class="count">' + A.length + '</span>';
+  allTab.onclick = () => { activeCat = 'all'; render(); };
+  cats.appendChild(allTab);
+  for (const c of C) {
+    const tab = document.createElement('div');
+    tab.className = 'cat-tab' + (activeCat === c.id ? ' active' : '');
+    const ic = document.createElement('canvas');
+    tab.appendChild(ic);
+    paint(ic, c.icon, 16);
+    tab.innerHTML += '<span>' + c.name + '</span><span class="count">' + A.filter(a => a.category === c.id).length + '</span>';
+    tab.onclick = () => { activeCat = c.id; render(); };
+    cats.appendChild(tab);
+  }
+}
+
+function buildCard(a) {
+  const unlocked = isUnlocked(a);
+  const card = document.createElement('div');
+  const tier = T[a.tier];
+  card.className = 'ach-card' + (unlocked ? ' unlocked' : ' locked') + (a.secret && !unlocked ? ' secret' : '');
+  card.style.setProperty('--tier-color', tier.color);
+
+  // Icon
+  const wrap = document.createElement('div'); wrap.className = 'ic-wrap';
+  const c = document.createElement('canvas');
+  wrap.appendChild(c);
+  paint(c, a.secret && !unlocked ? 'pickup_rune' : a.icon, 40);
+  if (unlocked) {
+    Showcase.animState.push({ canvas: c, name: a.icon, elapsed: 0 });
+  }
+  card.appendChild(wrap);
+
+  // Body
+  const body = document.createElement('div'); body.className = 'body';
+  const top = document.createElement('div'); top.className = 'top-row';
+  const nm = document.createElement('div'); nm.className = 'name';
+  nm.textContent = a.secret && !unlocked ? '??? 비밀 업적' : a.name;
+  top.appendChild(nm);
+  const tag = document.createElement('div'); tag.className = 'tier-tag'; tag.textContent = tier.name;
+  top.appendChild(tag);
+  body.appendChild(top);
+
+  const blurb = document.createElement('div'); blurb.className = 'blurb';
+  blurb.textContent = a.secret && !unlocked ? '? ? ? ? ? ? ? ? ? ? ? ? ? ? ? ?' : a.blurb;
+  body.appendChild(blurb);
+
+  const tgt = document.createElement('div'); tgt.className = 'target';
+  tgt.textContent = '⚐ ' + (a.secret && !unlocked ? '???' : a.target);
+  body.appendChild(tgt);
+
+  const rew = document.createElement('div'); rew.className = 'reward';
+  rew.textContent = '🏆 보상 — ' + (a.secret && !unlocked ? '???' : a.reward);
+  body.appendChild(rew);
+
+  if (unlocked) {
+    const b = document.createElement('div'); b.className = 'badge'; b.textContent = '✓';
+    card.appendChild(b);
+  }
+  card.appendChild(body);
+  return card;
+}
+
+function render() {
+  buildTabs();
+  const grid = document.getElementById('grid');
+  grid.innerHTML = '';
+  const list = activeCat === 'all' ? A : A.filter(a => a.category === activeCat);
+  // sort: unlocked first, then by tier weight
+  const tierW = { bronze: 0, silver: 1, gold: 2, platinum: 3 };
+  list.sort((x, y) => {
+    const ux = isUnlocked(x), uy = isUnlocked(y);
+    if (ux !== uy) return ux ? -1 : 1;
+    return tierW[x.tier] - tierW[y.tier];
+  });
+  for (const a of list) grid.appendChild(buildCard(a));
+
+  // Update progress numbers
+  const unlocked = A.filter(isUnlocked).length;
+  document.getElementById('unlock-count').textContent = unlocked;
+  document.getElementById('total-count').textContent = A.length;
+  document.getElementById('fill-bar').style.width = Math.round(unlocked / A.length * 100) + '%';
+}
+
+render();
+</script>
+</body>
+</html>

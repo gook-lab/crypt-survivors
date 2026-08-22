@@ -1,0 +1,328 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Result · Crypt Asset Pack</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="../showcase.css" />
+<style>
+  .result-stage {
+    background: #07060c;
+    border: 1px solid var(--line);
+    padding: 14px;
+    margin-bottom: 18px;
+  }
+  .result-frame {
+    padding: 36px 32px;
+    background: rgba(7,6,12,0.5);
+    border: 1px solid var(--gold);
+    position: relative;
+    overflow: hidden;
+  }
+  .result-frame.victory {
+    border-color: var(--gold);
+    background: radial-gradient(circle at 50% 0%, rgba(212,160,74,0.22), rgba(7,6,12,0.7));
+  }
+  .result-frame.defeat {
+    border-color: var(--blood);
+    background: radial-gradient(circle at 50% 0%, rgba(200,51,42,0.18), rgba(7,6,12,0.8));
+  }
+  .result-title {
+    text-align: center;
+    margin-bottom: 24px;
+  }
+  .result-title .word {
+    display: inline-block;
+    font-family: 'Cinzel', serif;
+    font-weight: 700;
+    font-size: 48px;
+    letter-spacing: 0.18em;
+    padding: 8px 32px;
+    text-shadow: 0 2px 0 rgba(0,0,0,0.6), 0 0 24px rgba(212,160,74,0.3);
+  }
+  .result-frame.victory .word {
+    color: var(--gold-hi);
+    border-top: 2px solid var(--gold);
+    border-bottom: 2px solid var(--gold);
+  }
+  .result-frame.defeat .word {
+    color: var(--blood);
+    border-top: 2px solid var(--blood);
+    border-bottom: 2px solid var(--blood);
+  }
+  .result-title .sub {
+    margin-top: 8px;
+    color: var(--ink-dim);
+    font-size: 12px;
+    letter-spacing: 0.32em;
+    text-transform: uppercase;
+  }
+  .result-body {
+    display: grid;
+    grid-template-columns: 220px 1fr;
+    gap: 22px;
+  }
+  .result-body .hero-tile {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    padding: 14px;
+    text-align: center;
+  }
+  .result-body .hero-tile .portrait {
+    background-color: #1a1428;
+    background-image:
+      linear-gradient(45deg, #221a36 25%, transparent 25%),
+      linear-gradient(-45deg, #221a36 25%, transparent 25%);
+    background-size: 8px 8px;
+    border: 1px solid var(--line);
+    padding: 8px;
+    display: inline-block;
+    margin-bottom: 8px;
+  }
+  .result-body .hero-tile canvas { image-rendering: pixelated; }
+  .result-body .hero-tile .name {
+    font-family: 'Cinzel', serif;
+    font-weight: 700;
+    color: var(--ink);
+    font-size: 16px;
+  }
+  .result-body .hero-tile .lvl {
+    color: var(--gold-hi);
+    font-size: 11px;
+    letter-spacing: 0.16em;
+    margin: 2px 0 10px;
+  }
+  .result-body .hero-tile .loadout {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 4px;
+  }
+  .result-body .hero-tile .loadout .slot {
+    background-color: #1a1428;
+    background-image:
+      linear-gradient(45deg, #221a36 25%, transparent 25%),
+      linear-gradient(-45deg, #221a36 25%, transparent 25%);
+    background-size: 6px 6px;
+    border: 1px solid var(--line);
+    padding: 4px;
+    display: flex; align-items: center; justify-content: center;
+    height: 36px;
+  }
+  .result-body .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+  .stat-card {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    padding: 14px 18px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .stat-card canvas { image-rendering: pixelated; width: 32px; height: 32px; }
+  .stat-card .stat-name {
+    color: var(--ink-dim);
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+  }
+  .stat-card .stat-val {
+    color: var(--ink);
+    font-family: 'Cinzel', serif;
+    font-size: 24px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+  }
+  .stat-card.gold .stat-val { color: var(--gold-hi); }
+  .stat-card.kills .stat-val { color: var(--blood); }
+  .actions {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin-top: 24px;
+  }
+  .actions .btn-lg {
+    background: var(--panel);
+    color: var(--ink);
+    border: 1px solid var(--gold);
+    padding: 12px 28px;
+    font-family: 'Cinzel', serif;
+    font-size: 13px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    cursor: pointer;
+    font-weight: 700;
+  }
+  .actions .btn-lg:hover { background: var(--gold); color: var(--bg); }
+  .actions .btn-lg.primary { background: var(--gold); color: var(--bg); }
+  .actions .btn-lg.primary:hover { background: var(--gold-hi); }
+  .actions .btn-lg .k {
+    display: inline-block;
+    color: var(--gold-hi);
+    margin-right: 8px;
+    font-weight: 700;
+  }
+  .actions .btn-lg.primary .k { color: var(--bg); }
+</style>
+</head>
+<body>
+<header class="masthead">
+  <div class="eyebrow">PAGE · 14 · RESULT</div>
+  <h1>Run <span class="accent">Result</span> · Game Over</h1>
+  <p class="lede">
+    런 종료 후 보이는 결과 화면. <b>VICTORY</b> (보스 처치 완료) 또는 <b>DEFEAT</b> (사망)에 따라 색조와 라벨이 달라집니다.
+    런 통계 + 사용한 무기/패시브 + 획득 골드를 한눈에. 메타 상점으로 즉시 이동 가능.
+  </p>
+</header>
+<main>
+
+<section class="bay">
+  <h2>01 · Victory</h2>
+  <p class="bay-sub">30분 보스를 처치하고 런을 끝냈을 때. 황금 테마, 보너스 골드 표시.</p>
+  <div class="result-stage">
+    <div class="result-frame victory">
+      <div class="result-title">
+        <div class="word">VICTORY</div>
+        <div class="sub">crypt of the dead · chapter 1 cleared</div>
+      </div>
+      <div class="result-body">
+        <div class="hero-tile">
+          <div class="portrait">
+            <canvas id="vp" width="80" height="80"></canvas>
+          </div>
+          <div class="name">Knight</div>
+          <div class="lvl">레벨 32</div>
+          <div class="loadout" id="v-loadout"></div>
+        </div>
+        <div class="stats-grid" id="v-stats"></div>
+      </div>
+      <div class="actions">
+        <button class="btn-lg primary"><span class="k">⏎</span>다시 도전</button>
+        <button class="btn-lg"><span class="k">S</span>상점</button>
+        <button class="btn-lg"><span class="k">M</span>메뉴</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="bay">
+  <h2>02 · Defeat</h2>
+  <p class="bay-sub">사망 시. 핏빛 테마. 절반 골드만 정산 (런 도중 획득한 양 중 50%).</p>
+  <div class="result-stage">
+    <div class="result-frame defeat">
+      <div class="result-title">
+        <div class="word">DEFEAT</div>
+        <div class="sub">14분 22초 생존 · 적에게 쓰러졌다</div>
+      </div>
+      <div class="result-body">
+        <div class="hero-tile">
+          <div class="portrait">
+            <canvas id="dp" width="80" height="80"></canvas>
+          </div>
+          <div class="name">Mage</div>
+          <div class="lvl">레벨 18</div>
+          <div class="loadout" id="d-loadout"></div>
+        </div>
+        <div class="stats-grid" id="d-stats"></div>
+      </div>
+      <div class="actions">
+        <button class="btn-lg primary"><span class="k">⏎</span>다시 도전</button>
+        <button class="btn-lg"><span class="k">S</span>상점</button>
+        <button class="btn-lg"><span class="k">M</span>메뉴</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<script src="../palette.js"></script>
+<script src="../sprites.js"></script>
+<script src="../heroes_hd.js"></script>
+<script src="../heroes_hd3.js"></script>
+<script src="../heroes_smooth_walk.js"></script>
+<script src="../heroes_xhd.js"></script>
+<script src="../bosses_hd.js"></script>
+<script src="../enemies_hd.js"></script>
+<script src="../enemies_hd2.js"></script>
+<script src="../weapons_hd.js"></script>
+<script src="../projectiles_hd.js"></script>
+<script src="../skills_hd.js"></script>
+<script src="../pickups_hd2.js"></script>
+<script src="../chests_polished.js"></script>
+<script src="../structures.js"></script>
+<script src="../structures_extra.js"></script>
+<script src="../tiles_unified.js"></script>
+<script src="../tiles_natural.js"></script>
+<script src="../hd2_apply.js"></script>
+<script src="../effects_hd3.js"></script>
+<script src="../lightning_polish.js"></script>
+<script src="../atlas.js"></script>
+<script src="../showcase.js"></script>
+<script>
+Showcase.renderNav('result');
+
+function paint(canvas, name, size) {
+  canvas.width = size; canvas.height = size;
+  const ctx = canvas.getContext('2d');
+  ctx.imageSmoothingEnabled = false;
+  if (SPRITES[name]) ctx.drawImage(AtlasBuilder.renderFrame(name, 0), 0, 0, size, size);
+}
+
+paint(document.getElementById('vp'), 'knight_walk', 80);
+Showcase.animState.push({ canvas: document.getElementById('vp'), name: 'knight_walk', elapsed: 0 });
+paint(document.getElementById('dp'), 'mage_walk', 80);
+Showcase.animState.push({ canvas: document.getElementById('dp'), name: 'mage_walk', elapsed: 0 });
+
+function fillLoadout(host, items) {
+  for (const id of items) {
+    const slot = document.createElement('div'); slot.className = 'slot';
+    const c = document.createElement('canvas');
+    slot.appendChild(c);
+    paint(c, id, 28);
+    if (SPRITES[id] && SPRITES[id].length > 1) {
+      Showcase.animState.push({ canvas: c, name: id, elapsed: 0 });
+    }
+    host.appendChild(slot);
+  }
+}
+fillLoadout(document.getElementById('v-loadout'),
+  ['icon_leg_blade', 'icon_vanguard', 'icon_holywater', 'icon_might', 'icon_haste', 'icon_vigor']);
+fillLoadout(document.getElementById('d-loadout'),
+  ['icon_nova', 'icon_lightning', 'icon_firewall', 'icon_might', 'icon_haste', 'icon_multi']);
+
+function statCard(host, iconName, label, value, mod) {
+  const card = document.createElement('div'); card.className = 'stat-card' + (mod ? ' ' + mod : '');
+  const c = document.createElement('canvas');
+  card.appendChild(c);
+  paint(c, iconName, 32);
+  Showcase.animState.push({ canvas: c, name: iconName, elapsed: 0 });
+  const box = document.createElement('div');
+  box.innerHTML = '<div class="stat-name">' + label + '</div><div class="stat-val">' + value + '</div>';
+  card.appendChild(box);
+  host.appendChild(card);
+}
+
+const v = document.getElementById('v-stats');
+statCard(v, 'pickup_gold',   '획득 골드',  '3,842 G', 'gold');
+statCard(v, 'fx_death_generic','처치 수',  '1,247',   'kills');
+statCard(v, 'pickup_xp_blue','수집 XP',   '15,420');
+statCard(v, 'fx_levelup',    '최고 콤보', '×312');
+statCard(v, 'icon_leg_blade','진화',     '여명의 검기');
+statCard(v, 'pickup_chest_gold','보스 처치','1 (Skeleton King)');
+
+const d = document.getElementById('d-stats');
+statCard(d, 'pickup_gold',   '획득 골드',  '1,247 G (×½)', 'gold');
+statCard(d, 'fx_death_generic','처치 수',  '683',          'kills');
+statCard(d, 'pickup_xp_blue','수집 XP',   '6,210');
+statCard(d, 'fx_impact_smash','받은 피해', '342');
+statCard(d, 'icon_nova',     '주력 무기',  '노바 Lv.8');
+statCard(d, 'fx_death_generic','마지막 적','뱀파이어 로드');
+</script>
+</body>
+</html>

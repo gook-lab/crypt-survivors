@@ -1,0 +1,343 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Minimap UI · Crypt Asset Pack</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="../showcase.css" />
+<style>
+  .stage {
+    position: relative;
+    background: #07060c;
+    border: 1px solid var(--line);
+    overflow: hidden;
+    margin: 0 auto;
+    width: 960px; height: 540px;
+  }
+  .stage canvas#world {
+    position: absolute; inset: 0;
+    image-rendering: pixelated;
+    width: 100%; height: 100%;
+  }
+  /* Minimap — top-right corner */
+  .minimap {
+    position: absolute;
+    top: 14px; right: 14px;
+    width: 200px; height: 200px;
+    background: rgba(7,6,12,0.85);
+    border: 1px solid var(--gold);
+    backdrop-filter: blur(2px);
+    z-index: 10;
+    padding: 8px;
+  }
+  .minimap-head {
+    display: flex; justify-content: space-between; align-items: baseline;
+    font-family: 'Cinzel', serif;
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    color: var(--gold-hi);
+    text-transform: uppercase;
+    margin-bottom: 6px;
+    padding-bottom: 4px;
+    border-bottom: 1px dashed var(--line);
+  }
+  .minimap canvas#minimap-canvas {
+    image-rendering: pixelated;
+    width: 100%;
+    height: 168px;
+    display: block;
+    background: var(--bg);
+    border: 1px solid var(--line);
+  }
+  .minimap-legend {
+    display: flex; gap: 8px;
+    font-size: 8px;
+    color: var(--ink-dim);
+    letter-spacing: 0.08em;
+    margin-top: 4px;
+    flex-wrap: wrap;
+  }
+  .minimap-legend .dot {
+    display: inline-block;
+    width: 6px; height: 6px;
+    margin-right: 3px;
+    vertical-align: middle;
+  }
+  .controls {
+    text-align: center;
+    margin-top: 14px;
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .controls button {
+    background: var(--bg-2);
+    color: var(--ink);
+    border: 1px solid var(--line);
+    padding: 8px 14px;
+    font-family: inherit;
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    cursor: pointer;
+  }
+  .controls button:hover { background: var(--gold); color: var(--bg); border-color: var(--gold); }
+  .controls button.active { background: var(--gold); color: var(--bg); border-color: var(--gold); }
+  .controls .k {
+    color: var(--gold); margin-right: 5px; font-weight: 700;
+  }
+  .controls button:hover .k, .controls button.active .k { color: var(--bg); }
+</style>
+</head>
+<body>
+
+<header class="masthead">
+  <div class="eyebrow">PAGE · 25 · MINIMAP</div>
+  <h1>Minimap <span class="accent">UI</span> · 작은 지도 · 통일된 타일 레이아웃</h1>
+  <p class="lede">
+    오른쪽 상단 미니맵 — 룸 구조, 영웅 위치, 적 위치, 보물상자 위치를 한눈에. 화면은 새 <b>통일 타일 시스템</b>으로 깔려서
+    바닥이 한 장의 표면으로 읽힙니다. 룸 데이터는 <code>art/rooms.js</code>의 갱신된 floor 풀에서 읽어옴.
+  </p>
+</header>
+
+<main>
+<section class="bay">
+  <h2>01 · Live Minimap</h2>
+  <p class="bay-sub">버튼/키보드 1-4 으로 챕터 전환. 통일 타일 + 미니맵 갱신.</p>
+  <div class="stage" id="stage">
+    <canvas id="world" width="960" height="540"></canvas>
+    <div class="minimap">
+      <div class="minimap-head">
+        <span id="map-title">CRYPT</span>
+        <span id="map-room">Room 3/8</span>
+      </div>
+      <canvas id="minimap-canvas" width="180" height="160"></canvas>
+      <div class="minimap-legend">
+        <span><span class="dot" style="background:#49d0e0"></span>나</span>
+        <span><span class="dot" style="background:#c8332a"></span>적</span>
+        <span><span class="dot" style="background:#f0d27a"></span>상자</span>
+        <span><span class="dot" style="background:#b574d8"></span>보스</span>
+        <span><span class="dot" style="background:#8d83a0;border:1px solid #d4a04a"></span>출구</span>
+      </div>
+    </div>
+  </div>
+  <div class="controls">
+    <button data-biome="crypt" class="active"><span class="k">1</span>묘소</button>
+    <button data-biome="forest"><span class="k">2</span>숲</button>
+    <button data-biome="volcano"><span class="k">3</span>화산</button>
+    <button data-biome="ice"><span class="k">4</span>빙굴</button>
+    <button data-biome="sanctuary"><span class="k">5</span>성소</button>
+  </div>
+</section>
+</main>
+
+<script src="../palette.js"></script>
+<script src="../sprites.js"></script>
+<script src="../tiles_unified.js"></script>
+<script src="../tiles_natural.js"></script>
+<script src="../structures.js"></script>
+<script src="../heroes_hd.js"></script>
+<script src="../heroes_hd3.js"></script>
+<script src="../heroes_smooth_walk.js"></script>
+<script src="../heroes_xhd.js"></script>
+<script src="../bosses_hd.js"></script>
+<script src="../enemies_hd.js"></script>
+<script src="../enemies_hd2.js"></script>
+<script src="../weapons_hd.js"></script>
+<script src="../projectiles_hd.js"></script>
+<script src="../skills_hd.js"></script>
+<script src="../pickups_hd2.js"></script>
+<script src="../chests_polished.js"></script>
+<script src="../structures_extra.js"></script>
+<script src="../hd2_apply.js"></script>
+<script src="../effects_hd3.js"></script>
+<script src="../lightning_polish.js"></script>
+<script src="../atlas.js"></script>
+<script src="../showcase.js"></script>
+<script>
+Showcase.renderNav('minimap');
+
+const world = document.getElementById('world');
+const wctx = world.getContext('2d');
+wctx.imageSmoothingEnabled = false;
+const mini = document.getElementById('minimap-canvas');
+const mctx = mini.getContext('2d');
+mctx.imageSmoothingEnabled = false;
+
+const BIOMES = {
+  crypt:   { title: 'CRYPT',     pool: 'crypt',     accent: '#8d83a0', props: [['prop_tombstone', 70, 200], ['prop_castle_tower', 240, 110], ['prop_gargoyle', 420, 230], ['prop_candelabra', 120, 100]] },
+  forest:  { title: 'FOREST',    pool: 'forest',    accent: '#88b85a', props: [['prop_dead_tree', 60, 250], ['prop_dead_tree', 420, 250], ['prop_forest_shrine', 240, 200], ['prop_mushroom', 130, 220], ['prop_mushroom', 350, 220]] },
+  volcano: { title: 'VOLCANO',   pool: 'volcano',   accent: '#f08a2a', props: [['prop_obsidian_pillar', 60, 250], ['prop_obsidian_pillar', 420, 250], ['prop_fire_altar', 240, 200], ['prop_lava_crack', 130, 130, 'center']] },
+  ice:     { title: 'ICE',       pool: 'ice',       accent: '#6fb4dc', props: [['prop_ice_spike', 60, 250], ['prop_ice_spike', 420, 250], ['prop_frozen_statue', 240, 200], ['prop_ice_crystal', 130, 200]] },
+  sanctuary: { title: 'SANCTUARY', pool: 'sanctuary', accent: '#d4a04a', props: [['prop_fountain', 240, 200], ['prop_banner', 100, 80], ['prop_banner', 380, 80], ['prop_well', 130, 220]] },
+};
+
+const POOLS = window.UNIFIED_TILE_POOLS;
+
+function pickTile(pool) {
+  const total = pool.reduce((a, t) => a + t.weight, 0);
+  let r = Math.random() * total;
+  for (const t of pool) if ((r -= t.weight) <= 0) return t.tile;
+  return pool[0].tile;
+}
+
+let currentBiome = 'crypt';
+const heroPos = { x: 240, y: 180 };
+const enemies = [
+  { x: 90, y: 70 }, { x: 380, y: 90 }, { x: 60, y: 200 },
+  { x: 420, y: 220 }, { x: 150, y: 60 }, { x: 360, y: 100 },
+];
+const chests = [{ x: 200, y: 130, type: 'wood' }, { x: 300, y: 100, type: 'gold' }];
+
+function paintWorld() {
+  const biome = BIOMES[currentBiome];
+  const pool = POOLS[biome.pool];
+  const buf = document.createElement('canvas');
+  buf.width = 480; buf.height = 270;
+  const b = buf.getContext('2d');
+  b.imageSmoothingEnabled = false;
+
+  // Floor with unified pool
+  for (let y = 0; y < 17; y++) {
+    for (let x = 0; x < 30; x++) {
+      const t = pickTile(pool);
+      if (SPRITES[t]) b.drawImage(AtlasBuilder.renderFrame(t, 0), x * 16, y * 16);
+    }
+  }
+  // Props
+  for (const [name, px, py, anch] of biome.props) {
+    if (!SPRITES[name]) continue;
+    const sub = AtlasBuilder.renderFrame(name, 0);
+    let dx = px - sub.width / 2;
+    let dy = (anch === 'center') ? py - sub.height / 2 : py - sub.height;
+    b.drawImage(sub, Math.round(dx), Math.round(dy));
+  }
+  // Chests
+  for (const c of chests) {
+    const sub = AtlasBuilder.renderFrame(c.type === 'gold' ? 'pickup_chest_gold' : 'pickup_chest', 0);
+    b.drawImage(sub, c.x - sub.width / 2, c.y - sub.height);
+  }
+  // Hero
+  const hs = AtlasBuilder.renderFrame('knight_walk', 0);
+  b.drawImage(hs, heroPos.x - hs.width / 2, heroPos.y - hs.height);
+  // Enemies
+  for (const e of enemies) {
+    const es = AtlasBuilder.renderFrame('walker_walk', 0);
+    b.drawImage(es, e.x - es.width / 2, e.y - es.height);
+  }
+
+  wctx.drawImage(buf, 0, 0, world.width, world.height);
+  paintMinimap(biome);
+}
+
+function paintMinimap(biome) {
+  // 180×160 minimap, world is 480×270 logical
+  mctx.clearRect(0, 0, mini.width, mini.height);
+  // Background dim
+  mctx.fillStyle = '#0a0814';
+  mctx.fillRect(0, 0, mini.width, mini.height);
+  // Show 5-room grid: current room highlighted, others adjacent
+  // Layout: 3×3 mini rooms (some empty)
+  const cellW = 56, cellH = 50;
+  const grid = [
+    [null,    'norm',  null],
+    ['norm',  'curr',  'norm'],
+    [null,    'boss',  null],
+  ];
+  const padX = (mini.width - 3 * cellW) / 2;
+  const padY = (mini.height - 3 * cellH) / 2;
+  for (let r = 0; r < 3; r++) {
+    for (let c = 0; c < 3; c++) {
+      const kind = grid[r][c];
+      if (!kind) continue;
+      const x = padX + c * cellW, y = padY + r * cellH;
+      mctx.fillStyle = kind === 'curr' ? '#241c33' : '#14101e';
+      mctx.fillRect(x, y, cellW - 4, cellH - 4);
+      mctx.strokeStyle = kind === 'boss' ? '#c8332a' :
+                          kind === 'curr' ? '#f0d27a' : '#5a4a6d';
+      mctx.lineWidth = kind === 'curr' ? 2 : 1;
+      mctx.strokeRect(x + 0.5, y + 0.5, cellW - 5, cellH - 5);
+      // boss icon
+      if (kind === 'boss') {
+        mctx.fillStyle = '#c8332a';
+        mctx.fillRect(x + (cellW - 4) / 2 - 3, y + (cellH - 4) / 2 - 3, 6, 6);
+      }
+    }
+  }
+  // Door connectors
+  mctx.strokeStyle = biome.accent;
+  mctx.lineWidth = 2;
+  // current (center) to top, left, right, bottom
+  const cx = padX + cellW + (cellW - 4) / 2;
+  const cy = padY + cellH + (cellH - 4) / 2;
+  // top
+  mctx.beginPath(); mctx.moveTo(cx, padY + cellH); mctx.lineTo(cx, padY + cellH + 4); mctx.stroke();
+  // bottom (to boss room)
+  mctx.beginPath(); mctx.moveTo(cx, padY + 2 * cellH - 4); mctx.lineTo(cx, padY + 2 * cellH); mctx.stroke();
+  // left
+  mctx.beginPath(); mctx.moveTo(padX + cellW, cy); mctx.lineTo(padX + cellW + 4, cy); mctx.stroke();
+  // right
+  mctx.beginPath(); mctx.moveTo(padX + 2 * cellW - 4, cy); mctx.lineTo(padX + 2 * cellW, cy); mctx.stroke();
+
+  // Current room internal markers
+  const rx = padX + cellW + 2, ry = padY + cellH + 2;
+  const rw = cellW - 8, rh = cellH - 8;
+  // Hero
+  mctx.fillStyle = '#49d0e0';
+  const hX = rx + (heroPos.x / 480) * rw;
+  const hY = ry + (heroPos.y / 270) * rh;
+  mctx.fillRect(hX - 1, hY - 1, 3, 3);
+  // Enemies
+  mctx.fillStyle = '#c8332a';
+  for (const e of enemies) {
+    const ex = rx + (e.x / 480) * rw;
+    const ey = ry + (e.y / 270) * rh;
+    mctx.fillRect(ex, ey, 2, 2);
+  }
+  // Chests
+  mctx.fillStyle = '#f0d27a';
+  for (const c of chests) {
+    const cxp = rx + (c.x / 480) * rw;
+    const cyp = ry + (c.y / 270) * rh;
+    mctx.fillRect(cxp, cyp, 2, 2);
+  }
+
+  // Update headings
+  document.getElementById('map-title').textContent = biome.title;
+  document.getElementById('map-title').style.color = biome.accent;
+}
+
+function setBiome(name) {
+  currentBiome = name;
+  document.querySelectorAll('[data-biome]').forEach(b => {
+    b.classList.toggle('active', b.dataset.biome === name);
+  });
+  paintWorld();
+}
+
+document.querySelectorAll('[data-biome]').forEach(b => {
+  b.onclick = () => setBiome(b.dataset.biome);
+});
+window.addEventListener('keydown', (e) => {
+  const map = ['crypt', 'forest', 'volcano', 'ice', 'sanctuary'];
+  const idx = '12345'.indexOf(e.key);
+  if (idx >= 0 && map[idx]) setBiome(map[idx]);
+});
+
+// Move hero around a bit
+let heroT = 0;
+setInterval(() => {
+  heroT += 0.3;
+  heroPos.x = 240 + Math.cos(heroT) * 60;
+  heroPos.y = 180 + Math.sin(heroT) * 20;
+  paintWorld();
+}, 400);
+
+paintWorld();
+</script>
+</body>
+</html>

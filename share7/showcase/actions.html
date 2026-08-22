@@ -1,0 +1,340 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Actions · Crypt Asset Pack</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="../showcase.css" />
+<style>
+  .action-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
+    gap: 14px;
+  }
+  .action-card {
+    background: linear-gradient(180deg, var(--panel), var(--bg-2));
+    border: 1px solid var(--line);
+    padding: 14px 14px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    position: relative;
+    overflow: hidden;
+  }
+  .action-card.legendary { border-color: var(--gold); }
+  .action-card.legendary::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 100% 0%, rgba(212,160,74,0.16), transparent 60%);
+    pointer-events: none;
+  }
+  .action-card .head {
+    display: flex; align-items: center; gap: 10px;
+  }
+  .action-card .head .icon {
+    width: 48px; height: 48px;
+    background-color: #1a1428;
+    background-image:
+      linear-gradient(45deg, #221a36 25%, transparent 25%),
+      linear-gradient(-45deg, #221a36 25%, transparent 25%);
+    background-size: 8px 8px;
+    border: 1px solid var(--line);
+    display: flex; align-items: center; justify-content: center;
+    image-rendering: pixelated;
+  }
+  .action-card .head .icon canvas { image-rendering: pixelated; }
+  .action-card .head .info { flex: 1; }
+  .action-card .head .name {
+    font-family: 'Cinzel', serif;
+    font-weight: 700;
+    color: var(--ink);
+    font-size: 15px;
+    letter-spacing: 0.04em;
+  }
+  .action-card.legendary .head .name { color: var(--gold-hi); }
+  .action-card .head .pattern {
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--ink-dim);
+    margin-top: 2px;
+  }
+  .action-card .head .tier {
+    background: var(--bg-2);
+    border: 1px solid var(--line);
+    padding: 3px 8px;
+    font-size: 9px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--gold);
+  }
+  .action-card.legendary .head .tier { color: var(--bg); background: var(--gold); border-color: var(--gold); }
+  .action-card .blurb {
+    color: var(--ink-dim);
+    font-size: 11px;
+    line-height: 1.55;
+    min-height: 32px;
+  }
+  .action-card .stage {
+    background-color: #1a1428;
+    background-image:
+      linear-gradient(45deg, #221a36 25%, transparent 25%),
+      linear-gradient(-45deg, #221a36 25%, transparent 25%),
+      linear-gradient(45deg, transparent 75%, #221a36 75%),
+      linear-gradient(-45deg, transparent 75%, #221a36 75%);
+    background-size: 12px 12px;
+    background-position: 0 0, 0 6px, 6px -6px, -6px 0;
+    border: 1px solid var(--line);
+    padding: 8px;
+    height: 110px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+  .action-card .stage canvas { image-rendering: pixelated; }
+  .action-card .tags {
+    display: flex; gap: 4px; flex-wrap: wrap;
+  }
+  .action-card .tag {
+    font-size: 9px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink);
+    background: var(--bg-2);
+    border: 1px solid var(--line);
+    padding: 2px 6px;
+  }
+  .action-card .tag[data-t="holy"]    { color: #f0d27a; border-color: rgba(212,160,74,0.5); }
+  .action-card .tag[data-t="fire"]    { color: #f08a2a; border-color: rgba(240,138,42,0.5); }
+  .action-card .tag[data-t="ice"]     { color: #6fb4dc; border-color: rgba(111,180,220,0.5); }
+  .action-card .tag[data-t="arcane"]  { color: #b574d8; border-color: rgba(181,116,216,0.5); }
+  .action-card .tag[data-t="shadow"]  { color: #8d83a0; border-color: rgba(141,131,160,0.5); }
+  .action-card .tag[data-t="physical"]{ color: #c0563b; border-color: rgba(192,86,59,0.5); }
+  .action-card .stats {
+    font-size: 10px;
+    color: var(--ink-dim);
+    border-top: 1px dashed var(--line);
+    padding-top: 8px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2px 12px;
+  }
+  .action-card .stats b { color: var(--ink); font-weight: 500; }
+
+  .section-head {
+    font-family: 'Cinzel', serif;
+    color: var(--gold-hi);
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    font-size: 14px;
+    margin: 28px 0 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px dashed var(--line);
+  }
+  .section-head small { color: var(--ink-dim); font-weight: 400; text-transform: none; letter-spacing: 0.04em; margin-left: 12px; }
+</style>
+</head>
+<body>
+<header class="masthead">
+  <div class="eyebrow">PAGE · 06 · ACTIONS</div>
+  <h1>Weapon Actions · <span class="accent">Behavior Profiles</span></h1>
+  <p class="lede">
+    각 무기가 게임 안에서 어떻게 움직이는지 — 패턴 · 트레일 · 임팩트 · 머즐 효과 · 패스시브 프록까지 한눈에.
+    <b>Basic</b> 무기는 시작 풀에서 뽑히고, <b>Legendary</b>는 진화 또는 드롭으로만 얻을 수 있어요.
+    데이터는 <code>art/weapons.js</code>에 다 들어있어서 게임 코드에서 그대로 import해 쓰면 됩니다.
+  </p>
+</header>
+<main id="content"></main>
+
+<script src="../palette.js"></script>
+<script src="../sprites.js"></script>
+<script src="../heroes_hd.js"></script>
+<script src="../heroes_hd3.js"></script>
+<script src="../heroes_smooth_walk.js"></script>
+<script src="../heroes_xhd.js"></script>
+<script src="../bosses_hd.js"></script>
+<script src="../enemies_hd.js"></script>
+<script src="../enemies_hd2.js"></script>
+<script src="../weapons_hd.js"></script>
+<script src="../projectiles_hd.js"></script>
+<script src="../skills_hd.js"></script>
+<script src="../pickups_hd2.js"></script>
+<script src="../chests_polished.js"></script>
+<script src="../structures.js"></script>
+<script src="../structures_extra.js"></script>
+<script src="../tiles_unified.js"></script>
+<script src="../tiles_natural.js"></script>
+<script src="../hd2_apply.js"></script>
+<script src="../effects_hd3.js"></script>
+<script src="../lightning_polish.js"></script>
+<script src="../atlas.js"></script>
+<script src="../weapons.js"></script>
+<script src="../showcase.js"></script>
+<script>
+Showcase.renderNav('actions');
+
+const host = document.getElementById('content');
+const W = window.WEAPONS;
+
+function section(title, ids) {
+  const h = document.createElement('div');
+  h.className = 'section-head';
+  h.innerHTML = title + ' <small>' + ids.length + ' weapons</small>';
+  host.appendChild(h);
+  const grid = document.createElement('div');
+  grid.className = 'action-grid';
+  for (const id of ids) grid.appendChild(card(id, W[id]));
+  host.appendChild(grid);
+}
+
+function card(id, w) {
+  const c = document.createElement('div');
+  c.className = 'action-card' + (w.tier === 'legendary' ? ' legendary' : '');
+
+  // Head
+  const head = document.createElement('div');
+  head.className = 'head';
+  const ic = document.createElement('div'); ic.className = 'icon';
+  const icC = document.createElement('canvas');
+  // Defensive: skip icon if missing, but keep the card rendering
+  if (w.icon && SPRITES[w.icon]) {
+    const ifr = SPRITES[w.icon][0];
+    icC.width = ifr[0].length * 2; icC.height = ifr.length * 2;
+    ic.appendChild(icC);
+    const ictx = icC.getContext('2d'); ictx.imageSmoothingEnabled = false;
+    ictx.drawImage(AtlasBuilder.renderFrame(w.icon, 0), 0, 0, icC.width, icC.height);
+  } else {
+    ic.style.width = '48px'; ic.style.height = '48px';
+  }
+  head.appendChild(ic);
+
+  const info = document.createElement('div'); info.className = 'info';
+  const nm = document.createElement('div'); nm.className = 'name'; nm.textContent = w.name;
+  const pa = document.createElement('div'); pa.className = 'pattern';
+  pa.textContent = w.pattern + (w.count ? ' · count ' + w.count : '') + (w.pierce ? ' · pierce ' + (w.pierce >= 999 ? '∞' : w.pierce) : '');
+  info.appendChild(nm); info.appendChild(pa);
+  head.appendChild(info);
+
+  const tier = document.createElement('div'); tier.className = 'tier'; tier.textContent = w.tier;
+  head.appendChild(tier);
+  c.appendChild(head);
+
+  // Blurb
+  const blurb = document.createElement('div'); blurb.className = 'blurb'; blurb.textContent = w.blurb;
+  c.appendChild(blurb);
+
+  // Stage — animate the weapon + (if available) its primary action FX
+  const stage = document.createElement('div'); stage.className = 'stage';
+  if (!w.sprite || !SPRITES[w.sprite]) {
+    c.appendChild(stage);
+    if (w.tags && w.tags.length) {
+      const tagBar = document.createElement('div'); tagBar.className = 'tags';
+      for (const t of w.tags) {
+        const tag = document.createElement('span'); tag.className = 'tag'; tag.dataset.t = t; tag.textContent = t;
+        tagBar.appendChild(tag);
+      }
+      c.appendChild(tagBar);
+    }
+    return c;
+  }
+  const wfr = SPRITES[w.sprite][0];
+  const scale = Math.max(2, Math.floor(80 / Math.max(wfr.length, wfr[0].length)));
+  // Action FX behind weapon
+  const actionClip = w.action_fx || w.cast_fx || w.trail_fx || w.impact_fx;
+  const stageInner = document.createElement('div');
+  stageInner.style.position = 'relative';
+  stageInner.style.width = (Math.max(wfr[0].length, 24) * scale) + 'px';
+  stageInner.style.height = (Math.max(wfr.length, 24) * scale) + 'px';
+  stageInner.style.display = 'flex';
+  stageInner.style.alignItems = 'center';
+  stageInner.style.justifyContent = 'center';
+
+  // FX layer
+  if (actionClip && SPRITES[actionClip]) {
+    const fxC = document.createElement('canvas');
+    const fxfr = SPRITES[actionClip][0];
+    const fxScale = Math.max(2, Math.floor(96 / Math.max(fxfr.length, fxfr[0].length)));
+    fxC.width = fxfr[0].length * fxScale;
+    fxC.height = fxfr.length * fxScale;
+    fxC.style.position = 'absolute';
+    fxC.style.left = '50%';
+    fxC.style.top = '50%';
+    fxC.style.transform = 'translate(-50%, -50%)';
+    fxC.style.opacity = '0.7';
+    stageInner.appendChild(fxC);
+    Showcase.animState.push({ canvas: fxC, name: actionClip, elapsed: Math.random() * 0.5 });
+    const fctx = fxC.getContext('2d'); fctx.imageSmoothingEnabled = false;
+    fctx.drawImage(AtlasBuilder.renderFrame(actionClip, 0), 0, 0, fxC.width, fxC.height);
+  }
+  // Weapon sprite on top
+  const wC = document.createElement('canvas');
+  wC.width = wfr[0].length * scale;
+  wC.height = wfr.length * scale;
+  wC.style.position = 'relative';
+  wC.style.zIndex = '2';
+  stageInner.appendChild(wC);
+  const wctx = wC.getContext('2d'); wctx.imageSmoothingEnabled = false;
+  wctx.drawImage(AtlasBuilder.renderFrame(w.sprite, 0), 0, 0, wC.width, wC.height);
+  Showcase.animState.push({ canvas: wC, name: w.sprite, elapsed: 0 });
+  stage.appendChild(stageInner);
+  c.appendChild(stage);
+
+  // Tags
+  if (w.tags && w.tags.length) {
+    const tagBar = document.createElement('div'); tagBar.className = 'tags';
+    for (const t of w.tags) {
+      const tag = document.createElement('span'); tag.className = 'tag'; tag.dataset.t = t; tag.textContent = t;
+      tagBar.appendChild(tag);
+    }
+    c.appendChild(tagBar);
+  }
+
+  // Stats — show only the non-empty fx hooks
+  const stats = document.createElement('div'); stats.className = 'stats';
+  const hooks = [
+    ['action', w.action_fx],
+    ['cast', w.cast_fx],
+    ['muzzle', w.muzzle_fx],
+    ['trail', w.trail_fx],
+    ['impact', w.impact_fx],
+    ['proc', w.proc_fx],
+    ['aoe', w.aoe_fx],
+    ['drain', w.drain_fx],
+    ['death', w.death_fx],
+  ];
+  for (const [k, v] of hooks) {
+    if (!v) continue;
+    const e = document.createElement('div');
+    e.innerHTML = k + ' → <b>' + v + '</b>';
+    stats.appendChild(e);
+  }
+  if (w.knockback) stats.appendChild(textRow('knockback', w.knockback));
+  if (w.bounces) stats.appendChild(textRow('chain', w.bounces));
+  if (w.homing) stats.appendChild(textRow('homing', 'yes'));
+  if (w.duration) stats.appendChild(textRow('duration', w.duration + 's'));
+  if (w.radius) stats.appendChild(textRow('radius', w.radius + 'px'));
+  if (w.proc_chance) stats.appendChild(textRow('proc%', Math.round(w.proc_chance * 100) + '%'));
+  c.appendChild(stats);
+
+  return c;
+}
+
+function textRow(k, v) {
+  const e = document.createElement('div');
+  e.innerHTML = k + ' → <b>' + v + '</b>';
+  return e;
+}
+
+const basicIds = Object.entries(W).filter(([, w]) => w.tier === 'basic').map(([id]) => id);
+const legendaryIds = Object.entries(W).filter(([, w]) => w.tier === 'legendary').map(([id]) => id);
+
+section('01 · Basic Weapons', basicIds);
+section('02 · Legendary Weapons', legendaryIds);
+</script>
+</body>
+</html>

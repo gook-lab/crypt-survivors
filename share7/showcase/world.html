@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>World · Crypt Asset Pack</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="../showcase.css" />
+</head>
+<body>
+
+<header class="masthead">
+  <div class="eyebrow">PAGE · 04 · WORLD</div>
+  <h1>The <span class="accent">Crypt</span> · World</h1>
+  <p class="lede">픽업 · 포션 5색 · 상자/스크롤/룬 · 던전 + 아웃도어 타일.</p>
+</header>
+
+<main>
+  <div id="content"></div>
+</main>
+
+<script src="../palette.js"></script>
+<script src="../sprites.js"></script>
+<script src="../heroes_hd.js"></script>
+<script src="../heroes_hd3.js"></script>
+<script src="../heroes_smooth_walk.js"></script>
+<script src="../heroes_xhd.js"></script>
+<script src="../bosses_hd.js"></script>
+<script src="../enemies_hd.js"></script>
+<script src="../enemies_hd2.js"></script>
+<script src="../weapons_hd.js"></script>
+<script src="../projectiles_hd.js"></script>
+<script src="../skills_hd.js"></script>
+<script src="../pickups_hd2.js"></script>
+<script src="../chests_polished.js"></script>
+<script src="../structures.js"></script>
+<script src="../structures_extra.js"></script>
+<script src="../tiles_unified.js"></script>
+<script src="../tiles_natural.js"></script>
+<script src="../hd2_apply.js"></script>
+<script src="../effects_hd3.js"></script>
+<script src="../lightning_polish.js"></script>
+<script src="../atlas.js"></script>
+<script src="../showcase.js"></script>
+<script>
+Showcase.renderNav('world');
+Showcase.renderGroups(document.getElementById('content'), [
+  { title: 'Pickups · Gems & Coins', items: ['pickup_xp_blue', 'pickup_xp_green', 'pickup_xp_red', 'pickup_gold'] },
+  { title: 'Pickups · Items', items: ['pickup_heart', 'pickup_magnet', 'pickup_bomb', 'pickup_chicken', 'pickup_scroll', 'pickup_key', 'pickup_rune'] },
+  { title: 'Pickups · Chests', items: ['pickup_chest', 'pickup_chest_open', 'pickup_chest_gold'] },
+  { title: 'Pickups · Potions', items: ['pickup_potion_hp', 'pickup_potion_might', 'pickup_potion_mana', 'pickup_potion_swift', 'pickup_potion_arcane'] },
+  { title: 'Tileset · Dungeon', items: ['tile_stone_1', 'tile_stone_2', 'tile_stone_crack', 'tile_bones', 'tile_blood', 'tile_moss'] },
+  { title: 'Tileset · Outdoor', items: ['tile_grass', 'tile_grass_full', 'tile_grass_dark', 'tile_dirt', 'tile_water'] },
+  { title: 'Tileset · Swamp', items: ['tile_swamp_grass', 'tile_swamp_mud', 'tile_swamp_water'] },
+  { title: 'Tileset · Volcano', items: ['tile_volcano_lava', 'tile_volcano_ash', 'tile_volcano_rock'] },
+  { title: 'Tileset · Ice', items: ['tile_ice_floor', 'tile_ice_crack', 'tile_ice_snow'] },
+]);
+</script>
+</body>
+</html>

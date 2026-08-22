@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Enemies HD2 · Crypt Asset Pack</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="../showcase.css" />
+<style>
+  .enemy-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 12px;
+  }
+  .enemy-card {
+    background: var(--panel);
+    border: 1px solid var(--gold);
+    padding: 14px;
+    text-align: center;
+  }
+  .enemy-card .row {
+    background-color: #1a1428;
+    background-image:
+      linear-gradient(45deg, #221a36 25%, transparent 25%),
+      linear-gradient(-45deg, #221a36 25%, transparent 25%);
+    background-size: 12px 12px;
+    border: 1px solid var(--line);
+    padding: 12px;
+    display: flex;
+    align-items: end;
+    justify-content: center;
+    gap: 16px;
+    min-height: 120px;
+    margin-bottom: 8px;
+  }
+  .enemy-card canvas { image-rendering: pixelated; }
+  .enemy-card .arr { color: var(--gold); font-size: 18px; font-weight: 700; align-self: center; }
+  .enemy-card .nm {
+    font-family: 'Cinzel', serif;
+    color: var(--gold-hi);
+    font-size: 14px;
+    letter-spacing: 0.05em;
+    font-weight: 700;
+  }
+  .enemy-card .sub {
+    color: var(--ink-dim);
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    margin-top: 2px;
+  }
+</style>
+</head>
+<body>
+<header class="masthead">
+  <div class="eyebrow">PAGE · 29 · ENEMIES HD2 · 정교 패스</div>
+  <h1>Enemies <span class="accent">HD2</span> · 적 24×24 정교화</h1>
+  <p class="lede">
+    적 11종을 손으로 다시 그렸어요 — 외곽선 + 다중-톤 셰이딩 + 명확한 실루엣. 원본/HD/<b>HD2</b> 3단계로 진화.
+    데이터: <code>art/enemies_hd2.js</code>.
+  </p>
+</header>
+<main id="content"></main>
+
+<script src="../palette.js"></script>
+<script src="../sprites.js"></script>
+<script src="../enemies_hd.js"></script>
+<script src="../enemies_hd2.js"></script>
+<script src="../heroes_hd.js"></script>
+<script src="../heroes_hd3.js"></script>
+<script src="../heroes_smooth_walk.js"></script>
+<script src="../heroes_xhd.js"></script>
+<script src="../bosses_hd.js"></script>
+<script src="../weapons_hd.js"></script>
+<script src="../projectiles_hd.js"></script>
+<script src="../skills_hd.js"></script>
+<script src="../pickups_hd2.js"></script>
+<script src="../chests_polished.js"></script>
+<script src="../structures.js"></script>
+<script src="../structures_extra.js"></script>
+<script src="../tiles_unified.js"></script>
+<script src="../tiles_natural.js"></script>
+<script src="../hd2_apply.js"></script>
+<script src="../effects_hd3.js"></script>
+<script src="../lightning_polish.js"></script>
+<script src="../atlas.js"></script>
+<script src="../showcase.js"></script>
+<script>
+Showcase.renderNav('enemies_hd2');
+
+function paint(canvas, name, scale) {
+  if (!SPRITES[name]) return;
+  const f = SPRITES[name][0];
+  canvas.width = f[0].length * scale;
+  canvas.height = f.length * scale;
+  const ctx = canvas.getContext('2d');
+  ctx.imageSmoothingEnabled = false;
+  ctx.drawImage(AtlasBuilder.renderFrame(name, 0), 0, 0, canvas.width, canvas.height);
+}
+
+const PAIRS = [
+  { orig: 'walker_walk',   hd: 'walker_hd2_walk',   name: '워커',     sub: '좀비 구울' },
+  { orig: 'runner_walk',   hd: 'runner_hd2_walk',   name: '러너',     sub: '헬하운드' },
+  { orig: 'brute_walk',    hd: 'brute_hd2_walk',    name: '브루트',   sub: '아머드 오우거' },
+  { orig: 'elite_walk',    hd: 'elite_hd2_walk',    name: '엘리트',   sub: '워카프트' },
+  { orig: 'bat_fly',       hd: 'bat_hd2_fly',       name: '박쥐',     sub: '야간 박쥐' },
+  { orig: 'slime_idle',    hd: 'slime_hd2_idle',    name: '슬라임',   sub: '바이오 슬라임' },
+  { orig: 'spider_walk',   hd: 'spider_hd2_walk',   name: '거미',     sub: '독거미' },
+  { orig: 'crypt_archer',  hd: 'crypt_archer_hd2',  name: '해골 궁수', sub: 'CRYPT' },
+  { orig: 'forest_wolf',   hd: 'forest_wolf_hd2',   name: '저주 늑대', sub: 'FOREST' },
+  { orig: 'ice_wisp',      hd: 'ice_wisp_hd2',      name: '빙결 위스프', sub: 'ICE' },
+  { orig: 'volcano_imp',   hd: 'volcano_imp_hd2',   name: '화염 임프', sub: 'VOLCANO' },
+];
+
+const content = document.getElementById('content');
+const section = document.createElement('section'); section.className = 'bay';
+section.innerHTML = '<h2>01 · Before vs After HD2</h2><p class="bay-sub">' + PAIRS.length + '종 적. 좌측 원본 / 우측 HD2.</p>';
+const grid = document.createElement('div'); grid.className = 'enemy-grid';
+section.appendChild(grid);
+content.appendChild(section);
+
+for (const p of PAIRS) {
+  const card = document.createElement('div'); card.className = 'enemy-card';
+  const row = document.createElement('div'); row.className = 'row';
+
+  if (SPRITES[p.orig]) {
+    const c1 = document.createElement('canvas');
+    const f1 = SPRITES[p.orig][0];
+    const s1 = Math.max(3, Math.floor(80 / Math.max(f1.length, f1[0].length)));
+    paint(c1, p.orig, s1);
+    Showcase.animState.push({ canvas: c1, name: p.orig, elapsed: 0 });
+    row.appendChild(c1);
+  }
+  const arr = document.createElement('span'); arr.className = 'arr'; arr.textContent = '→';
+  row.appendChild(arr);
+  if (SPRITES[p.hd]) {
+    const c2 = document.createElement('canvas');
+    const f2 = SPRITES[p.hd][0];
+    const s2 = Math.max(3, Math.floor(100 / Math.max(f2.length, f2[0].length)));
+    paint(c2, p.hd, s2);
+    Showcase.animState.push({ canvas: c2, name: p.hd, elapsed: 0 });
+    row.appendChild(c2);
+  }
+  card.appendChild(row);
+  card.innerHTML += '<div class="nm">' + p.name + '</div>' +
+                    '<div class="sub">' + p.sub + '</div>';
+  grid.appendChild(card);
+}
+</script>
+</body>
+</html>

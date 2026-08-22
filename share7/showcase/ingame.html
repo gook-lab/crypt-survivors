@@ -1,0 +1,686 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Pause · Stats · Chest Gacha · Crypt Asset Pack</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="../showcase.css" />
+<style>
+  /* In-game stage simulator */
+  .game-stage {
+    position: relative;
+    background: #07060c;
+    border: 1px solid var(--line);
+    overflow: hidden;
+    margin: 0 auto;
+    width: 960px;
+    height: 540px;
+  }
+  .game-stage canvas#world {
+    position: absolute; inset: 0;
+    image-rendering: pixelated;
+    width: 100%; height: 100%;
+  }
+
+  /* Left stats panel — always visible */
+  .stats-panel {
+    position: absolute;
+    top: 16px; left: 16px;
+    width: 220px;
+    background: rgba(7,6,12,0.78);
+    border: 1px solid var(--gold);
+    padding: 14px 14px 12px;
+    backdrop-filter: blur(2px);
+    z-index: 10;
+  }
+  .stats-panel .panel-head {
+    font-family: 'Cinzel', serif;
+    color: var(--gold-hi);
+    font-size: 11px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    padding-bottom: 6px;
+    margin-bottom: 8px;
+    border-bottom: 1px dashed var(--line);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .stats-panel .timer {
+    color: var(--ink);
+    font-family: 'Cinzel', serif;
+    font-size: 13px;
+    font-weight: 700;
+  }
+  .stats-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    color: var(--ink-dim);
+    margin: 5px 0;
+  }
+  .stats-row canvas { image-rendering: pixelated; width: 16px; height: 16px; }
+  .stats-row .name { flex: 1; letter-spacing: 0.04em; }
+  .stats-row .val {
+    color: var(--ink);
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+  .stats-row.crit .val { color: var(--blood); }
+  .stats-row.gold .val { color: var(--gold-hi); }
+  .stats-section-head {
+    font-size: 9px;
+    color: var(--gold);
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    margin: 10px 0 4px;
+    padding-top: 8px;
+    border-top: 1px dashed var(--line);
+  }
+  .stats-section-head:first-of-type { border-top: none; padding-top: 0; }
+  .hp-mini, .xp-mini {
+    display: flex; align-items: center; gap: 8px;
+    margin: 6px 0;
+  }
+  .hp-mini .bar-bg, .xp-mini .bar-bg {
+    flex: 1; height: 6px;
+    background: var(--bg-2);
+    border: 1px solid var(--line);
+    position: relative;
+  }
+  .hp-mini .bar-fill { background: var(--blood); height: 100%; transition: width 0.2s; }
+  .xp-mini .bar-fill { background: var(--cyan); height: 100%; transition: width 0.2s; }
+  .hp-mini .pct, .xp-mini .pct {
+    color: var(--ink); font-size: 10px; min-width: 32px; text-align: right;
+  }
+
+  /* Slot row */
+  .slots-row {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 3px;
+    margin-top: 6px;
+  }
+  .slot {
+    background: var(--bg-2);
+    border: 1px solid var(--line);
+    width: 100%; aspect-ratio: 1;
+    display: flex; align-items: center; justify-content: center;
+    position: relative;
+  }
+  .slot canvas { image-rendering: pixelated; width: 80%; height: 80%; }
+  .slot .lv {
+    position: absolute;
+    bottom: 1px; right: 2px;
+    font-size: 8px;
+    color: var(--gold-hi);
+    font-weight: 700;
+    text-shadow: 0 1px 0 #000;
+  }
+
+  /* Pause modal */
+  .pause-overlay {
+    position: absolute; inset: 0;
+    background: rgba(7,6,12,0.85);
+    z-index: 20;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(3px);
+  }
+  .pause-overlay.open { display: flex; }
+  .pause-modal {
+    background: linear-gradient(180deg, var(--panel), var(--bg-2));
+    border: 2px solid var(--gold);
+    padding: 36px 48px;
+    min-width: 360px;
+    text-align: center;
+    position: relative;
+    box-shadow: 0 0 40px rgba(212,160,74,0.3);
+  }
+  .pause-modal .title {
+    font-family: 'Cinzel', serif;
+    color: var(--gold-hi);
+    font-size: 32px;
+    letter-spacing: 0.22em;
+    margin-bottom: 4px;
+    text-shadow: 0 2px 0 #000, 0 0 14px rgba(212,160,74,0.4);
+  }
+  .pause-modal .sub {
+    color: var(--ink-dim);
+    font-size: 11px;
+    letter-spacing: 0.32em;
+    text-transform: uppercase;
+    margin-bottom: 22px;
+  }
+  .pause-modal .menu-btn {
+    display: block;
+    width: 100%;
+    background: var(--bg-2);
+    border: 1px solid var(--line);
+    color: var(--ink);
+    padding: 14px 20px;
+    margin: 8px 0;
+    font-family: 'Cinzel', serif;
+    font-weight: 700;
+    font-size: 14px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.12s;
+  }
+  .pause-modal .menu-btn:hover {
+    background: var(--gold); color: var(--bg); border-color: var(--gold);
+  }
+  .pause-modal .menu-btn .k {
+    color: var(--gold);
+    margin-right: 10px;
+    font-weight: 700;
+  }
+  .pause-modal .menu-btn:hover .k { color: var(--bg); }
+  .pause-modal .menu-btn.danger { color: var(--blood); }
+  .pause-modal .menu-btn.danger:hover { background: var(--blood); color: var(--ink); border-color: var(--blood); }
+
+  /* Chest gacha modal */
+  .gacha-overlay {
+    position: absolute; inset: 0;
+    background: rgba(7,6,12,0.92);
+    z-index: 25;
+    display: none;
+    align-items: center;
+    justify-content: center;
+  }
+  .gacha-overlay.open { display: flex; }
+  .gacha-modal {
+    background: linear-gradient(180deg, var(--panel), var(--bg-2));
+    border: 2px solid var(--gold);
+    padding: 32px 48px;
+    min-width: 540px;
+    text-align: center;
+    position: relative;
+  }
+  .gacha-modal.jackpot {
+    border-color: var(--gold-hi);
+    box-shadow: 0 0 60px rgba(240,210,122,0.6);
+    animation: jackpot-glow 0.6s ease-out;
+  }
+  @keyframes jackpot-glow {
+    0% { transform: scale(0.5); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+  .gacha-modal .chest-title {
+    font-family: 'Cinzel', serif;
+    color: var(--gold-hi);
+    font-size: 22px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+  }
+  .gacha-modal .jackpot-badge {
+    color: var(--gold-hi);
+    font-family: 'Cinzel', serif;
+    font-size: 38px;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    margin-bottom: 14px;
+    text-shadow: 0 0 20px rgba(240,210,122,0.8);
+    display: none;
+  }
+  .gacha-modal.jackpot .jackpot-badge { display: block; }
+  .gacha-modal .gacha-status {
+    color: var(--ink-dim);
+    font-size: 12px;
+    margin: 8px 0 18px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+  }
+  .gacha-chest {
+    background-color: #1a1428;
+    background-image:
+      linear-gradient(45deg, #221a36 25%, transparent 25%),
+      linear-gradient(-45deg, #221a36 25%, transparent 25%);
+    background-size: 10px 10px;
+    border: 1px solid var(--line);
+    padding: 18px;
+    width: 140px; height: 140px;
+    margin: 0 auto 18px;
+    display: flex; align-items: center; justify-content: center;
+    position: relative;
+  }
+  .gacha-chest canvas { image-rendering: pixelated; width: 100%; height: 100%; }
+  .gacha-chest.spinning::after {
+    content: '';
+    position: absolute; inset: -8px;
+    background: radial-gradient(circle, rgba(240,210,122,0.4), transparent 70%);
+    animation: spin-glow 0.4s linear infinite;
+  }
+  @keyframes spin-glow {
+    0% { opacity: 0.3; }
+    50% { opacity: 1; }
+    100% { opacity: 0.3; }
+  }
+  .gacha-items {
+    display: flex; justify-content: center; gap: 14px;
+    margin: 14px 0 20px;
+    min-height: 120px;
+  }
+  .gacha-item {
+    background: var(--bg-2);
+    border: 1px solid var(--line);
+    padding: 12px;
+    width: 110px;
+    text-align: center;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.3s, transform 0.3s;
+  }
+  .gacha-item.show { opacity: 1; transform: translateY(0); }
+  .gacha-item.common { border-color: var(--ink-dim); }
+  .gacha-item.rare { border-color: var(--cyan); box-shadow: 0 0 10px rgba(73,208,224,0.3); }
+  .gacha-item.epic { border-color: var(--arcane); box-shadow: 0 0 14px rgba(181,116,216,0.4); }
+  .gacha-item .icon-wrap {
+    background-color: #1a1428;
+    background-image:
+      linear-gradient(45deg, #221a36 25%, transparent 25%),
+      linear-gradient(-45deg, #221a36 25%, transparent 25%);
+    background-size: 6px 6px;
+    border: 1px solid var(--line);
+    padding: 8px;
+    margin: 0 auto 6px;
+    width: 56px; height: 56px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .gacha-item .icon-wrap canvas { image-rendering: pixelated; }
+  .gacha-item .nm {
+    font-family: 'Cinzel', serif;
+    font-weight: 700;
+    font-size: 11px;
+    color: var(--ink);
+    letter-spacing: 0.02em;
+  }
+  .gacha-item.epic .nm { color: var(--arcane); }
+  .gacha-item.rare .nm { color: var(--cyan); }
+  .gacha-item .tier {
+    font-size: 8px;
+    color: var(--ink-dim);
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    margin: 2px 0;
+  }
+  .gacha-item .bl {
+    font-size: 9px;
+    color: var(--ink-dim);
+    line-height: 1.4;
+    margin-top: 4px;
+    min-height: 24px;
+  }
+
+  /* Trigger buttons */
+  .triggers {
+    display: flex; gap: 10px; justify-content: center;
+    margin-top: 14px;
+    flex-wrap: wrap;
+  }
+  .triggers button {
+    background: var(--bg-2);
+    border: 1px solid var(--line);
+    color: var(--ink);
+    padding: 8px 14px;
+    font-family: inherit;
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    cursor: pointer;
+  }
+  .triggers button:hover { background: var(--gold); color: var(--bg); border-color: var(--gold); }
+  .triggers .k {
+    color: var(--gold);
+    margin-right: 5px;
+    font-weight: 700;
+  }
+  .triggers button:hover .k { color: var(--bg); }
+</style>
+</head>
+<body>
+
+<header class="masthead">
+  <div class="eyebrow">PAGE · 21 · IN-GAME UI · 인게임 UI</div>
+  <h1>Pause · Stats · <span class="accent">Chest Gacha</span> Modal</h1>
+  <p class="lede">
+    <b>ESC / Tab</b>로 일시정지 + 메인메뉴 다이얼로그. 화면 왼쪽 항상 <b>Stats 패널</b>(타이머/HP/XP/처치/골드/보유 무기 슬롯).
+    보물상자 획득 시 <b>가챠 모달</b> — 1~3개 아이템이 회전 후 등장, <b>3개는 잿팟</b> (황금 글로우 + 큰 라벨).
+  </p>
+</header>
+
+<main>
+
+<section class="bay">
+  <h2>01 · Live Demo</h2>
+  <p class="bay-sub">아래에서 직접 조작 — ESC/Tab 일시정지, 1/2/3 으로 상자 종류 선택해 가챠 모달 띄우기.</p>
+  <div class="game-stage" id="stage">
+    <canvas id="world" width="960" height="540"></canvas>
+
+    <!-- Stats panel (always visible) -->
+    <div class="stats-panel" id="stats">
+      <div class="panel-head">
+        <span>NAME</span>
+        <span class="timer" id="run-timer">05:32</span>
+      </div>
+
+      <div class="stats-section-head">생존</div>
+      <div class="hp-mini">
+        <canvas data-icon="pickup_heart"></canvas>
+        <div class="bar-bg"><div class="bar-fill" id="hp-fill" style="width: 78%"></div></div>
+        <span class="pct" id="hp-pct">78%</span>
+      </div>
+      <div class="xp-mini">
+        <canvas data-icon="pickup_xp_blue"></canvas>
+        <div class="bar-bg"><div class="bar-fill" id="xp-fill" style="width: 43%"></div></div>
+        <span class="pct" id="xp-pct">43%</span>
+      </div>
+      <div class="stats-row">
+        <span class="name">레벨</span>
+        <span class="val" id="lvl">12</span>
+      </div>
+
+      <div class="stats-section-head">전투</div>
+      <div class="stats-row">
+        <canvas data-icon="icon_might"></canvas>
+        <span class="name">피해</span>
+        <span class="val">×1.42</span>
+      </div>
+      <div class="stats-row crit">
+        <canvas data-icon="fx_levelup"></canvas>
+        <span class="name">크리</span>
+        <span class="val">22%</span>
+      </div>
+      <div class="stats-row">
+        <canvas data-icon="icon_haste"></canvas>
+        <span class="name">속도</span>
+        <span class="val">+18%</span>
+      </div>
+
+      <div class="stats-section-head">자원</div>
+      <div class="stats-row gold">
+        <canvas data-icon="pickup_gold"></canvas>
+        <span class="name">골드</span>
+        <span class="val" id="gold">1,427</span>
+      </div>
+      <div class="stats-row">
+        <canvas data-icon="fx_death_generic"></canvas>
+        <span class="name">처치</span>
+        <span class="val" id="kills">847</span>
+      </div>
+
+      <div class="stats-section-head">무기 / 패시브</div>
+      <div class="slots-row" id="weap-slots"></div>
+      <div class="slots-row" id="pass-slots" style="margin-top: 4px"></div>
+    </div>
+
+    <!-- Pause modal -->
+    <div class="pause-overlay" id="pause">
+      <div class="pause-modal">
+        <div class="title">PAUSED</div>
+        <div class="sub">choose your path</div>
+        <button class="menu-btn" data-act="resume"><span class="k">⏎</span>계속하기</button>
+        <button class="menu-btn" data-act="restart"><span class="k">R</span>다시 시작</button>
+        <button class="menu-btn" data-act="settings"><span class="k">S</span>설정</button>
+        <button class="menu-btn danger" data-act="quit"><span class="k">Q</span>메인 메뉴</button>
+      </div>
+    </div>
+
+    <!-- Chest gacha modal -->
+    <div class="gacha-overlay" id="gacha">
+      <div class="gacha-modal" id="gacha-modal">
+        <div class="jackpot-badge">★ JACKPOT ★</div>
+        <div class="chest-title" id="chest-title">보물 상자</div>
+        <div class="gacha-status" id="gacha-status">획득!</div>
+        <div class="gacha-chest" id="gacha-chest-display">
+          <canvas></canvas>
+        </div>
+        <div class="gacha-items" id="gacha-items"></div>
+        <button class="menu-btn" id="gacha-close" style="max-width:200px;margin:0 auto;">획득</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="triggers">
+    <button data-trigger="pause"><span class="k">Esc/Tab</span>일시정지</button>
+    <button data-chest="wood"><span class="k">1</span>나무 상자</button>
+    <button data-chest="gold"><span class="k">2</span>황금 상자</button>
+    <button data-chest="cursed"><span class="k">3</span>저주 상자</button>
+    <button data-chest="boss"><span class="k">4</span>보스 보상</button>
+  </div>
+</section>
+
+</main>
+
+<script src="../palette.js"></script>
+<script src="../sprites.js"></script>
+<script src="../structures.js"></script>
+<script src="../structures_extra.js"></script>
+<script src="../chest_gacha.js"></script>
+<script src="../heroes_hd.js"></script>
+<script src="../heroes_hd3.js"></script>
+<script src="../heroes_smooth_walk.js"></script>
+<script src="../heroes_xhd.js"></script>
+<script src="../bosses_hd.js"></script>
+<script src="../enemies_hd.js"></script>
+<script src="../enemies_hd2.js"></script>
+<script src="../weapons_hd.js"></script>
+<script src="../projectiles_hd.js"></script>
+<script src="../skills_hd.js"></script>
+<script src="../pickups_hd2.js"></script>
+<script src="../chests_polished.js"></script>
+<script src="../tiles_unified.js"></script>
+<script src="../tiles_natural.js"></script>
+<script src="../hd2_apply.js"></script>
+<script src="../effects_hd3.js"></script>
+<script src="../lightning_polish.js"></script>
+<script src="../atlas.js"></script>
+<script src="../showcase.js"></script>
+<script>
+Showcase.renderNav('ingame');
+
+// ── Helpers ────────────────────────────────────────────────
+function paint(canvas, name, size) {
+  if (!canvas.width) {
+    canvas.width = size || 16;
+    canvas.height = size || 16;
+  }
+  const ctx = canvas.getContext('2d');
+  ctx.imageSmoothingEnabled = false;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  if (SPRITES[name]) ctx.drawImage(AtlasBuilder.renderFrame(name, 0), 0, 0, canvas.width, canvas.height);
+}
+
+// Paint all data-icon canvases in stats panel
+document.querySelectorAll('[data-icon]').forEach(c => {
+  c.width = 16; c.height = 16;
+  paint(c, c.dataset.icon, 16);
+  Showcase.animState.push({ canvas: c, name: c.dataset.icon, elapsed: 0 });
+});
+
+// ── World background — pretend gameplay ──────────────────
+const world = document.getElementById('world');
+const wctx = world.getContext('2d');
+wctx.imageSmoothingEnabled = false;
+function paintWorld() {
+  const buf = document.createElement('canvas');
+  buf.width = 480; buf.height = 270;
+  const b = buf.getContext('2d');
+  b.imageSmoothingEnabled = false;
+  const tilePool = ['tile_stone_1','tile_stone_2','tile_moss','tile_bones','tile_blood','tile_stone_crack'];
+  for (let y = 0; y < 17; y++) for (let x = 0; x < 30; x++) {
+    const t = tilePool[(x*7+y*13) % tilePool.length];
+    b.drawImage(AtlasBuilder.renderFrame(t, 0), x*16, y*16);
+  }
+  // Some props + entities
+  const props = [
+    { n: 'prop_tombstone', x: 60, y: 200, anch: 'bottom' },
+    { n: 'prop_castle_tower', x: 240, y: 130, anch: 'bottom' },
+    { n: 'prop_gargoyle', x: 420, y: 240, anch: 'bottom' },
+    { n: 'prop_candelabra', x: 130, y: 130, anch: 'bottom' },
+    { n: 'knight_walk', x: 240, y: 200, anch: 'bottom' },
+    { n: 'walker_walk', x: 120, y: 80, anch: 'bottom' },
+    { n: 'walker_walk', x: 360, y: 100, anch: 'bottom' },
+    { n: 'runner_walk', x: 300, y: 220, anch: 'bottom' },
+  ];
+  for (const p of props) {
+    const sub = AtlasBuilder.renderFrame(p.n, 0);
+    if (p.anch === 'bottom') b.drawImage(sub, Math.round(p.x - sub.width/2), Math.round(p.y - sub.height));
+    else b.drawImage(sub, Math.round(p.x - sub.width/2), Math.round(p.y - sub.height/2));
+  }
+  wctx.drawImage(buf, 0, 0, world.width, world.height);
+}
+paintWorld();
+
+// ── Weapon/passive slots ──────────────────────────────────
+const WEAPONS = [
+  { icon: 'icon_wand', lv: 5 },
+  { icon: 'icon_nova', lv: 3 },
+  { icon: 'icon_holywater', lv: 2 },
+  { icon: 'icon_garlic', lv: 1 },
+  { icon: null }, { icon: null },
+];
+const PASSIVES = [
+  { icon: 'icon_might', lv: 4 },
+  { icon: 'icon_haste', lv: 3 },
+  { icon: 'icon_vigor', lv: 2 },
+  { icon: 'icon_lodestone', lv: 1 },
+  { icon: null }, { icon: null },
+];
+function fillSlots(host, items) {
+  for (const it of items) {
+    const slot = document.createElement('div'); slot.className = 'slot';
+    if (it.icon) {
+      const c = document.createElement('canvas');
+      c.width = 32; c.height = 32;
+      paint(c, it.icon, 32);
+      slot.appendChild(c);
+      Showcase.animState.push({ canvas: c, name: it.icon, elapsed: 0 });
+      const lv = document.createElement('span'); lv.className = 'lv'; lv.textContent = it.lv;
+      slot.appendChild(lv);
+    }
+    host.appendChild(slot);
+  }
+}
+fillSlots(document.getElementById('weap-slots'), WEAPONS);
+fillSlots(document.getElementById('pass-slots'), PASSIVES);
+
+// ── Pause modal ───────────────────────────────────────────
+const pauseEl = document.getElementById('pause');
+const stage = document.getElementById('stage');
+function setPaused(on) {
+  pauseEl.classList.toggle('open', on);
+}
+document.querySelectorAll('[data-act]').forEach(b => {
+  b.onclick = () => {
+    const act = b.dataset.act;
+    if (act === 'resume') setPaused(false);
+    else if (act === 'quit') alert('메인 메뉴로 이동 (실제 게임에서는 location reload)');
+    else if (act === 'restart') alert('다시 시작 (실제 게임에서는 새 런 시작)');
+    else alert('설정 화면');
+  };
+});
+
+document.querySelector('[data-trigger="pause"]').onclick = () => setPaused(true);
+window.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' || e.key === 'Tab') {
+    e.preventDefault();
+    setPaused(!pauseEl.classList.contains('open'));
+  }
+  if (pauseEl.classList.contains('open')) {
+    if (e.key === 'r' || e.key === 'R') document.querySelector('[data-act="restart"]').click();
+    if (e.key === 'q' || e.key === 'Q') document.querySelector('[data-act="quit"]').click();
+    if (e.key === 's' || e.key === 'S') document.querySelector('[data-act="settings"]').click();
+    if (e.key === 'Enter') document.querySelector('[data-act="resume"]').click();
+  }
+  if (!pauseEl.classList.contains('open') && !document.getElementById('gacha').classList.contains('open')) {
+    if (e.key === '1') openChest('wood');
+    if (e.key === '2') openChest('gold');
+    if (e.key === '3') openChest('cursed');
+    if (e.key === '4') openChest('boss');
+  }
+});
+
+// ── Chest gacha modal ─────────────────────────────────────
+const gachaEl = document.getElementById('gacha');
+const gachaModal = document.getElementById('gacha-modal');
+const gachaItems = document.getElementById('gacha-items');
+const gachaChest = document.getElementById('gacha-chest-display');
+const chestCanvas = gachaChest.querySelector('canvas');
+const gachaStatus = document.getElementById('gacha-status');
+const chestTitle = document.getElementById('chest-title');
+
+function openChest(type) {
+  const def = CHEST_TYPES[type] || CHEST_TYPES.wood;
+  chestTitle.textContent = def.name;
+  gachaStatus.textContent = '회전 중...';
+  gachaModal.classList.remove('jackpot');
+  gachaItems.innerHTML = '';
+  gachaEl.classList.add('open');
+  gachaChest.classList.add('spinning');
+  chestCanvas.width = chestCanvas.height = 96;
+  paint(chestCanvas, def.icon, 96);
+  Showcase.animState.push({ canvas: chestCanvas, name: def.icon, elapsed: 0 });
+
+  // After spinning, reveal items
+  setTimeout(() => {
+    const result = rollChest(type);
+    gachaChest.classList.remove('spinning');
+    gachaModal.classList.toggle('jackpot', result.isJackpot);
+    paint(chestCanvas, 'pickup_chest_open', 96);
+
+    if (result.isJackpot) {
+      gachaStatus.textContent = '★ 3개 아이템 잿팟 ★';
+    } else if (result.count === 2) {
+      gachaStatus.textContent = '2개 아이템 획득!';
+    } else {
+      gachaStatus.textContent = '아이템 획득';
+    }
+
+    // Reveal items one by one
+    result.items.forEach((item, idx) => {
+      setTimeout(() => addGachaItem(item), idx * 220);
+    });
+  }, 1100);
+}
+
+function addGachaItem(item) {
+  const card = document.createElement('div');
+  card.className = 'gacha-item ' + item.tier;
+  card.innerHTML =
+    '<div class="icon-wrap"><canvas width="40" height="40"></canvas></div>' +
+    '<div class="nm">' + item.name + '</div>' +
+    '<div class="tier">' + item.tier + '</div>' +
+    '<div class="bl">' + item.blurb + '</div>';
+  gachaItems.appendChild(card);
+  const c = card.querySelector('canvas');
+  paint(c, item.icon, 40);
+  Showcase.animState.push({ canvas: c, name: item.icon, elapsed: 0 });
+  requestAnimationFrame(() => card.classList.add('show'));
+}
+
+document.getElementById('gacha-close').onclick = () => gachaEl.classList.remove('open');
+gachaEl.addEventListener('click', (e) => { if (e.target === gachaEl) gachaEl.classList.remove('open'); });
+
+document.querySelectorAll('[data-chest]').forEach(b => {
+  b.onclick = () => openChest(b.dataset.chest);
+});
+
+// ── Animated timer ────────────────────────────────────────
+let runSeconds = 332;
+setInterval(() => {
+  if (pauseEl.classList.contains('open')) return;
+  runSeconds++;
+  const m = String(Math.floor(runSeconds / 60)).padStart(2, '0');
+  const s = String(runSeconds % 60).padStart(2, '0');
+  document.getElementById('run-timer').textContent = m + ':' + s;
+}, 1000);
+</script>
+</body>
+</html>

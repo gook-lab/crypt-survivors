@@ -1,0 +1,299 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>UI · Crypt Asset Pack</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="../../art/showcase.css" />
+<style>
+  .demo { display: grid; grid-template-columns: minmax(420px, 1fr) 260px; gap: 18px; }
+  .demo .stage-wrap { background: #07060c; border: 1px solid var(--line); padding: 16px; display: flex; align-items: center; justify-content: center; }
+  .demo .stage-wrap canvas { image-rendering: pixelated; border: 1px solid var(--line); }
+  .demo aside { background: var(--panel); border: 1px solid var(--line); padding: 16px; font-size: 12px; color: var(--ink-dim); line-height: 1.55; }
+  .demo aside h3 { color: var(--gold-hi); font-family: 'Cinzel', serif; font-size: 13px; letter-spacing: 0.18em; text-transform: uppercase; margin: 0 0 8px; }
+  .demo aside code { background: var(--bg-2); color: var(--ink); padding: 1px 5px; font-size: 11px; }
+  .demo aside p { margin: 0 0 10px; }
+  .font-preview { background: var(--panel); border: 1px solid var(--line); padding: 16px; display: flex; gap: 18px; align-items: center; flex-wrap: wrap; }
+  .font-preview canvas { image-rendering: pixelated; background: #1a1428; border: 1px solid var(--line); }
+  .font-preview .label { color: var(--ink-dim); font-size: 11px; }
+  /* HUD mock */
+  .hud-mock { background: #07060c; border: 1px solid var(--line); padding: 16px; }
+  .hud-mock canvas { image-rendering: pixelated; display: block; margin: 0 auto; }
+</style>
+</head>
+<body>
+<header class="masthead">
+  <div class="eyebrow">PAGE · 05 · UI &amp; DEMO</div>
+  <h1>UI Icons · Font · <span class="accent">In-Game Preview</span></h1>
+  <p class="lede">캐릭터 선택/HUD/레벨업창에 쓰는 UI 아이콘 + 데미지 비트맵 폰트 + 실제 게임 해상도 데모 + HUD 목업.</p>
+</header>
+<main>
+
+<section class="bay">
+  <h2>01 · UI Icons</h2>
+  <p class="bay-sub">24×24 양각 프레임 아이콘. 영웅 5 · 보스 4 · 무기 17 · 전설 8 · 패시브 6 · 상태이상 8.</p>
+  <div id="host-icons"></div>
+</section>
+
+<section class="bay">
+  <h2>02 · Damage Font</h2>
+  <p class="bay-sub">4×6 비트맵 폰트 — 데미지 숫자/HUD 카운터용. 크리티컬은 빨간색으로 표시하세요.</p>
+  <div class="font-preview">
+    <canvas id="font-canvas"></canvas>
+    <span class="label">0123456789 + - x · 3× 미리보기</span>
+  </div>
+</section>
+
+<section class="bay">
+  <h2>03 · HUD Frame Mock</h2>
+  <p class="bay-sub">HUD 프레임 + 무기/패시브 슬롯 6칸 + HP/XP 바 + 타이머 + 골드 카운터.</p>
+  <div class="hud-mock">
+    <canvas id="hud-canvas" width="960" height="120"></canvas>
+  </div>
+</section>
+
+<section class="bay">
+  <h2>04 · In-Game Preview</h2>
+  <p class="bay-sub">실제 게임 해상도(480×270) 데모. 모든 시스템이 함께 돌아갑니다.</p>
+  <div class="demo">
+    <div class="stage-wrap">
+      <canvas id="demo-canvas" width="960" height="540"></canvas>
+    </div>
+    <aside>
+      <h3>How to wire it up</h3>
+      <p><b>1.</b> <code>spritesheet.png</code>과 <code>atlas.json</code>을 <code>game/src/assets/</code>에 복사.</p>
+      <p><b>2.</b> <code>renderer.js</code>의 <code>circleTexture()</code>를 Pixi <code>Texture.from(spritesheet).frame</code> 캐시로 교체. 엔티티에 <code>type</code> 필드 두고 <code>SPRITE_OF[type]</code>로 클립 매핑.</p>
+      <p><b>3.</b> 적 스폰 시 <code>walker</code> → <code>walker_walk</code> 등. 보스는 <code>boss_idle / boss_vampire / boss_skeleton_king / boss_demon</code>.</p>
+      <p><b>4.</b> 픽업/투사체도 동일. <code>fx_hit</code>·<code>fx_impact_*</code>는 hit 이벤트에서 1회 재생.</p>
+    </aside>
+  </div>
+</section>
+
+</main>
+
+<script src="../../art/palette.js"></script>
+<script src="../../art/sprites.js"></script>
+<script src="../../art/atlas.js"></script>
+<script src="../../art/showcase.js"></script>
+<script>
+Showcase.renderNav('ui');
+Showcase.renderGroups(document.getElementById('host-icons'), [
+  { title: '영웅 초상화', items: ['icon_hero_knight','icon_hero_warrior','icon_hero_mage','icon_hero_huntress','icon_hero_cleric'] },
+  { title: '보스 초상화', items: ['icon_boss_lich','icon_boss_vampire','icon_boss_skeleton','icon_boss_demon'] },
+  { title: '무기 아이콘', items: ['icon_wand','icon_nova','icon_prism','icon_spear','icon_axe','icon_mace','icon_holywater','icon_arrow','icon_garlic','icon_bible','icon_cross','icon_whip','icon_lightning','icon_firewall','icon_knives','icon_scythe','icon_bone'] },
+  { title: '전설 무기 아이콘', items: ['icon_leg_blade','icon_leg_axe','icon_leg_spear','icon_leg_arrow','icon_leg_whip','icon_leg_cross','icon_leg_bible','icon_leg_nova'] },
+  { title: '패시브 아이콘', items: ['icon_might','icon_haste','icon_multi','icon_swift','icon_vigor','icon_lodestone'] },
+  { title: '상태이상 아이콘', items: ['status_burn','status_freeze','status_poison','status_shock','status_stun','status_bleed','status_slow','status_shield'] },
+  { title: 'HUD 프레임', items: ['hud_bar_hp','hud_bar_xp','hud_weapon_slot','hud_corner'] },
+  { title: '커서 / 에임 인디케이터', items: ['cursor_aim','cursor_target','aim_indicator'] },
+]);
+
+// ─ Bitmap font preview
+{
+  const fontCanvas = document.getElementById('font-canvas');
+  const sample = '0123456789 +-x';
+  const gw = 4, gh = 6, pad = 1, scale = 3;
+  fontCanvas.width = (gw + pad) * sample.length * scale;
+  fontCanvas.height = gh * scale;
+  const fc = fontCanvas.getContext('2d');
+  fc.imageSmoothingEnabled = false;
+  let cx = 0;
+  for (const ch of sample) {
+    const glyph = FONT[ch];
+    if (!glyph) { cx += (gw + pad) * scale; continue; }
+    for (let y = 0; y < glyph.length; y++) {
+      const row = glyph[y];
+      for (let x = 0; x < row.length; x++) {
+        if (row[x] === '.' || row[x] === ' ') continue;
+        fc.fillStyle = PALETTE[row[x]] || '#ece2c8';
+        fc.fillRect(cx + x * scale, y * scale, scale, scale);
+      }
+    }
+    cx += (gw + pad) * scale;
+  }
+}
+
+// ─ HUD mock
+{
+  const hud = document.getElementById('hud-canvas');
+  const buf = document.createElement('canvas');
+  buf.width = 480; buf.height = 60;
+  const b = buf.getContext('2d');
+  b.imageSmoothingEnabled = false;
+  // background fill
+  b.fillStyle = '#07060c'; b.fillRect(0, 0, 480, 60);
+  // top bar: HP + XP
+  function bar(x, y, w, h, fill, bgColor, fgColor) {
+    b.fillStyle = '#14101e'; b.fillRect(x - 1, y - 1, w + 2, h + 2);
+    b.fillStyle = bgColor;   b.fillRect(x, y, w, h);
+    b.fillStyle = fgColor;   b.fillRect(x, y, Math.floor(w * fill), h);
+    // frame
+    b.fillStyle = '#8a5a18';
+    b.fillRect(x - 1, y - 1, w + 2, 1);
+    b.fillRect(x - 1, y + h, w + 2, 1);
+    b.fillRect(x - 1, y - 1, 1, h + 2);
+    b.fillRect(x + w, y - 1, 1, h + 2);
+  }
+  // HP heart icon
+  const heart = AtlasBuilder.renderFrame('pickup_heart', 0);
+  b.drawImage(heart, 6, 6);
+  bar(20, 10, 140, 6, 0.65, '#1f0a0a', '#c8332a');
+  // XP gem icon
+  const gem = AtlasBuilder.renderFrame('pickup_xp_blue', 0);
+  b.drawImage(gem, 6, 22);
+  bar(20, 26, 140, 4, 0.4, '#0a1a22', '#49d0e0');
+  // Timer (top center)
+  function drawText(text, x, y, color) {
+    let cx = x;
+    for (const ch of text) {
+      const g = FONT[ch];
+      if (!g) { cx += 5; continue; }
+      for (let yy = 0; yy < g.length; yy++) for (let xx = 0; xx < g[yy].length; xx++) {
+        if (g[yy][xx] !== 'P') continue;
+        b.fillStyle = '#000'; b.fillRect(cx + xx, y + yy + 1, 1, 1);
+        b.fillStyle = color;  b.fillRect(cx + xx, y + yy, 1, 1);
+      }
+      cx += 5;
+    }
+  }
+  drawText('5-32', 220, 6, '#f0d27a');
+  // Gold counter top right
+  const gold = AtlasBuilder.renderFrame('pickup_gold', 0);
+  b.drawImage(gold, 380, 4);
+  drawText('1247', 395, 6, '#f0d27a');
+  // Weapon slots
+  function slot(x, y, iconName, lv) {
+    b.fillStyle = '#1d1830'; b.fillRect(x, y, 22, 22);
+    b.fillStyle = '#8a5a18';
+    b.fillRect(x, y, 22, 1); b.fillRect(x, y + 21, 22, 1);
+    b.fillRect(x, y, 1, 22); b.fillRect(x + 21, y, 1, 22);
+    if (iconName) {
+      const ic = AtlasBuilder.renderFrame(iconName, 0);
+      b.drawImage(ic, x - 1, y - 1);
+    }
+    if (lv) drawText(String(lv), x + 14, y + 16, '#f0d27a');
+  }
+  // 6 weapon + 6 passive slots
+  const wpSlots = ['icon_wand','icon_nova','icon_axe','icon_holywater','icon_garlic','icon_lightning'];
+  for (let i = 0; i < 6; i++) slot(180 + i * 26, 34, wpSlots[i], 3);
+  // separator
+  b.fillStyle = '#3d3050'; b.fillRect(340, 34, 1, 22);
+  const psSlots = ['icon_might','icon_haste','icon_vigor','icon_swift','icon_lodestone','icon_multi'];
+  for (let i = 0; i < 6; i++) slot(350 + i * 26, 34, psSlots[i], 2);
+
+  hud.width = 960; hud.height = 120;
+  const hctx = hud.getContext('2d');
+  hctx.imageSmoothingEnabled = false;
+  hctx.drawImage(buf, 0, 0, hud.width, hud.height);
+}
+
+// ─ In-game preview (mini)
+{
+  const demo = document.getElementById('demo-canvas');
+  demo.width = 960; demo.height = 540;
+  const dctx = demo.getContext('2d');
+  dctx.imageSmoothingEnabled = false;
+  const buf = document.createElement('canvas');
+  buf.width = 480; buf.height = 270;
+  const bctx = buf.getContext('2d');
+  bctx.imageSmoothingEnabled = false;
+
+  const TILE = 16;
+  const tilePicks = ['tile_stone_1','tile_stone_2','tile_stone_1','tile_stone_1','tile_stone_2','tile_stone_1','tile_stone_2','tile_stone_crack','tile_stone_1','tile_stone_2','tile_stone_1','tile_grass','tile_stone_2','tile_stone_1','tile_bones','tile_blood'];
+  function drawFloor() {
+    for (let y = 0; y < 18; y++)
+      for (let x = 0; x < 31; x++) {
+        const t = tilePicks[(x * 7 + y * 13) % tilePicks.length];
+        bctx.drawImage(AtlasBuilder.renderFrame(t, 0), x * TILE, y * TILE);
+      }
+  }
+  const player = { x: 240, y: 138, name: 'knight_walk' };
+  const enemies = [
+    { x: 90, y: 80, name: 'walker_walk' },
+    { x: 400, y: 90, name: 'walker_walk' },
+    { x: 60, y: 200, name: 'runner_walk' },
+    { x: 420, y: 200, name: 'runner_walk' },
+    { x: 150, y: 60, name: 'elite_walk' },
+    { x: 330, y: 220, name: 'brute_walk' },
+    { x: 200, y: 40, name: 'bat_fly' },
+    { x: 80, y: 130, name: 'slime_idle' },
+  ];
+  const boss = { x: 240, y: 50, name: 'boss_vampire' };
+  const gems = [
+    { x: 200, y: 110, name: 'pickup_xp_blue' },
+    { x: 260, y: 160, name: 'pickup_xp_blue' },
+    { x: 150, y: 180, name: 'pickup_xp_green' },
+    { x: 300, y: 90, name: 'pickup_gold' },
+    { x: 340, y: 130, name: 'pickup_heart' },
+    { x: 100, y: 130, name: 'pickup_xp_red' },
+    { x: 380, y: 160, name: 'pickup_potion_hp' },
+  ];
+  const projectiles = [
+    { name: 'proj_wand' },
+    { name: 'proj_nova' },
+    { name: 'proj_axe' },
+    { name: 'proj_arrow' },
+  ];
+  const sparks = [];
+
+  function drawAt(name, frameIdx, x, y) {
+    const sub = AtlasBuilder.renderFrame(name, frameIdx);
+    bctx.drawImage(sub, Math.round(x - sub.width / 2), Math.round(y - sub.height / 2));
+  }
+  function drawDmg(x, y, text, color) {
+    let cx = Math.floor(x - text.length * 2);
+    const cy = Math.floor(y);
+    for (const ch of text) {
+      const g = FONT[ch];
+      if (!g) { cx += 5; continue; }
+      for (let yy = 0; yy < g.length; yy++) for (let xx = 0; xx < g[yy].length; xx++) {
+        if (g[yy][xx] !== 'P') continue;
+        bctx.fillStyle = '#000'; bctx.fillRect(cx + xx, cy + yy + 1, 1, 1);
+        bctx.fillStyle = color || '#f0d27a'; bctx.fillRect(cx + xx, cy + yy, 1, 1);
+      }
+      cx += 5;
+    }
+  }
+
+  const start = performance.now();
+  function tick() {
+    try {
+      const t = (performance.now() - start) / 1000;
+      drawFloor();
+      for (let i = 0; i < projectiles.length; i++) {
+        const p = projectiles[i];
+        p.x = player.x + Math.cos(t * 1.4 + i * 1.6) * 56;
+        p.y = player.y + Math.sin(t * 1.4 + i * 1.6) * 30;
+      }
+      if (Math.random() < 0.06) {
+        const e = enemies[Math.floor(Math.random() * enemies.length)];
+        sparks.push({ x: e.x, y: e.y - 6, name: 'fx_hit', born: t });
+      }
+      for (let i = sparks.length - 1; i >= 0; i--) {
+        if (t - sparks[i].born > SPRITES.fx_hit.length / AtlasBuilder.FPS.fx_hit) sparks.splice(i, 1);
+      }
+      const all = [boss, ...enemies, ...gems, player, ...projectiles, ...sparks];
+      all.sort((a, b) => a.y - b.y);
+      for (const it of all) {
+        const fps = AtlasBuilder.FPS[it.name] || 0;
+        const fc = SPRITES[it.name].length;
+        const localT = it === boss ? t : (it.born != null ? t - it.born : t + (it.x * 0.013));
+        const fIdx = fps > 0 && fc > 1 ? Math.floor(localT * fps) % fc : 0;
+        drawAt(it.name, fIdx, it.x, it.y);
+      }
+      drawDmg(player.x + 24, player.y - 10 - ((t * 30) % 24), '12');
+      drawDmg(player.x - 30, player.y - 6 - ((t * 30 + 16) % 24), '47');
+      drawDmg(player.x + 4, player.y - 18 - ((t * 30 + 8) % 24), '128', '#c8332a'); // crit red
+      dctx.clearRect(0, 0, demo.width, demo.height);
+      dctx.drawImage(buf, 0, 0, demo.width, demo.height);
+    } catch (e) { console.error(e); }
+    requestAnimationFrame(tick);
+  }
+  tick();
+}
+</script>
+</body>
+</html>

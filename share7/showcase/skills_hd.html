@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Skill VFX HD · Crypt Asset Pack</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="../showcase.css" />
+<style>
+  .skill-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 12px;
+  }
+  .skill-card {
+    background: var(--panel);
+    border: 1px solid var(--gold);
+    padding: 14px;
+    text-align: center;
+  }
+  .skill-card .stage {
+    background-color: #1a1428;
+    background-image:
+      linear-gradient(45deg, #221a36 25%, transparent 25%),
+      linear-gradient(-45deg, #221a36 25%, transparent 25%);
+    background-size: 12px 12px;
+    border: 1px solid var(--line);
+    padding: 12px;
+    min-height: 130px;
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 8px;
+  }
+  .skill-card canvas { image-rendering: pixelated; }
+  .skill-card .name {
+    font-family: 'Cinzel', serif;
+    font-weight: 700;
+    color: var(--gold-hi);
+    font-size: 13px;
+    letter-spacing: 0.05em;
+  }
+  .skill-card .desc {
+    color: var(--ink-dim);
+    font-size: 10px;
+    margin-top: 4px;
+  }
+  .void-strip {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 8px;
+  }
+  .void-tile-card {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    padding: 8px;
+    text-align: center;
+  }
+  .void-tile-card .preview { background: #000; padding: 4px; border: 1px solid var(--line); }
+  .void-tile-card canvas { image-rendering: pixelated; }
+  .void-tile-card .nm {
+    font-size: 10px; color: var(--ink-dim); margin-top: 4px;
+    letter-spacing: 0.08em;
+  }
+</style>
+</head>
+<body>
+<header class="masthead">
+  <div class="eyebrow">PAGE · 27 · SKILL VFX · 정교화</div>
+  <h1>Skill VFX HD <span class="accent">·</span> Void Tiles</h1>
+  <p class="lede">
+    9가지 핵심 스킬 시각 효과를 부드러운 그라데이션 + 외곽선 + 다중-톤으로 다시 그렸습니다.
+    공허 타일 3종(베이스/별/네뷸라)도 함께 — 림보·우주적 공간 표현용.
+    데이터: <code>art/skills_hd.js</code>.
+  </p>
+</header>
+<main>
+
+<section class="bay">
+  <h2>01 · Void Tiles · 공허 타일</h2>
+  <p class="bay-sub">우주 / 림보 / 보스 페이즈 2 배경용. 기존 어두운 타일 위에 깐다.</p>
+  <div class="void-strip" id="void-tiles"></div>
+</section>
+
+<section class="bay">
+  <h2>02 · Skill VFX · HD</h2>
+  <p class="bay-sub">기존 단순 fx 위에 덮어 쓸 정교 버전. 게임에서 <code>_hd</code> 접미사로 호출.</p>
+  <div class="skill-grid" id="skills"></div>
+</section>
+
+</main>
+
+<script src="../palette.js"></script>
+<script src="../sprites.js"></script>
+<script src="../skills_hd.js"></script>
+<script src="../heroes_hd.js"></script>
+<script src="../heroes_hd3.js"></script>
+<script src="../heroes_smooth_walk.js"></script>
+<script src="../heroes_xhd.js"></script>
+<script src="../bosses_hd.js"></script>
+<script src="../enemies_hd.js"></script>
+<script src="../enemies_hd2.js"></script>
+<script src="../weapons_hd.js"></script>
+<script src="../projectiles_hd.js"></script>
+<script src="../pickups_hd2.js"></script>
+<script src="../chests_polished.js"></script>
+<script src="../structures.js"></script>
+<script src="../structures_extra.js"></script>
+<script src="../tiles_unified.js"></script>
+<script src="../tiles_natural.js"></script>
+<script src="../hd2_apply.js"></script>
+<script src="../effects_hd3.js"></script>
+<script src="../lightning_polish.js"></script>
+<script src="../atlas.js"></script>
+<script src="../showcase.js"></script>
+<script>
+Showcase.renderNav('skills_hd');
+
+function paint(canvas, name, scale) {
+  if (!SPRITES[name]) return;
+  const f = SPRITES[name][0];
+  canvas.width = f[0].length * scale;
+  canvas.height = f.length * scale;
+  const ctx = canvas.getContext('2d');
+  ctx.imageSmoothingEnabled = false;
+  ctx.drawImage(AtlasBuilder.renderFrame(name, 0), 0, 0, canvas.width, canvas.height);
+}
+
+// Void tiles
+const TILES = [
+  { id: 'tile_void',        name: '공허 베이스' },
+  { id: 'tile_void_star',   name: '공허 + 별' },
+  { id: 'tile_void_nebula', name: '공허 + 네뷸라' },
+];
+const voidHost = document.getElementById('void-tiles');
+for (const t of TILES) {
+  const card = document.createElement('div'); card.className = 'void-tile-card';
+  const prev = document.createElement('div'); prev.className = 'preview';
+  // 3×3 grid to show tiling
+  const c = document.createElement('canvas');
+  c.width = 16 * 3 * 3; c.height = 16 * 3 * 3;
+  const ctx = c.getContext('2d');
+  ctx.imageSmoothingEnabled = false;
+  const sub = AtlasBuilder.renderFrame(t.id, 0);
+  for (let y = 0; y < 3; y++) for (let x = 0; x < 3; x++) {
+    ctx.drawImage(sub, x * 16 * 3, y * 16 * 3, 16 * 3, 16 * 3);
+  }
+  prev.appendChild(c);
+  card.appendChild(prev);
+  card.innerHTML += '<div class="nm">' + t.name + '</div>';
+  voidHost.appendChild(card);
+}
+
+// Skills
+const SKILLS = [
+  { id: 'fx_explosion_hd',     name: '폭발 HD',     desc: '24×24 · 6f · 부드러운 그라데이션 + 그을음 외곽' },
+  { id: 'fx_arcane_burst_hd',  name: '아케인 버스트 HD', desc: '20×20 · 5f · 8 방향 광선 + 흰 코어' },
+  { id: 'fx_holy_beam_hd',     name: '성광 빔 HD',   desc: '16×24 · 4f · 빛 기둥 + 캡' },
+  { id: 'fx_ice_nova_hd',      name: '빙결 노바 HD', desc: '20×20 · 5f · 6 결정 가시 + 흰 코어' },
+  { id: 'fx_lightning_hd',     name: '낙뢰 HD',     desc: '12×24 · 4f · 지그재그 + 외부 글로우' },
+  { id: 'fx_poison_cloud_hd',  name: '독 구름 HD',   desc: '20×20 · 4f · 흘러내리는 녹색 + 거품' },
+  { id: 'fx_soul_drain_hd',    name: '영혼 흡수 HD', desc: '8×16 · 4f · 위로 올라가는 영혼 위스프' },
+  { id: 'fx_shield_hex_hd',    name: '6각 실드 HD',  desc: '18×18 · 2f · 마법 6각 보호막' },
+  { id: 'fx_black_hole_hd',    name: '블랙홀 HD',    desc: '20×20 · 4f · 사건의 지평 + 회전 원반' },
+];
+const skillsHost = document.getElementById('skills');
+for (const s of SKILLS) {
+  const card = document.createElement('div'); card.className = 'skill-card';
+  const stage = document.createElement('div'); stage.className = 'stage';
+  const c = document.createElement('canvas');
+  const f = SPRITES[s.id][0];
+  const scale = Math.max(3, Math.floor(110 / Math.max(f.length, f[0].length)));
+  paint(c, s.id, scale);
+  stage.appendChild(c);
+  Showcase.animState.push({ canvas: c, name: s.id, elapsed: Math.random() });
+  card.appendChild(stage);
+  card.innerHTML += '<div class="name">' + s.name + '</div>' +
+                    '<div class="desc">' + s.desc + '</div>';
+  skillsHost.appendChild(card);
+}
+</script>
+</body>
+</html>

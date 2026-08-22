@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Effects HD3 · Crypt Asset Pack</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="../showcase.css" />
+<style>
+  .fx-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 12px;
+  }
+  .fx-card {
+    background: var(--panel);
+    border: 1px solid var(--gold);
+    padding: 14px;
+    text-align: center;
+  }
+  .fx-card .stage {
+    background-color: #1a1428;
+    background-image:
+      linear-gradient(45deg, #221a36 25%, transparent 25%),
+      linear-gradient(-45deg, #221a36 25%, transparent 25%);
+    background-size: 12px 12px;
+    border: 1px solid var(--line);
+    padding: 12px;
+    min-height: 140px;
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 8px;
+  }
+  .fx-card canvas { image-rendering: pixelated; }
+  .fx-card .nm {
+    font-family: 'Cinzel', serif;
+    font-weight: 700;
+    color: var(--gold-hi);
+    font-size: 13px;
+    letter-spacing: 0.05em;
+  }
+  .fx-card .desc {
+    color: var(--ink-dim);
+    font-size: 10px;
+    margin-top: 4px;
+  }
+  .row-compare {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    padding: 14px;
+    margin-bottom: 10px;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 12px;
+    align-items: center;
+  }
+  .row-compare .info h4 {
+    margin: 0;
+    font-family: 'Cinzel', serif;
+    color: var(--ink);
+    font-size: 13px;
+    letter-spacing: 0.06em;
+  }
+  .row-compare .info .sub {
+    color: var(--ink-dim);
+    font-size: 10px;
+    margin-top: 4px;
+  }
+  .row-compare .panel {
+    background-color: #1a1428;
+    background-image:
+      linear-gradient(45deg, #221a36 25%, transparent 25%),
+      linear-gradient(-45deg, #221a36 25%, transparent 25%);
+    background-size: 10px 10px;
+    border: 1px solid var(--line);
+    padding: 12px;
+    display: flex; align-items: center; justify-content: center;
+    min-height: 110px;
+  }
+  .row-compare .panel.hd { border-color: var(--gold); box-shadow: 0 0 14px rgba(212,160,74,0.2); }
+  .row-compare canvas { image-rendering: pixelated; }
+  .row-compare .lbl {
+    color: var(--ink-dim);
+    font-size: 9px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    text-align: center;
+    margin-top: 6px;
+  }
+  .row-compare .panel.hd .lbl { color: var(--gold-hi); }
+  .trail-strip {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+</style>
+</head>
+<body>
+<header class="masthead">
+  <div class="eyebrow">PAGE · 32 · EFFECTS HD3 · 정교 패스</div>
+  <h1>Effects <span class="accent">HD3</span> · 이펙트 24-32px 고도화</h1>
+  <p class="lede">
+    히트 스파크 · 폭발 · 검기 · 무기별 임팩트 + 5색 트레일을 24-32px 다중-톤 셰이딩으로 다시 그렸습니다.
+    원본 sprite key 자동 alias 적용 — Arsenal · Actions · Impacts 페이지에 즉시 반영. 데이터: <code>art/effects_hd3.js</code>.
+  </p>
+</header>
+<main>
+
+<section class="bay">
+  <h2>01 · Core Effects · Before vs After</h2>
+  <p class="bay-sub">기존 작은 fx (16×16) → HD3 (24-32px, 외곽선 + 그라데이션).</p>
+  <div id="compares"></div>
+</section>
+
+<section class="bay">
+  <h2>02 · Weapon Impact HD3 · 무기별 임팩트</h2>
+  <p class="bay-sub">8가지 무기 타입별 임팩트 — 찌르기 / 베기 / 내리치기 / 마법 / 성광 / 화염 / 빙결 / 감전.</p>
+  <div class="fx-grid" id="impacts"></div>
+</section>
+
+<section class="bay">
+  <h2>03 · Projectile Trails · 5색 궤적</h2>
+  <p class="bay-sub">투사체 뒤에 따라가는 색별 트레일. 빔/볼트/화살에 어울리는 5종.</p>
+  <div class="trail-strip" id="trails"></div>
+</section>
+
+</main>
+
+<script src="../palette.js"></script>
+<script src="../sprites.js"></script>
+<script src="../effects_hd3.js"></script>
+<script src="../atlas.js"></script>
+<script src="../showcase.js"></script>
+<script>
+Showcase.renderNav('effects_hd3');
+
+function paint(canvas, name, scale) {
+  if (!SPRITES[name]) return;
+  const f = SPRITES[name][0];
+  canvas.width = f[0].length * scale;
+  canvas.height = f.length * scale;
+  const ctx = canvas.getContext('2d');
+  ctx.imageSmoothingEnabled = false;
+  ctx.drawImage(AtlasBuilder.renderFrame(name, 0), 0, 0, canvas.width, canvas.height);
+}
+
+// Before/After compares
+const PAIRS = [
+  { orig: 'fx_hit_original',  hd: 'fx_hit_hd3',       name: '히트 스파크', sub: '16×16 → 24×24 · 4프레임' },
+  { orig: 'fx_explosion_original', hd: 'fx_explosion_hd3', name: '폭발', sub: '24×24 → 32×32 · 6프레임 · 노이즈 가장자리' },
+  { orig: 'fx_slash_original', hd: 'fx_slash_hd3',     name: '검기', sub: '16×16 → 32×32 · 4프레임 호 + 흰 코어' },
+];
+const cmpHost = document.getElementById('compares');
+for (const p of PAIRS) {
+  const row = document.createElement('div'); row.className = 'row-compare';
+  const info = document.createElement('div'); info.className = 'info';
+  info.innerHTML = '<h4>' + p.name + '</h4><div class="sub">' + p.sub + '</div>';
+  row.appendChild(info);
+
+  const p1 = document.createElement('div'); p1.className = 'panel';
+  const c1 = document.createElement('canvas');
+  if (SPRITES[p.orig]) {
+    const f = SPRITES[p.orig][0];
+    const s = Math.max(3, Math.floor(80 / Math.max(f.length, f[0].length)));
+    paint(c1, p.orig, s);
+    Showcase.animState.push({ canvas: c1, name: p.orig, elapsed: 0 });
+  }
+  p1.appendChild(c1);
+  const l1 = document.createElement('div'); l1.className = 'lbl'; l1.textContent = 'ORIGINAL'; p1.appendChild(l1);
+  row.appendChild(p1);
+
+  const p2 = document.createElement('div'); p2.className = 'panel hd';
+  const c2 = document.createElement('canvas');
+  if (SPRITES[p.hd]) {
+    const f = SPRITES[p.hd][0];
+    const s = Math.max(3, Math.floor(110 / Math.max(f.length, f[0].length)));
+    paint(c2, p.hd, s);
+    Showcase.animState.push({ canvas: c2, name: p.hd, elapsed: 0 });
+  }
+  p2.appendChild(c2);
+  const l2 = document.createElement('div'); l2.className = 'lbl'; l2.textContent = '★ HD3'; p2.appendChild(l2);
+  row.appendChild(p2);
+
+  cmpHost.appendChild(row);
+}
+
+// Impact cards
+const IMPACTS = [
+  { id: 'fx_impact_pierce_hd3', name: '찌르기', desc: '창·화살 · 24×24 · 3프레임 + 핏빛 streak' },
+  { id: 'fx_impact_bash_hd3',   name: '내리치기', desc: '철퇴·해머 · 24×24 · 동심원 충격파' },
+  { id: 'fx_impact_magic_hd3',  name: '마법',   desc: '완드·노바 · 24×24 · 6방향 자주 호' },
+  { id: 'fx_impact_holy_hd3',   name: '성광',   desc: '성수·십자가 · 24×24 · 황금 십자 발광' },
+  { id: 'fx_impact_fire_hd3',   name: '화염',   desc: '화염벽 · 24×24 · 5혀 불꽃 + 그을음' },
+  { id: 'fx_impact_ice_hd3',    name: '빙결',   desc: '얼음·프리즘 · 24×24 · 8방향 결정 가시' },
+  { id: 'fx_impact_shock_hd3',  name: '감전',   desc: '낙뢰 · 24×24 · 4방향 지그재그 볼트' },
+  { id: 'fx_hit_hd3',           name: '일반 히트', desc: '범용 · 24×24 · 4프레임 크로스 + 다이아 가시' },
+];
+const impHost = document.getElementById('impacts');
+for (const im of IMPACTS) {
+  const card = document.createElement('div'); card.className = 'fx-card';
+  const stage = document.createElement('div'); stage.className = 'stage';
+  const c = document.createElement('canvas');
+  const f = SPRITES[im.id][0];
+  const scale = Math.max(3, Math.floor(120 / Math.max(f.length, f[0].length)));
+  paint(c, im.id, scale);
+  stage.appendChild(c);
+  Showcase.animState.push({ canvas: c, name: im.id, elapsed: Math.random() });
+  card.appendChild(stage);
+  card.innerHTML += '<div class="nm">' + im.name + '</div><div class="desc">' + im.desc + '</div>';
+  impHost.appendChild(card);
+}
+
+// Trails
+const TRAILS = [
+  { id: 'trail_fire_hd3', name: '화염 트레일', sub: '주황/빨강' },
+  { id: 'trail_ice_hd3', name: '빙결 트레일', sub: '청록/흰' },
+  { id: 'trail_arcane_hd3', name: '아케인 트레일', sub: '자주/흰' },
+  { id: 'trail_holy_hd3', name: '성광 트레일', sub: '황금' },
+  { id: 'trail_gold_hd3', name: '황금 트레일', sub: '범용' },
+];
+const trailHost = document.getElementById('trails');
+for (const t of TRAILS) {
+  const card = document.createElement('div'); card.className = 'fx-card';
+  card.style.minWidth = '180px';
+  const stage = document.createElement('div'); stage.className = 'stage';
+  stage.style.minHeight = '80px';
+  const c = document.createElement('canvas');
+  paint(c, t.id, 6);
+  stage.appendChild(c);
+  card.appendChild(stage);
+  card.innerHTML += '<div class="nm">' + t.name + '</div><div class="desc">' + t.sub + '</div>';
+  trailHost.appendChild(card);
+}
+</script>
+</body>
+</html>

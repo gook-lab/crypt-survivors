@@ -1,0 +1,505 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Level-Up UI · Crypt Asset Pack</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="../showcase.css" />
+<style>
+  /* ── Level-up overlay frame (scaled to look in-game) ── */
+  .lvl-stage {
+    background: #07060c;
+    border: 1px solid var(--line);
+    padding: 14px;
+    position: relative;
+    overflow: hidden;
+  }
+  .lvl-stage .bg-pixel {
+    position: absolute;
+    inset: 0;
+    image-rendering: pixelated;
+    opacity: 0.5;
+  }
+  .lvl-screen {
+    position: relative;
+    z-index: 2;
+    padding: 36px 32px 28px;
+    background: rgba(7, 6, 12, 0.86);
+    border: 1px solid var(--line);
+    backdrop-filter: blur(2px);
+  }
+  .lvl-title {
+    text-align: center;
+    margin-bottom: 28px;
+  }
+  .lvl-title .stripe {
+    display: inline-block;
+    color: var(--gold-hi);
+    font-family: 'Cinzel', serif;
+    font-weight: 700;
+    font-size: 36px;
+    letter-spacing: 0.18em;
+    padding: 8px 24px;
+    background: linear-gradient(180deg, rgba(212,160,74,0.16), rgba(212,160,74,0.04));
+    border-top: 1px solid var(--gold);
+    border-bottom: 1px solid var(--gold);
+    text-shadow: 0 2px 0 rgba(0,0,0,0.6), 0 0 18px rgba(212,160,74,0.4);
+  }
+  .lvl-title .sub {
+    margin-top: 6px;
+    color: var(--ink-dim);
+    font-size: 11px;
+    letter-spacing: 0.32em;
+    text-transform: uppercase;
+  }
+  .lvl-cards {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+  /* ── Each choice card ── */
+  .lvl-card {
+    background: linear-gradient(180deg, var(--panel), var(--bg-2));
+    border: 2px solid var(--line);
+    padding: 18px 16px 14px;
+    text-align: center;
+    position: relative;
+    cursor: pointer;
+    transition: transform 0.1s, border-color 0.15s;
+    overflow: hidden;
+  }
+  .lvl-card:hover { transform: translateY(-2px); border-color: var(--gold); }
+  .lvl-card.evolution {
+    border-color: var(--gold);
+    background: linear-gradient(180deg, #2a2240, #14101e);
+  }
+  .lvl-card.evolution::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 50% 0%, rgba(212,160,74,0.32), transparent 70%);
+    pointer-events: none;
+    animation: shimmer 2.2s ease-in-out infinite;
+  }
+  @keyframes shimmer { 0%,100%{opacity:.6;} 50%{opacity:1;} }
+  .lvl-card.new::before {
+    content: 'NEW';
+    position: absolute;
+    top: 8px; right: 10px;
+    background: var(--gold);
+    color: var(--bg);
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    padding: 2px 6px;
+  }
+  .lvl-card.maxed { opacity: 0.55; }
+  .lvl-card.maxed::after {
+    content: 'MAX';
+    position: absolute;
+    bottom: 8px; right: 10px;
+    color: var(--ink-dim);
+    font-size: 9px;
+    letter-spacing: 0.18em;
+  }
+  .lvl-card.evolution::after {
+    content: '★ EVOLUTION ★';
+    position: absolute;
+    bottom: 8px; left: 0; right: 0;
+    color: var(--gold-hi);
+    font-size: 10px;
+    letter-spacing: 0.22em;
+    font-weight: 700;
+    text-shadow: 0 0 8px rgba(212,160,74,0.8);
+    text-align: center;
+  }
+  .lvl-card .icon-wrap {
+    background-color: #1a1428;
+    background-image:
+      linear-gradient(45deg, #221a36 25%, transparent 25%),
+      linear-gradient(-45deg, #221a36 25%, transparent 25%),
+      linear-gradient(45deg, transparent 75%, #221a36 75%),
+      linear-gradient(-45deg, transparent 75%, #221a36 75%);
+    background-size: 12px 12px;
+    background-position: 0 0, 0 6px, 6px -6px, -6px 0;
+    border: 1px solid var(--line);
+    padding: 10px;
+    margin: 0 auto 12px;
+    width: 78px;
+    height: 78px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative; z-index: 1;
+  }
+  .lvl-card.evolution .icon-wrap { border-color: var(--gold); }
+  .lvl-card .icon-wrap canvas { image-rendering: pixelated; }
+  .lvl-card .name {
+    font-family: 'Cinzel', serif;
+    font-weight: 700;
+    color: var(--ink);
+    font-size: 15px;
+    letter-spacing: 0.05em;
+    margin-bottom: 4px;
+    position: relative; z-index: 1;
+  }
+  .lvl-card.evolution .name { color: var(--gold-hi); }
+  .lvl-card .lvtag {
+    color: var(--gold);
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    position: relative; z-index: 1;
+  }
+  .lvl-card.evolution .lvtag { color: var(--ink-dim); }
+  .lvl-card .desc {
+    color: var(--ink-dim);
+    font-size: 11px;
+    line-height: 1.55;
+    min-height: 70px;
+    position: relative; z-index: 1;
+  }
+  .lvl-card.evolution .desc { color: var(--ink); }
+  .lvl-card .key-hint {
+    position: absolute;
+    top: 8px;
+    left: 10px;
+    background: var(--bg-2);
+    border: 1px solid var(--line);
+    color: var(--gold-hi);
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 7px;
+    z-index: 2;
+  }
+  /* Action bar */
+  .lvl-actions {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+  }
+  .lvl-actions .btn-small {
+    background: var(--panel);
+    color: var(--ink);
+    border: 1px solid var(--line);
+    padding: 8px 16px;
+    font-family: inherit;
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+  }
+  .lvl-actions .btn-small:hover { background: var(--ink); color: var(--bg); }
+  .lvl-actions .btn-small .k {
+    color: var(--gold);
+    margin-right: 6px;
+    font-weight: 700;
+  }
+  .lvl-actions .btn-small .price {
+    color: var(--gold-hi);
+    margin-left: 6px;
+  }
+  /* Section caption */
+  .state-cap {
+    color: var(--ink-dim);
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    margin: 14px 0 8px;
+    text-align: center;
+    text-transform: uppercase;
+  }
+  .state-cap b { color: var(--gold); font-weight: 500; }
+
+  /* Inline mini cards spec section */
+  .spec-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 10px;
+  }
+  .spec-card {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    padding: 12px 14px;
+  }
+  .spec-card h3 {
+    margin: 0 0 6px;
+    font-family: 'Cinzel', serif;
+    font-size: 13px;
+    color: var(--gold-hi);
+    letter-spacing: 0.04em;
+  }
+  .spec-card p { margin: 0; font-size: 11px; color: var(--ink-dim); line-height: 1.5; }
+  .spec-card .tagline {
+    color: var(--ink); font-size: 11px;
+    border-top: 1px dashed var(--line);
+    padding-top: 6px; margin-top: 6px;
+  }
+</style>
+</head>
+<body>
+
+<header class="masthead">
+  <div class="eyebrow">PAGE · 10 · LEVEL-UP UI</div>
+  <h1>Level-Up <span class="accent">Choice</span> Cards</h1>
+  <p class="lede">
+    레벨업 시 게임을 일시정지하고 띄우는 3개의 카드. 무기/패시브 신규 획득, 레벨 상승, 진화 잠금 해제까지
+    네 가지 상태를 자연스럽게 한 화면에서 처리합니다. 키보드 1/2/3 + Reroll·Skip·Banish 단축키 지원.
+  </p>
+</header>
+
+<main>
+
+<!-- ── Mock 1 — typical level-up screen ─────────────────────────── -->
+<section class="bay">
+  <h2>01 · Standard Level Up</h2>
+  <p class="bay-sub">평범한 레벨업 — 신규 무기 한 칸 + 보유 무기 레벨업 한 칸 + 패시브 레벨업 한 칸.</p>
+  <div class="lvl-stage">
+    <canvas class="bg-pixel" id="bg1" width="960" height="540"></canvas>
+    <div class="lvl-screen">
+      <div class="lvl-title">
+        <div class="stripe">LEVEL UP!</div>
+        <div class="sub">choose · 1 · 2 · 3</div>
+      </div>
+      <div class="lvl-cards" id="cards1"></div>
+      <div class="lvl-actions">
+        <button class="btn-small"><span class="k">R</span>REROLL<span class="price">3 G</span></button>
+        <button class="btn-small"><span class="k">S</span>SKIP<span class="price">+2 HP</span></button>
+        <button class="btn-small"><span class="k">B</span>BANISH<span class="price">5 G</span></button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Mock 2 — evolution unlocked ─────────────────────────────── -->
+<section class="bay">
+  <h2>02 · Evolution Unlocked</h2>
+  <p class="bay-sub">기본 무기가 MAX + 필요한 패시브 보유 → 진화 카드가 뜬다. 전체 카드 황금 테두리.</p>
+  <div class="lvl-stage">
+    <canvas class="bg-pixel" id="bg2" width="960" height="540"></canvas>
+    <div class="lvl-screen">
+      <div class="lvl-title">
+        <div class="stripe">EVOLUTION READY</div>
+        <div class="sub">choose your destiny</div>
+      </div>
+      <div class="lvl-cards" id="cards2"></div>
+      <div class="lvl-actions">
+        <button class="btn-small"><span class="k">R</span>REROLL<span class="price">— 진화 불가</span></button>
+        <button class="btn-small"><span class="k">S</span>SKIP<span class="price">+2 HP</span></button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Mock 3 — first weapon pick ─────────────────────────────── -->
+<section class="bay">
+  <h2>03 · Starting Loadout</h2>
+  <p class="bay-sub">캐릭터 선택 직후 첫 무기 선택. NEW 라벨로 새 무기임을 표시.</p>
+  <div class="lvl-stage">
+    <canvas class="bg-pixel" id="bg3" width="960" height="540"></canvas>
+    <div class="lvl-screen">
+      <div class="lvl-title">
+        <div class="stripe">CHOOSE WEAPON</div>
+        <div class="sub">초기 무기를 선택하세요</div>
+      </div>
+      <div class="lvl-cards" id="cards3"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Mock 4 — max level / all maxed ─────────────────────────── -->
+<section class="bay">
+  <h2>04 · All Maxed · Stat Boost</h2>
+  <p class="bay-sub">모든 무기/패시브 슬롯이 MAX인 경우 — 풀 회복, 골드 보너스, 약초 등 보조 카드로 대체.</p>
+  <div class="lvl-stage">
+    <canvas class="bg-pixel" id="bg4" width="960" height="540"></canvas>
+    <div class="lvl-screen">
+      <div class="lvl-title">
+        <div class="stripe">FORTUNE</div>
+        <div class="sub">all slots maxed</div>
+      </div>
+      <div class="lvl-cards" id="cards4"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Spec / wiring notes ────────────────────────────────────── -->
+<section class="bay">
+  <h2>05 · Card States</h2>
+  <p class="bay-sub">4가지 카드 상태를 자유롭게 조합. <code>data-state</code> 속성으로 스타일 자동 적용.</p>
+  <div class="spec-grid">
+    <div class="spec-card">
+      <h3>Standard</h3>
+      <p>Lv. N → N+1 형식. 기본 회색 테두리. 호버 시 황금색.</p>
+      <div class="tagline"><code>.lvl-card</code></div>
+    </div>
+    <div class="spec-card">
+      <h3>NEW</h3>
+      <p>아직 보유하지 않은 무기/패시브. 우측 상단 노란 NEW 배지.</p>
+      <div class="tagline"><code>.lvl-card.new</code></div>
+    </div>
+    <div class="spec-card">
+      <h3>EVOLUTION</h3>
+      <p>진화 가능한 경우. 황금 테두리 + 펄스 글로우 + ★ EVOLUTION ★ 라벨.</p>
+      <div class="tagline"><code>.lvl-card.evolution</code></div>
+    </div>
+    <div class="spec-card">
+      <h3>MAXED</h3>
+      <p>최대 레벨 도달 — 흐리게 표시. 골드 보너스로 자동 대체 권장.</p>
+      <div class="tagline"><code>.lvl-card.maxed</code></div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<script src="../palette.js"></script>
+<script src="../sprites.js"></script>
+<script src="../heroes_hd.js"></script>
+<script src="../heroes_hd3.js"></script>
+<script src="../heroes_smooth_walk.js"></script>
+<script src="../heroes_xhd.js"></script>
+<script src="../bosses_hd.js"></script>
+<script src="../enemies_hd.js"></script>
+<script src="../enemies_hd2.js"></script>
+<script src="../weapons_hd.js"></script>
+<script src="../projectiles_hd.js"></script>
+<script src="../skills_hd.js"></script>
+<script src="../pickups_hd2.js"></script>
+<script src="../chests_polished.js"></script>
+<script src="../structures.js"></script>
+<script src="../structures_extra.js"></script>
+<script src="../tiles_unified.js"></script>
+<script src="../tiles_natural.js"></script>
+<script src="../hd2_apply.js"></script>
+<script src="../effects_hd3.js"></script>
+<script src="../lightning_polish.js"></script>
+<script src="../atlas.js"></script>
+<script src="../weapons.js"></script>
+<script src="../evolutions.js"></script>
+<script src="../showcase.js"></script>
+<script>
+Showcase.renderNav('levelup');
+
+const W = window.WEAPONS;
+const P = window.PASSIVES;
+
+function paint(canvas, spriteName, size) {
+  canvas.width = size; canvas.height = size;
+  const ctx = canvas.getContext('2d');
+  ctx.imageSmoothingEnabled = false;
+  if (SPRITES[spriteName]) {
+    ctx.drawImage(AtlasBuilder.renderFrame(spriteName, 0), 0, 0, size, size);
+  }
+}
+
+// Build a quick "pixelated dungeon" background so the overlay looks in-game.
+function paintBg(canvasId) {
+  const c = document.getElementById(canvasId);
+  const ctx = c.getContext('2d');
+  ctx.imageSmoothingEnabled = false;
+  const buf = document.createElement('canvas');
+  buf.width = 96; buf.height = 54;
+  const b = buf.getContext('2d');
+  b.imageSmoothingEnabled = false;
+  // tile floor
+  const tiles = ['tile_stone_1','tile_stone_2','tile_bones','tile_stone_crack','tile_blood'];
+  for (let y = 0; y < 4; y++) for (let x = 0; x < 6; x++) {
+    const t = tiles[(x*5+y*3) % tiles.length];
+    b.drawImage(AtlasBuilder.renderFrame(t, 0), x * 16, y * 16);
+  }
+  // a couple of enemies for atmosphere
+  const characters = [
+    { name: 'knight_walk', x: 40, y: 30 },
+    { name: 'walker_walk', x: 20, y: 14 },
+    { name: 'runner_walk', x: 70, y: 22 },
+    { name: 'bat_fly', x: 60, y: 6 },
+  ];
+  for (const e of characters) {
+    const f = AtlasBuilder.renderFrame(e.name, 0);
+    b.drawImage(f, e.x - f.width/2, e.y - f.height/2);
+  }
+  ctx.drawImage(buf, 0, 0, c.width, c.height);
+}
+paintBg('bg1');
+paintBg('bg2');
+paintBg('bg3');
+paintBg('bg4');
+
+function makeCard(opts) {
+  const card = document.createElement('div');
+  card.className = 'lvl-card' + (opts.state ? ' ' + opts.state : '');
+  const key = document.createElement('div'); key.className = 'key-hint'; key.textContent = opts.key;
+  card.appendChild(key);
+  const wrap = document.createElement('div'); wrap.className = 'icon-wrap';
+  const c = document.createElement('canvas');
+  wrap.appendChild(c);
+  paint(c, opts.icon, 56);
+  Showcase.animState.push({ canvas: c, name: opts.icon, elapsed: 0 });
+  card.appendChild(wrap);
+  const nm = document.createElement('div'); nm.className = 'name'; nm.textContent = opts.name;
+  card.appendChild(nm);
+  const lv = document.createElement('div'); lv.className = 'lvtag'; lv.textContent = opts.lvl;
+  card.appendChild(lv);
+  const dsc = document.createElement('div'); dsc.className = 'desc';
+  dsc.textContent = opts.desc;
+  card.appendChild(dsc);
+  return card;
+}
+
+// ── State 1 — standard
+const c1 = document.getElementById('cards1');
+c1.appendChild(makeCard({ key: '1', state: 'new', icon: 'icon_axe', name: '도끼',
+  lvl: 'New Weapon · Lv. 1',
+  desc: '회전하는 도끼를 던져 돌아오기까지 모든 적을 베어버린다. 시작 무기로 선택 가능.' }));
+c1.appendChild(makeCard({ key: '2', icon: 'icon_wand', name: '매직 완드',
+  lvl: 'Lv. 3 → 4',
+  desc: '발사 속도 +15%, 동시 발사 +1. 가장 가까운 적 자동 추적.' }));
+c1.appendChild(makeCard({ key: '3', icon: 'icon_might', name: '힘',
+  lvl: 'Lv. 2 → 3',
+  desc: '모든 피해량 +10%. 누적 패시브, 다른 패시브와 함께 강화.' }));
+
+// ── State 2 — evolution
+const c2 = document.getElementById('cards2');
+c2.appendChild(makeCard({ key: '1', state: 'evolution', icon: 'icon_leg_blade', name: '여명의 검기',
+  lvl: '진화 — 매직 완드(MAX) + 힘',
+  desc: '마법 탄환이 검기로 진화. 빠른 회복 + 라인 위 모든 적 관통. 한번 진화하면 되돌릴 수 없다.' }));
+c2.appendChild(makeCard({ key: '2', icon: 'icon_haste', name: '신속',
+  lvl: 'Lv. 1 → 2',
+  desc: '공격 속도 +8%. 모든 무기 쿨다운 단축.' }));
+c2.appendChild(makeCard({ key: '3', icon: 'icon_vigor', name: '활력',
+  lvl: 'Lv. 3 → 4',
+  desc: '최대 HP +20. 즉시 회복도 적용.' }));
+
+// ── State 3 — starting
+const c3 = document.getElementById('cards3');
+c3.appendChild(makeCard({ key: '1', state: 'new', icon: 'icon_wand', name: '매직 완드',
+  lvl: '시작 무기 · Lv. 1',
+  desc: '가장 가까운 적을 자동 추적하는 마법 탄환. 균형 잡힌 시작.' }));
+c3.appendChild(makeCard({ key: '2', state: 'new', icon: 'icon_arrow', name: '화살',
+  lvl: '시작 무기 · Lv. 1',
+  desc: '빠른 일직선 화살. 적중 시 짧은 출혈. 라인업 적에 강하다.' }));
+c3.appendChild(makeCard({ key: '3', state: 'new', icon: 'icon_holywater', name: '성수병',
+  lvl: '시작 무기 · Lv. 1',
+  desc: '땅에 신성한 웅덩이를 던져 그 안 적에게 지속 신성 피해. 군중 통제 강함.' }));
+
+// ── State 4 — all maxed
+const c4 = document.getElementById('cards4');
+c4.appendChild(makeCard({ key: '1', icon: 'pickup_heart', name: '풀 회복',
+  lvl: 'INSTANT',
+  desc: '최대 HP까지 즉시 회복. 다음 보스 전 추천.' }));
+c4.appendChild(makeCard({ key: '2', icon: 'pickup_gold', name: '골드 보너스',
+  lvl: '+ 50',
+  desc: '즉시 50 골드 획득. 다음 상점에서 사용 가능.' }));
+c4.appendChild(makeCard({ key: '3', icon: 'pickup_chicken', name: '치킨',
+  lvl: 'INSTANT · 30%',
+  desc: '최대 HP의 30% 회복. 가벼운 응급용.' }));
+
+</script>
+</body>
+</html>

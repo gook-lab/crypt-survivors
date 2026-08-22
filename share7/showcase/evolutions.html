@@ -1,0 +1,304 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Evolutions · Crypt Asset Pack</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="../showcase.css" />
+<style>
+  /* ── Evolution row ── */
+  .evo-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  .evo-row {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    padding: 14px 18px;
+    display: grid;
+    grid-template-columns: 1fr 28px 60px 28px 1.4fr 2fr;
+    gap: 14px;
+    align-items: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .evo-row::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent 40%, rgba(212,160,74,0.06) 70%, rgba(212,160,74,0.14));
+    pointer-events: none;
+  }
+  .evo-row.drop {
+    grid-template-columns: 1fr 60px 1.4fr 2fr;
+  }
+  .evo-cell {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    position: relative;
+    z-index: 1;
+  }
+  .evo-cell .frame {
+    background-color: #1a1428;
+    background-image:
+      linear-gradient(45deg, #221a36 25%, transparent 25%),
+      linear-gradient(-45deg, #221a36 25%, transparent 25%),
+      linear-gradient(45deg, transparent 75%, #221a36 75%),
+      linear-gradient(-45deg, transparent 75%, #221a36 75%);
+    background-size: 10px 10px;
+    background-position: 0 0, 0 5px, 5px -5px, -5px 0;
+    border: 1px solid var(--line);
+    padding: 6px;
+    image-rendering: pixelated;
+  }
+  .evo-cell.legendary .frame { border-color: var(--gold); }
+  .evo-cell canvas { image-rendering: pixelated; }
+  .evo-cell .label .name {
+    font-size: 12px; color: var(--ink); font-weight: 500;
+  }
+  .evo-cell.legendary .label .name { color: var(--gold-hi); }
+  .evo-cell .label .sub {
+    color: var(--ink-dim); font-size: 9px;
+    letter-spacing: 0.16em; text-transform: uppercase;
+  }
+  .evo-row .op {
+    text-align: center;
+    color: var(--gold);
+    font-size: 22px;
+    font-weight: 700;
+    font-family: 'Cinzel', serif;
+    position: relative; z-index: 1;
+  }
+  .evo-row .arrow {
+    text-align: center;
+    color: var(--gold-hi);
+    font-size: 18px;
+    letter-spacing: 0;
+    position: relative; z-index: 1;
+  }
+  .evo-row .max-tag {
+    background: var(--bg-2);
+    border: 1px solid var(--line);
+    color: var(--ink-dim);
+    font-size: 9px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    text-align: center;
+    white-space: nowrap;
+    position: relative; z-index: 1;
+  }
+  .evo-row .note {
+    color: var(--ink-dim);
+    font-size: 11px;
+    line-height: 1.5;
+    position: relative; z-index: 1;
+  }
+  .evo-row.drop::before {
+    background: linear-gradient(90deg, rgba(110,58,138,0.1), rgba(110,58,138,0.05));
+  }
+  .evo-row.drop .max-tag {
+    background: rgba(110,58,138,0.18);
+    color: var(--arcane);
+    border-color: var(--arcane);
+  }
+
+  /* ── Passives strip ── */
+  .passive-strip {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 10px;
+  }
+  .passive-card {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    padding: 12px;
+    display: flex;
+    gap: 12px;
+    align-items: center;
+  }
+  .passive-card .ic {
+    background-color: #1a1428;
+    background-image:
+      linear-gradient(45deg, #221a36 25%, transparent 25%),
+      linear-gradient(-45deg, #221a36 25%, transparent 25%);
+    background-size: 8px 8px;
+    border: 1px solid var(--line);
+    padding: 4px;
+    flex-shrink: 0;
+  }
+  .passive-card canvas { image-rendering: pixelated; }
+  .passive-card .pn { color: var(--ink); font-size: 14px; font-family: 'Cinzel', serif; font-weight: 700; letter-spacing: 0.04em; }
+  .passive-card .ps { color: var(--gold-hi); font-size: 10px; letter-spacing: 0.08em; margin: 2px 0; }
+  .passive-card .pb { color: var(--ink-dim); font-size: 10px; line-height: 1.4; }
+</style>
+</head>
+<body>
+
+<header class="masthead">
+  <div class="eyebrow">PAGE · 09 · EVOLUTIONS</div>
+  <h1>Weapon Evolution <span class="accent">Tree</span></h1>
+  <p class="lede">
+    기본 무기를 <b>최대 레벨</b>까지 올린 뒤, 짝이 되는 <b>패시브</b>를 1렙 이상 보유하면 다음 레벨업 카드가 떴을 때
+    <b>전설 무기로 진화</b>합니다. 일부 전설은 진화 없이 상자/보스 드랍으로만 등장해요.
+    데이터는 <code>art/evolutions.js</code>에 정의되어 게임 코드에서 바로 import.
+  </p>
+</header>
+
+<main>
+
+<section class="bay">
+  <h2>01 · Passives (6)</h2>
+  <p class="bay-sub">레벨업 시 무기와 함께 뽑히는 패시브. 진화 조합에 필요.</p>
+  <div class="passive-strip" id="passives"></div>
+</section>
+
+<section class="bay">
+  <h2>02 · Evolution Recipes</h2>
+  <p class="bay-sub">기본 무기(MAX) + 패시브(1레벨+) → 전설 무기. 진화 무기는 더 이상 레벨업 불가, 대신 압도적 성능.</p>
+  <div class="evo-grid" id="evolutions"></div>
+</section>
+
+<section class="bay">
+  <h2>03 · Drop-Only Legendaries</h2>
+  <p class="bay-sub">조합으로 만들 수 없는 진귀한 무기. 황금 상자나 보스 드랍으로만.</p>
+  <div class="evo-grid" id="drops"></div>
+</section>
+
+</main>
+
+<script src="../palette.js"></script>
+<script src="../sprites.js"></script>
+<script src="../heroes_hd.js"></script>
+<script src="../heroes_hd3.js"></script>
+<script src="../heroes_smooth_walk.js"></script>
+<script src="../heroes_xhd.js"></script>
+<script src="../bosses_hd.js"></script>
+<script src="../enemies_hd.js"></script>
+<script src="../enemies_hd2.js"></script>
+<script src="../weapons_hd.js"></script>
+<script src="../projectiles_hd.js"></script>
+<script src="../skills_hd.js"></script>
+<script src="../pickups_hd2.js"></script>
+<script src="../chests_polished.js"></script>
+<script src="../structures.js"></script>
+<script src="../structures_extra.js"></script>
+<script src="../tiles_unified.js"></script>
+<script src="../tiles_natural.js"></script>
+<script src="../hd2_apply.js"></script>
+<script src="../effects_hd3.js"></script>
+<script src="../lightning_polish.js"></script>
+<script src="../atlas.js"></script>
+<script src="../weapons.js"></script>
+<script src="../evolutions.js"></script>
+<script src="../showcase.js"></script>
+<script>
+Showcase.renderNav('evolutions');
+
+const W = window.WEAPONS;
+const P = window.PASSIVES;
+const EV = window.EVOLUTIONS;
+
+function paint(canvas, spriteName, size) {
+  canvas.width = size; canvas.height = size;
+  const ctx = canvas.getContext('2d');
+  ctx.imageSmoothingEnabled = false;
+  if (SPRITES[spriteName]) {
+    ctx.drawImage(AtlasBuilder.renderFrame(spriteName, 0), 0, 0, size, size);
+  }
+}
+
+// ── Passives ──
+const passHost = document.getElementById('passives');
+for (const [pid, p] of Object.entries(P)) {
+  const card = document.createElement('div'); card.className = 'passive-card';
+  const ic = document.createElement('div'); ic.className = 'ic';
+  const c = document.createElement('canvas');
+  ic.appendChild(c);
+  paint(c, p.icon, 44);
+  Showcase.animState.push({ canvas: c, name: p.icon, elapsed: 0 });
+  card.appendChild(ic);
+  const txt = document.createElement('div');
+  txt.innerHTML =
+    '<div class="pn">' + p.name + '</div>' +
+    '<div class="ps">' + p.stat + ' ' + p.per_level + ' / lvl · 최대 ' + p.max_level + '레벨</div>' +
+    '<div class="pb">' + p.blurb + '</div>';
+  card.appendChild(txt);
+  passHost.appendChild(card);
+}
+
+// ── Evolution rows ──
+function evoCell(weaponId, label) {
+  const cell = document.createElement('div');
+  cell.className = 'evo-cell' + (W[weaponId] && W[weaponId].tier === 'legendary' ? ' legendary' : '');
+  const frame = document.createElement('div'); frame.className = 'frame';
+  const c = document.createElement('canvas');
+  frame.appendChild(c);
+  if (W[weaponId]) {
+    paint(c, W[weaponId].icon, 36);
+    Showcase.animState.push({ canvas: c, name: W[weaponId].icon, elapsed: 0 });
+  }
+  cell.appendChild(frame);
+  const lbl = document.createElement('div'); lbl.className = 'label';
+  const nm = document.createElement('div'); nm.className = 'name'; nm.textContent = W[weaponId] ? W[weaponId].name : weaponId;
+  const sub = document.createElement('div'); sub.className = 'sub'; sub.textContent = label || (W[weaponId] && W[weaponId].pattern) || '';
+  lbl.appendChild(nm); lbl.appendChild(sub);
+  cell.appendChild(lbl);
+  return cell;
+}
+
+function passiveCell(passiveId) {
+  const cell = document.createElement('div'); cell.className = 'evo-cell';
+  const frame = document.createElement('div'); frame.className = 'frame';
+  const c = document.createElement('canvas');
+  frame.appendChild(c);
+  paint(c, P[passiveId].icon, 36);
+  Showcase.animState.push({ canvas: c, name: P[passiveId].icon, elapsed: 0 });
+  cell.appendChild(frame);
+  const lbl = document.createElement('div'); lbl.className = 'label';
+  lbl.innerHTML = '<div class="name">' + P[passiveId].name + '</div><div class="sub">PASSIVE</div>';
+  cell.appendChild(lbl);
+  return cell;
+}
+
+const evoHost = document.getElementById('evolutions');
+const dropHost = document.getElementById('drops');
+for (const ev of EV) {
+  if (ev.drop_only) continue;
+  const row = document.createElement('div'); row.className = 'evo-row';
+  row.appendChild(evoCell(ev.from, 'BASE · MAX'));
+  const op = document.createElement('div'); op.className = 'op'; op.textContent = '+';
+  row.appendChild(op);
+  row.appendChild(passiveCell(ev.with));
+  const arrow = document.createElement('div'); arrow.className = 'arrow'; arrow.textContent = '→';
+  row.appendChild(arrow);
+  row.appendChild(evoCell(ev.to, 'LEGENDARY'));
+  const note = document.createElement('div'); note.className = 'note'; note.textContent = ev.note;
+  row.appendChild(note);
+  evoHost.appendChild(row);
+}
+
+// drop-only
+for (const ev of EV) {
+  if (!ev.drop_only) continue;
+  const row = document.createElement('div'); row.className = 'evo-row drop';
+  // empty source col with condition tag
+  const cond = document.createElement('div');
+  cond.style.cssText = 'color: var(--arcane); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; position:relative; z-index:1;';
+  cond.textContent = ev.condition || 'CHEST DROP';
+  row.appendChild(cond);
+  const tag = document.createElement('div'); tag.className = 'max-tag'; tag.textContent = 'DROP ONLY';
+  row.appendChild(tag);
+  row.appendChild(evoCell(ev.to, 'LEGENDARY'));
+  const note = document.createElement('div'); note.className = 'note'; note.textContent = ev.note;
+  row.appendChild(note);
+  dropHost.appendChild(row);
+}
+</script>
+</body>
+</html>

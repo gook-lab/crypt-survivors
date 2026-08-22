@@ -1,0 +1,374 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Shop · Crypt Asset Pack</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="../showcase.css" />
+<style>
+  .shop-stage {
+    background: #07060c;
+    border: 1px solid var(--line);
+    padding: 14px;
+  }
+  .shop-frame {
+    background: linear-gradient(180deg, var(--bg-2), #07060c);
+    border: 1px solid var(--gold);
+    padding: 26px 28px 22px;
+  }
+  .shop-head {
+    display: flex; align-items: baseline; gap: 24px; margin-bottom: 18px;
+  }
+  .shop-head h1 {
+    margin: 0;
+    font-family: 'Cinzel', serif;
+    font-size: 30px;
+    color: var(--gold-hi);
+    letter-spacing: 0.12em;
+    text-shadow: 0 0 14px rgba(212,160,74,0.35);
+  }
+  .shop-head .gold-display {
+    margin-left: auto;
+    display: flex; align-items: center; gap: 8px;
+    background: rgba(212,160,74,0.10);
+    border: 1px solid var(--gold);
+    padding: 8px 14px;
+    color: var(--gold-hi);
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+  }
+  .shop-head .gold-display canvas { image-rendering: pixelated; width: 22px; height: 22px; }
+  .tab-bar {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 14px;
+    border-bottom: 1px solid var(--line);
+  }
+  .tab {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-bottom: none;
+    padding: 10px 18px;
+    color: var(--ink-dim);
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    cursor: pointer;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .tab canvas { image-rendering: pixelated; width: 18px; height: 18px; }
+  .tab.active {
+    background: var(--bg-2);
+    color: var(--gold-hi);
+    border-bottom: 1px solid var(--bg-2);
+    margin-bottom: -1px;
+  }
+  /* Upgrade grid */
+  .upg-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+    gap: 12px;
+  }
+  .upg-card {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    padding: 14px;
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+  }
+  .upg-card .ic-wrap {
+    background-color: #1a1428;
+    background-image:
+      linear-gradient(45deg, #221a36 25%, transparent 25%),
+      linear-gradient(-45deg, #221a36 25%, transparent 25%);
+    background-size: 8px 8px;
+    border: 1px solid var(--line);
+    padding: 6px;
+    flex-shrink: 0;
+  }
+  .upg-card .ic-wrap canvas { image-rendering: pixelated; }
+  .upg-card .body { flex: 1; min-width: 0; }
+  .upg-card .name {
+    font-family: 'Cinzel', serif;
+    font-weight: 700;
+    color: var(--ink);
+    font-size: 14px;
+    letter-spacing: 0.04em;
+  }
+  .upg-card .blurb {
+    color: var(--ink-dim);
+    font-size: 10px;
+    line-height: 1.55;
+    margin: 4px 0 8px;
+  }
+  .upg-card .effect {
+    color: var(--gold-hi);
+    font-size: 10px;
+    letter-spacing: 0.06em;
+    margin-bottom: 8px;
+  }
+  .upg-card .lvl-row { display: flex; gap: 3px; margin-bottom: 8px; flex-wrap: wrap; }
+  .upg-card .pip {
+    width: 16px; height: 6px;
+    background: var(--bg-2);
+    border: 1px solid var(--line);
+  }
+  .upg-card .pip.owned { background: var(--gold); border-color: var(--gold-hi); }
+  .upg-card .pip.next  { background: rgba(212,160,74,0.4); border-color: var(--gold); }
+  .upg-card .buy {
+    background: var(--bg-2);
+    color: var(--gold-hi);
+    border: 1px solid var(--gold);
+    padding: 6px 12px;
+    font-family: inherit;
+    font-size: 10px;
+    letter-spacing: 0.16em;
+    cursor: pointer;
+    display: flex; align-items: center; gap: 6px;
+    text-transform: uppercase;
+  }
+  .upg-card .buy canvas { image-rendering: pixelated; width: 14px; height: 14px; }
+  .upg-card .buy:hover { background: var(--gold); color: var(--bg); }
+  .upg-card .buy.maxed {
+    background: var(--bg);
+    color: var(--ink-dim);
+    border-color: var(--line);
+    cursor: default;
+  }
+  .upg-card .buy.locked {
+    background: var(--bg);
+    color: var(--ink-dim);
+    border-color: var(--line);
+    cursor: not-allowed;
+  }
+
+  /* Hero unlock row */
+  .heroes-row {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+  .h-card {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    padding: 12px;
+    text-align: center;
+    position: relative;
+  }
+  .h-card.unlocked { border-color: var(--gold); }
+  .h-card.locked { opacity: 0.55; }
+  .h-card .portrait {
+    background-color: #1a1428;
+    background-image:
+      linear-gradient(45deg, #221a36 25%, transparent 25%),
+      linear-gradient(-45deg, #221a36 25%, transparent 25%);
+    background-size: 10px 10px;
+    border: 1px solid var(--line);
+    padding: 6px;
+    margin-bottom: 8px;
+    display: inline-block;
+  }
+  .h-card .portrait canvas { image-rendering: pixelated; }
+  .h-card.unlocked .portrait { border-color: var(--gold); }
+  .h-card .name {
+    font-family: 'Cinzel', serif;
+    color: var(--ink);
+    font-weight: 700;
+    font-size: 13px;
+  }
+  .h-card.unlocked .name { color: var(--gold-hi); }
+  .h-card .cond {
+    color: var(--ink-dim);
+    font-size: 9px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin: 4px 0;
+  }
+  .h-card .cost {
+    color: var(--gold-hi);
+    font-size: 11px;
+    font-weight: 700;
+    margin-top: 4px;
+  }
+  .h-card .badge {
+    position: absolute; top: 6px; right: 8px;
+    color: var(--gold);
+    font-size: 10px;
+    letter-spacing: 0.12em;
+  }
+</style>
+</head>
+<body>
+<header class="masthead">
+  <div class="eyebrow">PAGE · 12 · META SHOP</div>
+  <h1>Meta-Progression <span class="accent">Shop</span></h1>
+  <p class="lede">
+    런(run) 사이에 골드를 사용해 영구 업그레이드를 구매하는 화면. 14가지 업그레이드를 4탭(전투/생존/유틸/경제)으로 분류.
+    5명의 영웅도 골드 + 클리어 조건으로 차례로 해금됩니다.
+    데이터: <code>art/shop.js</code>.
+  </p>
+</header>
+<main>
+
+<section class="bay">
+  <h2>01 · Shop UI Mock</h2>
+  <p class="bay-sub">실제 게임에서 메뉴 → "상점" 진입 시 보일 화면.</p>
+  <div class="shop-stage">
+    <div class="shop-frame">
+      <div class="shop-head">
+        <h1>아이템 상점</h1>
+        <div class="gold-display">
+          <canvas id="goldIcon" width="22" height="22"></canvas>
+          <span id="goldAmount">3,247</span>
+        </div>
+      </div>
+
+      <div class="heroes-row" id="heroesRow"></div>
+
+      <div class="tab-bar" id="tabs"></div>
+      <div class="upg-grid" id="upgrades"></div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<script src="../palette.js"></script>
+<script src="../sprites.js"></script>
+<script src="../heroes_hd.js"></script>
+<script src="../heroes_hd3.js"></script>
+<script src="../heroes_smooth_walk.js"></script>
+<script src="../heroes_xhd.js"></script>
+<script src="../bosses_hd.js"></script>
+<script src="../enemies_hd.js"></script>
+<script src="../enemies_hd2.js"></script>
+<script src="../weapons_hd.js"></script>
+<script src="../projectiles_hd.js"></script>
+<script src="../skills_hd.js"></script>
+<script src="../pickups_hd2.js"></script>
+<script src="../chests_polished.js"></script>
+<script src="../structures.js"></script>
+<script src="../structures_extra.js"></script>
+<script src="../tiles_unified.js"></script>
+<script src="../tiles_natural.js"></script>
+<script src="../hd2_apply.js"></script>
+<script src="../effects_hd3.js"></script>
+<script src="../lightning_polish.js"></script>
+<script src="../atlas.js"></script>
+<script src="../heroes.js"></script>
+<script src="../shop.js"></script>
+<script src="../showcase.js"></script>
+<script>
+Showcase.renderNav('shop');
+
+function paint(canvas, name, size) {
+  canvas.width = size; canvas.height = size;
+  const ctx = canvas.getContext('2d');
+  ctx.imageSmoothingEnabled = false;
+  if (SPRITES[name]) ctx.drawImage(AtlasBuilder.renderFrame(name, 0), 0, 0, size, size);
+}
+
+paint(document.getElementById('goldIcon'), 'pickup_gold', 22);
+
+// Hero unlock row
+const heroesRow = document.getElementById('heroesRow');
+const H = window.HEROES;
+const HU = window.HERO_UNLOCKS;
+HU.forEach((u, idx) => {
+  const h = H[u.id];
+  const card = document.createElement('div');
+  card.className = 'h-card ' + (idx <= 1 ? 'unlocked' : 'locked');
+  const portrait = document.createElement('div'); portrait.className = 'portrait';
+  const pC = document.createElement('canvas');
+  portrait.appendChild(pC);
+  paint(pC, h.sprite, 56);
+  Showcase.animState.push({ canvas: pC, name: h.sprite, elapsed: 0 });
+  card.appendChild(portrait);
+  card.innerHTML += '<div class="name">' + h.name + '</div>' +
+    '<div class="cond">' + u.condition + '</div>' +
+    '<div class="cost">' + (u.cost === 0 ? '시작 시 보유' : u.cost.toLocaleString() + ' G') + '</div>';
+  if (idx <= 1) {
+    const badge = document.createElement('div'); badge.className = 'badge'; badge.textContent = '✔';
+    card.appendChild(badge);
+  }
+  heroesRow.appendChild(card);
+});
+
+// Tabs
+const tabs = document.getElementById('tabs');
+const upgrades = document.getElementById('upgrades');
+const TABS = window.SHOP_TABS;
+const UPG = window.SHOP_UPGRADES;
+let activeTab = 'combat';
+
+// Fake current ownership for mock
+const OWNED = { might: 4, haste: 3, vigor: 5, magnet: 2, swift: 2, regen: 1, crit: 1 };
+
+function buildTab(tabId) {
+  upgrades.innerHTML = '';
+  for (const u of UPG.filter(x => x.tab === tabId)) {
+    const lvl = OWNED[u.id] || 0;
+    const isMax = lvl >= u.max;
+    const card = document.createElement('div'); card.className = 'upg-card';
+    const wrap = document.createElement('div'); wrap.className = 'ic-wrap';
+    const c = document.createElement('canvas');
+    wrap.appendChild(c);
+    paint(c, u.icon, 36);
+    Showcase.animState.push({ canvas: c, name: u.icon, elapsed: 0 });
+    card.appendChild(wrap);
+    const body = document.createElement('div'); body.className = 'body';
+    body.innerHTML =
+      '<div class="name">' + u.name + ' <small style="color:var(--ink-dim);font-size:10px">Lv. ' + lvl + ' / ' + u.max + '</small></div>' +
+      '<div class="blurb">' + u.blurb + '</div>' +
+      '<div class="effect">' + u.effect + '</div>';
+    // pips
+    const pipRow = document.createElement('div'); pipRow.className = 'lvl-row';
+    for (let i = 0; i < u.max; i++) {
+      const pip = document.createElement('span');
+      pip.className = 'pip' + (i < lvl ? ' owned' : (i === lvl ? ' next' : ''));
+      pipRow.appendChild(pip);
+    }
+    body.appendChild(pipRow);
+    const buy = document.createElement('button'); buy.className = 'buy' + (isMax ? ' maxed' : '');
+    if (isMax) {
+      buy.textContent = 'MAXED';
+    } else {
+      const goldC = document.createElement('canvas');
+      buy.appendChild(goldC);
+      paint(goldC, 'pickup_gold', 14);
+      const sp = document.createElement('span');
+      sp.textContent = u.cost[lvl].toLocaleString();
+      buy.appendChild(sp);
+    }
+    body.appendChild(buy);
+    card.appendChild(body);
+    upgrades.appendChild(card);
+  }
+}
+
+for (const t of TABS) {
+  const tab = document.createElement('div');
+  tab.className = 'tab' + (t.id === activeTab ? ' active' : '');
+  const c = document.createElement('canvas');
+  tab.appendChild(c);
+  paint(c, t.icon, 18);
+  const sp = document.createElement('span');
+  sp.textContent = t.name;
+  tab.appendChild(sp);
+  tab.onclick = () => {
+    activeTab = t.id;
+    [...tabs.children].forEach((el, i) => el.classList.toggle('active', TABS[i].id === activeTab));
+    buildTab(activeTab);
+  };
+  tabs.appendChild(tab);
+}
+buildTab(activeTab);
+</script>
+</body>
+</html>

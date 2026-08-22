@@ -1,0 +1,274 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Natural Map · Crypt Asset Pack</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="../showcase.css" />
+<style>
+  .stage {
+    position: relative;
+    background: #07060c;
+    border: 1px solid var(--line);
+    overflow: hidden;
+    margin: 0 auto 18px;
+    width: 960px; height: 540px;
+  }
+  .stage canvas { position: absolute; inset: 0; image-rendering: pixelated; width: 100%; height: 100%; }
+  .minimap {
+    position: absolute;
+    top: 14px; right: 14px;
+    width: 200px;
+    background: rgba(7,6,12,0.85);
+    border: 1px solid var(--gold);
+    padding: 8px;
+    z-index: 10;
+  }
+  .minimap-head {
+    font-family: 'Cinzel', serif;
+    color: var(--gold-hi);
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    padding-bottom: 4px;
+    margin-bottom: 6px;
+    border-bottom: 1px dashed var(--line);
+  }
+  .minimap canvas { position: static; image-rendering: pixelated; width: 100%; height: 170px; display: block; border: 1px solid var(--line); }
+  .controls { text-align: center; display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
+  .controls button {
+    background: var(--bg-2); color: var(--ink); border: 1px solid var(--line);
+    padding: 8px 14px; font-family: inherit; font-size: 10px;
+    letter-spacing: 0.14em; text-transform: uppercase; cursor: pointer;
+  }
+  .controls button.active { background: var(--gold); color: var(--bg); border-color: var(--gold); }
+  .controls .k { color: var(--gold); margin-right: 5px; font-weight: 700; }
+  .controls button.active .k { color: var(--bg); }
+</style>
+</head>
+<body>
+<header class="masthead">
+  <div class="eyebrow">PAGE · 31 · NATURAL MAP</div>
+  <h1>Natural Map · <span class="accent">자연스러운</span> 타일 + 미니맵</h1>
+  <p class="lede">
+    격자 모르타르 라인을 제거한 자연 타일 시스템 적용. 미니맵 + 인게임 뷰 모두 한 표면처럼 보이는 자연 텍스처로 깔립니다.
+    데이터: <code>art/tiles_natural.js</code> · <code>NATURAL_TILE_POOLS</code>.
+  </p>
+</header>
+<main>
+<section class="bay">
+  <h2>01 · Live World + Minimap</h2>
+  <p class="bay-sub">1-5 키로 바이옴 전환. 자연 타일이 미니맵에도 반영.</p>
+  <div class="stage" id="stage">
+    <canvas id="world" width="960" height="540"></canvas>
+    <div class="minimap">
+      <div class="minimap-head" id="mtitle">CRYPT</div>
+      <canvas id="mini" width="180" height="170"></canvas>
+    </div>
+  </div>
+  <div class="controls">
+    <button data-b="crypt" class="active"><span class="k">1</span>묘소</button>
+    <button data-b="forest"><span class="k">2</span>숲</button>
+    <button data-b="volcano"><span class="k">3</span>화산</button>
+    <button data-b="ice"><span class="k">4</span>빙굴</button>
+    <button data-b="sanctuary"><span class="k">5</span>성소</button>
+    <button data-b="island"><span class="k">6</span>다리·섬</button>
+  </div>
+</section>
+</main>
+
+<script src="../palette.js"></script>
+<script src="../sprites.js"></script>
+<script src="../heroes_hd.js"></script>
+<script src="../heroes_hd3.js"></script>
+<script src="../heroes_smooth_walk.js"></script>
+<script src="../enemies_hd2.js"></script>
+<script src="../structures.js"></script>
+<script src="../structures_extra.js"></script>
+<script src="../tiles_unified.js"></script>
+<script src="../tiles_natural.js"></script>
+<script src="../water_hd.js"></script>
+<script src="../hd2_apply.js"></script>
+<script src="../effects_hd3.js"></script>
+<script src="../lightning_polish.js"></script>
+<script src="../atlas.js"></script>
+<script src="../showcase.js"></script>
+<script>
+Showcase.renderNav('natural_map');
+
+const POOLS = window.NATURAL_TILE_POOLS;
+const BIOMES = {
+  crypt:   { title: 'CRYPT · 묘소',   accent: '#8d83a0',
+    props: [['prop_castle_tower',240,130,'b'],['prop_gargoyle',60,250,'b'],['prop_gargoyle',420,250,'b'],
+      ['prop_tombstone',100,210,'b'],['prop_tombstone',130,225,'b'],['prop_tombstone',350,210,'b'],
+      ['prop_tombstone',380,225,'b'],['prop_pillar_broken',170,250,'b'],['prop_pillar_broken',310,250,'b'],
+      ['prop_sarcophagus',240,240,'b'],['prop_candelabra',180,200,'b'],['prop_candelabra',300,200,'b'],
+      ['prop_bone_pile',200,165,'b'],['pickup_chest',390,170,'b'],['pickup_chest_gold',90,170,'b']] },
+  forest:  { title: 'FOREST · 숲',    accent: '#88b85a',
+    props: [['prop_dead_tree',40,260,'b'],['prop_dead_tree',440,260,'b'],['prop_dead_tree',150,250,'b'],
+      ['prop_dead_tree',330,250,'b'],['prop_forest_shrine',240,220,'b'],['prop_mushroom',80,225,'b'],
+      ['prop_mushroom',100,235,'b'],['prop_mushroom',380,225,'b'],['prop_mushroom',400,235,'b'],
+      ['prop_stone_wall',60,210,'b'],['prop_stone_wall',420,210,'b'],['prop_well',200,250,'b'],
+      ['prop_altar_nature',300,250,'b'],['pickup_chest',360,170,'b']] },
+  volcano: { title: 'VOLCANO · 화산', accent: '#f08a2a',
+    props: [['prop_obsidian_pillar',60,260,'b'],['prop_obsidian_pillar',420,260,'b'],
+      ['prop_obsidian_pillar',160,260,'b'],['prop_obsidian_pillar',320,260,'b'],
+      ['prop_fire_altar',240,235,'b'],['prop_brazier',120,255,'b'],['prop_brazier',360,255,'b'],
+      ['prop_lava_crack',180,120,'c'],['prop_lava_crack',300,150,'c'],['prop_bone_pile',90,230,'b'],
+      ['prop_bone_pile',390,230,'b'],['prop_barrel_intact',200,225,'b'],['prop_barrel_intact',280,225,'b'],
+      ['pickup_chest_cursed',240,175,'b']] },
+  ice:     { title: 'ICE · 빙굴',     accent: '#6fb4dc',
+    props: [['prop_ice_spike',60,260,'b'],['prop_ice_spike',420,260,'b'],['prop_ice_spike',130,250,'b'],
+      ['prop_ice_spike',350,250,'b'],['prop_frozen_statue',100,255,'b'],['prop_frozen_statue',380,255,'b'],
+      ['prop_ice_crystal',180,210,'b'],['prop_ice_crystal',300,210,'b'],['prop_ice_crystal',240,260,'b'],
+      ['prop_ice_crystal',80,180,'b'],['prop_ice_crystal',400,180,'b'],['pickup_chest_gold',240,170,'b']] },
+  sanctuary:{ title: 'SANCTUARY · 성소', accent: '#d4a04a',
+    props: [['prop_church',240,165,'b'],['prop_fountain',130,245,'b'],['prop_fountain',350,245,'b'],
+      ['prop_banner',60,90,'t'],['prop_banner',420,90,'t'],['prop_banner',180,90,'t'],['prop_banner',300,90,'t'],
+      ['prop_well',100,260,'b'],['prop_well',380,260,'b'],['prop_altar_holy',240,245,'b'],
+      ['prop_candelabra',180,235,'b'],['prop_candelabra',300,235,'b'],['pickup_chest_boss',60,170,'b']] },
+  island:  { title: 'ISLAND · 다리·섬', accent: '#6fb4dc',
+    // Two islands connected by bridges across water
+    waterFill: true,
+    landTiles: [
+      // left island
+      [0, 0, 14, 17],
+      // right island
+      [22, 0, 8, 17],
+      // bridge tile rows (use stone in shallow water)
+      [14, 7, 8, 3],
+    ],
+    props: [
+      // Left island - dense crypt structures
+      ['prop_castle_tower',80,140,'b'],
+      ['prop_tombstone',40,220,'b'],['prop_tombstone',60,235,'b'],['prop_tombstone',90,225,'b'],
+      ['prop_gargoyle',30,255,'b'],['prop_pillar_broken',120,250,'b'],
+      ['prop_candelabra',150,210,'b'],['prop_sarcophagus',180,240,'b'],
+      // Bridge - use existing prop_bridge_wood scaled up 2x
+      ['prop_bridge_wood',230,140,'cs'],['prop_bridge_wood',280,140,'cs'],
+      // Right island - forest
+      ['prop_dead_tree',360,260,'b'],['prop_dead_tree',440,260,'b'],
+      ['prop_forest_shrine',400,230,'b'],['prop_mushroom',380,250,'b'],
+      ['prop_well',420,250,'b'],
+      // Treasures
+      ['pickup_chest',55,160,'b'],['pickup_chest_gold',430,170,'b'],
+    ] },
+};
+
+let cur = 'crypt';
+const heroPos = { x: 240, y: 180 };
+const enemies = [{x:90,y:80},{x:380,y:90},{x:60,y:200},{x:420,y:220},{x:150,y:60},{x:360,y:100}];
+
+function pickTile(pool) {
+  const total = pool.reduce((a,t) => a + t.weight, 0);
+  let r = Math.random() * total;
+  for (const t of pool) if ((r -= t.weight) <= 0) return t.tile;
+  return pool[0].tile;
+}
+
+function drawWorld() {
+  const w = document.getElementById('world');
+  const wctx = w.getContext('2d');
+  wctx.imageSmoothingEnabled = false;
+  const buf = document.createElement('canvas');
+  buf.width = 480; buf.height = 270;
+  const b = buf.getContext('2d');
+  b.imageSmoothingEnabled = false;
+  const biome = BIOMES[cur];
+  const pool = POOLS[cur] || POOLS.crypt;
+
+  if (biome.waterFill) {
+    // Fill all with high-detail water first
+    for (let y = 0; y < 17; y++) for (let x = 0; x < 30; x++) {
+      // Around the bridge area (rows 7-10, cols 14-22), use foam variant
+      const isBridgeWater = x >= 13 && x <= 22 && y >= 6 && y <= 11;
+      const waterKey = isBridgeWater ? 'tile_water_hd_foam' : 'tile_water_hd';
+      if (SPRITES[waterKey]) b.drawImage(AtlasBuilder.renderFrame(waterKey, 0), x*16, y*16);
+    }
+    // Paint land patches over water (use crypt natural for left, forest for right)
+    for (const [lx, ly, lw, lh] of biome.landTiles || []) {
+      const landPool = lx < 15 ? POOLS.crypt : (lx > 20 ? POOLS.forest : POOLS.sanctuary);
+      for (let y = ly; y < ly + lh && y < 17; y++) {
+        for (let x = lx; x < lx + lw && x < 30; x++) {
+          const t = pickTile(landPool);
+          if (SPRITES[t]) b.drawImage(AtlasBuilder.renderFrame(t, 0), x*16, y*16);
+        }
+      }
+    }
+  } else {
+    for (let y = 0; y < 17; y++) for (let x = 0; x < 30; x++) {
+      const t = pickTile(pool);
+      if (SPRITES[t]) b.drawImage(AtlasBuilder.renderFrame(t, 0), x*16, y*16);
+    }
+  }
+
+  for (const [name, px, py, anch] of biome.props) {
+    if (!SPRITES[name]) continue;
+    const sub = AtlasBuilder.renderFrame(name, 0);
+    // 'cs' = center, scaled 2x (for bridges/large props)
+    const scale = (anch === 'cs') ? 2 : 1;
+    const sw = sub.width * scale, sh = sub.height * scale;
+    let dx = px - sw/2, dy;
+    if (anch === 't') dy = py;
+    else if (anch === 'c' || anch === 'cs') dy = py - sh/2;
+    else dy = py - sh;
+    b.drawImage(sub, Math.round(dx), Math.round(dy), sw, sh);
+  }
+  for (const e of enemies) {
+    const sub = AtlasBuilder.renderFrame('walker_walk', 0);
+    b.drawImage(sub, e.x - sub.width/2, e.y - sub.height);
+  }
+  const hs = AtlasBuilder.renderFrame('knight_walk', 0);
+  b.drawImage(hs, heroPos.x - hs.width/2, heroPos.y - hs.height);
+  wctx.drawImage(buf, 0, 0, w.width, w.height);
+  drawMini();
+}
+
+function drawMini() {
+  const m = document.getElementById('mini');
+  const mctx = m.getContext('2d');
+  mctx.imageSmoothingEnabled = false;
+  // Use the same natural tiles, scaled down — produces cohesive minimap
+  const pool = POOLS[cur];
+  const buf = document.createElement('canvas');
+  buf.width = 90; buf.height = 85;
+  const b = buf.getContext('2d');
+  b.imageSmoothingEnabled = false;
+  for (let y = 0; y < 6; y++) for (let x = 0; x < 6; x++) {
+    const t = pickTile(pool);
+    if (SPRITES[t]) b.drawImage(AtlasBuilder.renderFrame(t, 0), x*15, y*15);
+  }
+  mctx.drawImage(buf, 0, 0, m.width, m.height);
+  // Player dot
+  mctx.fillStyle = '#49d0e0';
+  mctx.fillRect(m.width/2 - 2, m.height/2 - 2, 4, 4);
+  // Enemy dots
+  mctx.fillStyle = '#c8332a';
+  for (const e of enemies) {
+    const ex = (e.x / 480) * m.width;
+    const ey = (e.y / 270) * m.height;
+    mctx.fillRect(ex - 1, ey - 1, 2, 2);
+  }
+  document.getElementById('mtitle').textContent = BIOMES[cur].title;
+  document.getElementById('mtitle').style.color = BIOMES[cur].accent;
+}
+
+document.querySelectorAll('[data-b]').forEach(btn => {
+  btn.onclick = () => {
+    cur = btn.dataset.b;
+    document.querySelectorAll('[data-b]').forEach(x => x.classList.toggle('active', x.dataset.b === cur));
+    drawWorld();
+  };
+});
+window.addEventListener('keydown', e => {
+  const map = ['crypt','forest','volcano','ice','sanctuary','island'];
+  const i = '123456'.indexOf(e.key);
+  if (i >= 0) { cur = map[i]; document.querySelectorAll('[data-b]').forEach(x => x.classList.toggle('active', x.dataset.b === cur)); drawWorld(); }
+});
+drawWorld();
+</script>
+</body>
+</html>

@@ -1,0 +1,278 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Hero Skills · Crypt Asset Pack</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="../showcase.css" />
+<style>
+  .hero-block {
+    background: linear-gradient(180deg, var(--panel), var(--bg-2));
+    border: 1px solid var(--line);
+    padding: 22px 22px 18px;
+    margin-bottom: 22px;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero-block::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 100% 0%, var(--accent), transparent 60%);
+    opacity: 0.16;
+    pointer-events: none;
+  }
+  .hero-block .head {
+    display: flex; gap: 18px; align-items: center;
+    margin-bottom: 18px;
+    position: relative; z-index: 1;
+  }
+  .hero-block .portrait {
+    background-color: #1a1428;
+    background-image:
+      linear-gradient(45deg, #221a36 25%, transparent 25%),
+      linear-gradient(-45deg, #221a36 25%, transparent 25%);
+    background-size: 10px 10px;
+    border: 2px solid;
+    padding: 8px;
+  }
+  .hero-block .portrait canvas { image-rendering: pixelated; }
+  .hero-block .meta { flex: 1; }
+  .hero-block .meta .name {
+    font-family: 'Cinzel', serif;
+    font-weight: 700;
+    color: var(--ink);
+    font-size: 26px;
+    letter-spacing: 0.04em;
+  }
+  .hero-block .meta .role {
+    color: var(--gold-hi);
+    font-size: 11px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    margin: 2px 0 6px;
+  }
+  .hero-block .meta .blurb {
+    color: var(--ink-dim);
+    font-size: 12px;
+    line-height: 1.55;
+    max-width: 560px;
+  }
+  .hero-block .stat-row {
+    display: flex; gap: 14px; flex-wrap: wrap;
+    font-size: 11px; color: var(--ink-dim);
+    margin-top: 8px;
+  }
+  .hero-block .stat-row b { color: var(--ink); }
+  .hero-block .exclusive {
+    display: flex; align-items: center; gap: 8px;
+    background: rgba(212,160,74,0.10);
+    border: 1px solid var(--gold);
+    padding: 8px 12px;
+    margin-top: 12px;
+    font-size: 11px;
+    color: var(--ink);
+  }
+  .hero-block .exclusive canvas {
+    image-rendering: pixelated; width: 28px; height: 28px;
+  }
+  .hero-block .exclusive b { color: var(--gold-hi); }
+  /* Skill ladder */
+  .ladder {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 10px;
+    position: relative; z-index: 1;
+  }
+  .ladder .step {
+    background: var(--bg-2);
+    border: 1px solid var(--line);
+    padding: 12px 10px 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    position: relative;
+  }
+  .ladder .step .lvtag {
+    background: var(--panel);
+    color: var(--gold);
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    padding: 2px 8px;
+    border: 1px solid var(--gold);
+    position: absolute;
+    top: -10px;
+    font-weight: 700;
+  }
+  .ladder .step.s1 .lvtag { color: var(--gold-hi); border-color: var(--gold-hi); }
+  .ladder .step.s50 .lvtag {
+    background: var(--gold);
+    color: var(--bg);
+    border-color: var(--gold-hi);
+  }
+  .ladder .step .ic-wrap {
+    background-color: #1a1428;
+    background-image:
+      linear-gradient(45deg, #221a36 25%, transparent 25%),
+      linear-gradient(-45deg, #221a36 25%, transparent 25%);
+    background-size: 6px 6px;
+    border: 1px solid var(--line);
+    padding: 6px;
+    margin: 8px 0 8px;
+  }
+  .ladder .step .ic-wrap canvas { image-rendering: pixelated; }
+  .ladder .step .sname {
+    font-family: 'Cinzel', serif;
+    font-weight: 700;
+    color: var(--ink);
+    font-size: 12px;
+    letter-spacing: 0.04em;
+    margin-bottom: 4px;
+  }
+  .ladder .step .sblurb {
+    color: var(--ink-dim);
+    font-size: 10px;
+    line-height: 1.5;
+    min-height: 56px;
+  }
+  .ladder .step .seffect {
+    color: var(--gold-hi);
+    font-size: 9px;
+    letter-spacing: 0.06em;
+    margin-top: 8px;
+    padding-top: 6px;
+    border-top: 1px dashed var(--line);
+  }
+  .ladder .step.s50 {
+    background: linear-gradient(180deg, rgba(212,160,74,0.18), var(--bg-2));
+    border-color: var(--gold);
+  }
+  .ladder .step.s50 .sname { color: var(--gold-hi); }
+</style>
+</head>
+<body>
+
+<header class="masthead">
+  <div class="eyebrow">PAGE · 11 · HERO SKILLS</div>
+  <h1>Hero <span class="accent">Skill Ladder</span> · Exclusive Weapons</h1>
+  <p class="lede">
+    각 영웅마다 <b>1·10·20·30·40·50</b> 레벨 마일스톤에 고유 스킬을 얻습니다.
+    1레벨 스킬은 시작 무기를, 50레벨은 클래스 정체성을 결정짓는 궁극기.
+    여기에 더해 각 영웅은 <b>전용 무기</b>를 가지며, 다른 영웅은 절대 이걸 뽑을 수 없어요.
+    데이터: <code>art/heroes.js</code> · <code>art/weapons.js</code>.
+  </p>
+</header>
+
+<main id="content"></main>
+
+<script src="../palette.js"></script>
+<script src="../sprites.js"></script>
+<script src="../heroes_hd.js"></script>
+<script src="../heroes_hd3.js"></script>
+<script src="../heroes_smooth_walk.js"></script>
+<script src="../heroes_xhd.js"></script>
+<script src="../bosses_hd.js"></script>
+<script src="../enemies_hd.js"></script>
+<script src="../enemies_hd2.js"></script>
+<script src="../weapons_hd.js"></script>
+<script src="../projectiles_hd.js"></script>
+<script src="../skills_hd.js"></script>
+<script src="../pickups_hd2.js"></script>
+<script src="../chests_polished.js"></script>
+<script src="../structures.js"></script>
+<script src="../structures_extra.js"></script>
+<script src="../tiles_unified.js"></script>
+<script src="../tiles_natural.js"></script>
+<script src="../hd2_apply.js"></script>
+<script src="../effects_hd3.js"></script>
+<script src="../lightning_polish.js"></script>
+<script src="../atlas.js"></script>
+<script src="../weapons.js"></script>
+<script src="../heroes.js"></script>
+<script src="../showcase.js"></script>
+<script>
+Showcase.renderNav('skills');
+
+const H = window.HEROES;
+const W = window.WEAPONS;
+const host = document.getElementById('content');
+
+function paint(canvas, name, size) {
+  canvas.width = size; canvas.height = size;
+  const ctx = canvas.getContext('2d');
+  ctx.imageSmoothingEnabled = false;
+  if (SPRITES[name]) ctx.drawImage(AtlasBuilder.renderFrame(name, 0), 0, 0, size, size);
+}
+
+for (const [hid, h] of Object.entries(H)) {
+  const block = document.createElement('section'); block.className = 'hero-block';
+  block.style.setProperty('--accent', h.color);
+
+  // Head
+  const head = document.createElement('div'); head.className = 'head';
+  const portrait = document.createElement('div'); portrait.className = 'portrait';
+  portrait.style.borderColor = h.color;
+  const pC = document.createElement('canvas');
+  portrait.appendChild(pC);
+  paint(pC, h.sprite, 80);
+  Showcase.animState.push({ canvas: pC, name: h.sprite, elapsed: 0 });
+  head.appendChild(portrait);
+
+  const meta = document.createElement('div'); meta.className = 'meta';
+  meta.innerHTML =
+    '<div class="name">' + h.name + '</div>' +
+    '<div class="role" style="color:' + h.color + '">' + h.role + '</div>' +
+    '<div class="blurb">' + h.blurb + '</div>' +
+    '<div class="stat-row">' +
+      '<span>HP <b>' + h.stats.hp + '</b></span>' +
+      '<span>이동 <b>' + h.stats.speed + '%</b></span>' +
+      '<span>자석 <b>' + h.stats.magnet + 'px</b></span>' +
+      '<span>피해 <b>×' + h.stats.dmg_mult + '</b></span>' +
+    '</div>';
+
+  // Exclusive weapon row
+  const ew = W[h.exclusive_weapon];
+  if (ew) {
+    const ex = document.createElement('div'); ex.className = 'exclusive';
+    const wc = document.createElement('canvas');
+    ex.appendChild(wc);
+    paint(wc, ew.icon, 28);
+    Showcase.animState.push({ canvas: wc, name: ew.icon, elapsed: 0 });
+    ex.innerHTML += '<span>전용 무기 <b>' + ew.name + '</b> — ' + ew.blurb + '</span>';
+    meta.appendChild(ex);
+  }
+  head.appendChild(meta);
+  block.appendChild(head);
+
+  // Skill ladder
+  const ladder = document.createElement('div'); ladder.className = 'ladder';
+  for (const sk of h.skills) {
+    const st = document.createElement('div');
+    st.className = 'step s' + sk.level;
+    const tag = document.createElement('div'); tag.className = 'lvtag';
+    tag.textContent = 'Lv ' + sk.level;
+    st.appendChild(tag);
+    const ic = document.createElement('div'); ic.className = 'ic-wrap';
+    const c = document.createElement('canvas');
+    ic.appendChild(c);
+    paint(c, sk.icon, 36);
+    Showcase.animState.push({ canvas: c, name: sk.icon, elapsed: 0 });
+    st.appendChild(ic);
+    const nm = document.createElement('div'); nm.className = 'sname'; nm.textContent = sk.name;
+    st.appendChild(nm);
+    const bl = document.createElement('div'); bl.className = 'sblurb'; bl.textContent = sk.blurb;
+    st.appendChild(bl);
+    const ef = document.createElement('div'); ef.className = 'seffect'; ef.textContent = sk.effect;
+    st.appendChild(ef);
+    ladder.appendChild(st);
+  }
+  block.appendChild(ladder);
+  host.appendChild(block);
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,55 @@
+{
+  "group_id": null,
+  "states": [
+    {
+      "character": {
+        "id": "1de4bf70-1264-4244-863d-4169ad7988af",
+        "name": "VS Yeti 2",
+        "prompt": "Side view pixel art white furry yeti giant beast, snow mountain creature, profile right, fantasy creature",
+        "size": {
+          "width": 68,
+          "height": 68
+        },
+        "template_id": "mannequin",
+        "directions": 4,
+        "view": "side",
+        "created_at": "2026-05-20T07:17:14.583376+00:00"
+      },
+      "folder": "VS_Yeti_2",
+      "frames": {
+        "rotations": {
+          "south": "VS_Yeti_2/rotations/south.png",
+          "west": "VS_Yeti_2/rotations/west.png",
+          "east": "VS_Yeti_2/rotations/east.png",
+          "north": "VS_Yeti_2/rotations/north.png"
+        },
+        "animations": {
+          "animating-1c3cecf7": {
+            "west": [
+              "VS_Yeti_2/animations/animating-1c3cecf7/west/frame_000.png",
+              "VS_Yeti_2/animations/animating-1c3cecf7/west/frame_001.png",
+              "VS_Yeti_2/animations/animating-1c3cecf7/west/frame_002.png",
+              "VS_Yeti_2/animations/animating-1c3cecf7/west/frame_003.png",
+              "VS_Yeti_2/animations/animating-1c3cecf7/west/frame_004.png",
+              "VS_Yeti_2/animations/animating-1c3cecf7/west/frame_005.png",
+              "VS_Yeti_2/animations/animating-1c3cecf7/west/frame_006.png",
+              "VS_Yeti_2/animations/animating-1c3cecf7/west/frame_007.png"
+            ],
+            "east": [
+              "VS_Yeti_2/animations/animating-1c3cecf7/east/frame_000.png",
+              "VS_Yeti_2/animations/animating-1c3cecf7/east/frame_001.png",
+              "VS_Yeti_2/animations/animating-1c3cecf7/east/frame_002.png",
+              "VS_Yeti_2/animations/animating-1c3cecf7/east/frame_003.png",
+              "VS_Yeti_2/animations/animating-1c3cecf7/east/frame_004.png",
+              "VS_Yeti_2/animations/animating-1c3cecf7/east/frame_005.png",
+              "VS_Yeti_2/animations/animating-1c3cecf7/east/frame_006.png",
+              "VS_Yeti_2/animations/animating-1c3cecf7/east/frame_007.png"
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "export_version": "3.0",
+  "export_date": "2026-05-20T07:32:24.958916"
+}

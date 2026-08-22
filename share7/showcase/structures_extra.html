@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Extra Structures · Crypt Asset Pack</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="../showcase.css" />
+<style>
+  .cat-section {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    padding: 18px 22px;
+    margin-bottom: 18px;
+  }
+  .cat-section h3 {
+    color: var(--gold-hi);
+    font-family: 'Cinzel', serif;
+    font-size: 16px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    margin: 0 0 4px;
+  }
+  .cat-section .sub {
+    color: var(--ink-dim);
+    font-size: 11px;
+    margin-bottom: 14px;
+  }
+  .props-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+    gap: 10px;
+  }
+  .prop-card {
+    background: var(--bg-2);
+    border: 1px solid var(--line);
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    text-align: center;
+  }
+  .prop-card.breakable { border-color: var(--blood); }
+  .prop-card .stage {
+    background-color: #1a1428;
+    background-image:
+      linear-gradient(45deg, #221a36 25%, transparent 25%),
+      linear-gradient(-45deg, #221a36 25%, transparent 25%);
+    background-size: 10px 10px;
+    border: 1px solid var(--line);
+    padding: 8px;
+    display: flex;
+    gap: 10px;
+    align-items: end;
+    justify-content: center;
+  }
+  .prop-card.breakable .stage { padding: 10px; }
+  .prop-card canvas { image-rendering: pixelated; }
+  .prop-card .arr { color: var(--gold); font-size: 14px; font-weight: 700; margin: 0 2px; align-self: center; }
+  .prop-card .nm {
+    font-family: 'Cinzel', serif;
+    font-weight: 700;
+    color: var(--ink);
+    font-size: 12px;
+    letter-spacing: 0.04em;
+    margin-top: 2px;
+  }
+  .prop-card .sub-nm {
+    color: var(--ink-dim);
+    font-size: 9px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+  }
+</style>
+</head>
+<body>
+<header class="masthead">
+  <div class="eyebrow">PAGE · 23 · STRUCTURES EXTRA</div>
+  <h1>Map Structures · <span class="accent">Variants</span> · 추가 구조물</h1>
+  <p class="lede">
+    다리·문·제단 변형, 인터랙티브 깨뜨림 오브젝트, 체크무늬 바닥, 큰 set-piece. 깨뜨림 오브젝트는 <b>온전 → 부서진</b> 상태가 함께 등록되어
+    피격 이벤트에 sprite swap만 하면 됩니다. 데이터: <code>art/structures_extra.js</code>.
+  </p>
+</header>
+<main>
+
+<section class="bay">
+  <h2>01 · Bridge Variants</h2>
+  <p class="bay-sub">3가지 다리 — 나무판자 / 부서진(점프 위험) / 로프(흔들리는 서스펜션).</p>
+  <div id="bridges"></div>
+</section>
+
+<section class="bay">
+  <h2>02 · Gate Variants</h2>
+  <p class="bay-sub">잠긴 철창 / 열린 입구 — 보스 룸 통과 등에 사용.</p>
+  <div id="gates"></div>
+</section>
+
+<section class="bay">
+  <h2>03 · Altar Variants</h2>
+  <p class="bay-sub">4가지 제단 — 신성(회복) / 혈의(딜+위험) / 아케인(애니, 마법) / 자연(스피드).</p>
+  <div id="altars"></div>
+</section>
+
+<section class="bay">
+  <h2>04 · Interactive Breakables</h2>
+  <p class="bay-sub">항아리·통·상자 — 무기로 깨뜨리면 골드/아이템 드랍. 온전(좌) → 부서진(우) 상태.</p>
+  <div id="breakables"></div>
+</section>
+
+<section class="bay">
+  <h2>05 · Special Floor &amp; Set-piece</h2>
+  <p class="bay-sub">체크무늬 바닥(보물 방/보스 룸용) + 교회 set-piece (32×32 큰 배경 구조물).</p>
+  <div id="special"></div>
+</section>
+
+</main>
+
+<script src="../palette.js"></script>
+<script src="../sprites.js"></script>
+<script src="../structures.js"></script>
+<script src="../structures_extra.js"></script>
+<script src="../heroes_hd.js"></script>
+<script src="../heroes_hd3.js"></script>
+<script src="../heroes_smooth_walk.js"></script>
+<script src="../heroes_xhd.js"></script>
+<script src="../bosses_hd.js"></script>
+<script src="../enemies_hd.js"></script>
+<script src="../enemies_hd2.js"></script>
+<script src="../weapons_hd.js"></script>
+<script src="../projectiles_hd.js"></script>
+<script src="../skills_hd.js"></script>
+<script src="../pickups_hd2.js"></script>
+<script src="../chests_polished.js"></script>
+<script src="../tiles_unified.js"></script>
+<script src="../tiles_natural.js"></script>
+<script src="../hd2_apply.js"></script>
+<script src="../effects_hd3.js"></script>
+<script src="../lightning_polish.js"></script>
+<script src="../atlas.js"></script>
+<script src="../showcase.js"></script>
+<script>
+Showcase.renderNav('structures_extra');
+
+function paint(canvas, name, scale) {
+  if (!SPRITES[name]) return;
+  const f = SPRITES[name][0];
+  canvas.width = f[0].length * scale;
+  canvas.height = f.length * scale;
+  const ctx = canvas.getContext('2d');
+  ctx.imageSmoothingEnabled = false;
+  ctx.drawImage(AtlasBuilder.renderFrame(name, 0), 0, 0, canvas.width, canvas.height);
+}
+
+function makeCard(name1, name2, label, sublabel, opts) {
+  const card = document.createElement('div'); card.className = 'prop-card';
+  if (opts && opts.breakable) card.classList.add('breakable');
+  const stage = document.createElement('div'); stage.className = 'stage';
+  if (name1 && SPRITES[name1]) {
+    const f = SPRITES[name1][0];
+    const maxDim = Math.max(f.length, f[0].length);
+    const scale = maxDim > 30 ? 2 : (maxDim > 22 ? 3 : (maxDim > 16 ? 3 : 4));
+    const c1 = document.createElement('canvas');
+    paint(c1, name1, scale);
+    stage.appendChild(c1);
+    Showcase.animState.push({ canvas: c1, name: name1, elapsed: 0 });
+  }
+  if (name2 && SPRITES[name2]) {
+    const arr = document.createElement('span'); arr.className = 'arr'; arr.textContent = '→';
+    stage.appendChild(arr);
+    const c2 = document.createElement('canvas');
+    const f = SPRITES[name2][0];
+    const maxDim = Math.max(f.length, f[0].length);
+    const scale = maxDim > 30 ? 2 : (maxDim > 22 ? 3 : (maxDim > 16 ? 3 : 4));
+    paint(c2, name2, scale);
+    stage.appendChild(c2);
+    Showcase.animState.push({ canvas: c2, name: name2, elapsed: 0 });
+  }
+  card.appendChild(stage);
+  const nm = document.createElement('div'); nm.className = 'nm'; nm.textContent = label;
+  card.appendChild(nm);
+  if (sublabel) {
+    const sn = document.createElement('div'); sn.className = 'sub-nm'; sn.textContent = sublabel;
+    card.appendChild(sn);
+  }
+  return card;
+}
+
+function gridSection(host, items) {
+  const cat = document.createElement('div'); cat.className = 'cat-section';
+  const grid = document.createElement('div'); grid.className = 'props-grid';
+  for (const it of items) {
+    grid.appendChild(makeCard(it[0], it[1], it[2], it[3], it[4]));
+  }
+  cat.appendChild(grid);
+  host.appendChild(cat);
+}
+
+gridSection(document.getElementById('bridges'), [
+  ['prop_bridge_wood', 'prop_bridge_wood_hd', '나무 다리', '24×16 · HD avail'],
+  ['prop_bridge_broken', 'prop_bridge_broken_hd', '부서진 다리', '24×16 · 점프 필요'],
+  ['prop_bridge_rope', 'prop_bridge_rope_hd', '로프 다리', '24×16 · 흔들림'],
+  ['prop_bridge', 'prop_bridge_hd', '석교 (기본)', '24×16 · 일반'],
+]);
+
+gridSection(document.getElementById('gates'), [
+  ['prop_gate', 'prop_gate_hd', '나무 대문', '24×24 · 닫힌'],
+  ['prop_gate_iron', 'prop_gate_iron_hd', '철 창살', '24×24 · 보스용'],
+  ['prop_gate_open', 'prop_gate_open_hd', '열린 입구', '24×24 · 통과'],
+]);
+
+gridSection(document.getElementById('altars'), [
+  ['prop_altar_holy', 'prop_altar_holy_hd', '신성 제단', '회복 효과'],
+  ['prop_altar_blood', 'prop_altar_blood_hd', '혈의 제단', '딜 +, HP -'],
+  ['prop_altar_arcane', null, '아케인 제단 (애니)', '마법 강화'],
+  ['prop_altar_nature', 'prop_altar_nature_hd', '자연 제단', '속도 +'],
+]);
+
+const breakablesHost = document.getElementById('breakables');
+const breakCat = document.createElement('div'); breakCat.className = 'cat-section';
+const breakGrid = document.createElement('div'); breakGrid.className = 'props-grid';
+for (const [a, b, lbl, sub] of [
+  ['prop_jar_intact', 'prop_jar_broken', '항아리', '골드 드랍'],
+  ['prop_jar_intact_hd', null, '항아리 HD', '14×16'],
+  ['prop_barrel_intact', 'prop_barrel_broken', '나무 통', '랜덤 드랍'],
+  ['prop_barrel_intact_hd', null, '나무 통 HD', '14×16'],
+  ['prop_crate_intact', 'prop_crate_broken', '나무 상자', '아이템 드랍'],
+  ['prop_crate_intact_hd', null, '나무 상자 HD', '14×14'],
+]) {
+  breakGrid.appendChild(makeCard(a, b, lbl, sub, { breakable: true }));
+}
+breakCat.appendChild(breakGrid);
+breakablesHost.appendChild(breakCat);
+
+gridSection(document.getElementById('special'), [
+  ['tile_checker', null, '체크무늬 바닥', '16×16 · 특수 영역'],
+  ['prop_church', null, '교회 (대형)', '32×32 · set-piece'],
+]);
+</script>
+</body>
+</html>

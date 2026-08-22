@@ -1,0 +1,3472 @@
+/* UI shell + HUD + overlays. Pixel-perfect retro aesthetic (design-review D3):
+   pixelated rendering, monospace type, chunky borders, hard offset shadows,
+   no rounded corners, dark blue-grey panels with a gold accent. A real pixel
+   webfont replaces the monospace stack later (design doc open question). */
+
+:root {
+  --bg: #1a1726;
+  --ink: #0d0a14;
+  --gold: #f0c14b;
+  --hp: #c0563b;
+  --panel: #2a2440;
+  --text-dim: #cfc8e0;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+  background: var(--bg);
+  overflow: hidden;
+}
+
+body {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#game {
+  position: relative;
+}
+
+#game canvas {
+  display: block; /* block removes the inline descender gap — no line-height:0 */
+  image-rendering: pixelated;
+}
+
+/* --- HUD: overlay layer, never eats game input (design-review) --- */
+.hud {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  font-family: 'Courier New', monospace;
+}
+
+/* framed bars (HP / XP / boss) — the sprite frame is the background, a
+   brighter copy is the width-clipped fill */
+.hud-bar {
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
+  image-rendering: pixelated;
+}
+
+.hud-bar-fill {
+  height: 100%;
+  background-repeat: no-repeat;
+  image-rendering: pixelated;
+  transition: width 0.12s linear;
+}
+
+.hud-hp,
+.hud-xp {
+  position: absolute;
+  left: 34px;
+  width: 224px;
+  height: 28px;
+}
+
+.hud-hp {
+  top: 46px;
+}
+
+.hud-xp {
+  top: 78px;
+}
+
+.hud-hp .hud-bar-fill,
+.hud-xp .hud-bar-fill {
+  background-size: 224px 28px;
+}
+
+.hud-lvl {
+  position: absolute;
+  top: 24px;
+  left: 36px;
+  color: var(--gold);
+  font-size: 14px;
+  font-weight: bold;
+  text-shadow: 1px 1px 0 var(--ink);
+}
+
+.hud-time {
+  position: absolute;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: #fff;
+  font-size: 26px;
+  font-weight: bold;
+  text-shadow: 2px 2px 0 var(--ink);
+}
+
+.hud-kills {
+  position: absolute;
+  top: 30px;
+  right: 36px;
+  color: var(--gold);
+  font-size: 14px;
+  text-shadow: 1px 1px 0 var(--ink);
+}
+
+/* corner brackets framing the play field */
+.hud-corner {
+  position: absolute;
+  width: 22px;
+  height: 22px;
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
+  image-rendering: pixelated;
+}
+
+.hud-corner-tl { top: 6px; left: 6px; }
+.hud-corner-tr { top: 6px; right: 6px; transform: scaleX(-1); }
+.hud-corner-bl { bottom: 6px; left: 6px; transform: scaleY(-1); }
+.hud-corner-br { bottom: 6px; right: 6px; transform: scale(-1, -1); }
+
+/* --- level-up picker --- */
+.levelup {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  justify-content: center;
+  /* fail-safe scroll — usually 3 cards fit, but if the user has a small
+     window or zoomed-in, contents shouldn't get clipped at the top */
+  overflow-y: auto;
+  padding: 24px 0;
+  background: rgba(13, 10, 20, 0.72);
+  font-family: 'Courier New', monospace;
+}
+.levelup-panel { margin: auto; }
+
+.levelup.hidden {
+  display: none;
+}
+
+.levelup-panel {
+  text-align: center;
+}
+
+.levelup-title {
+  color: var(--gold);
+  font-size: 30px;
+  letter-spacing: 6px;
+  margin-bottom: 22px;
+  text-shadow: 3px 3px 0 var(--ink);
+}
+
+.levelup-cards {
+  display: flex;
+  gap: 16px;
+}
+
+.lvl-card {
+  position: relative;
+  width: 184px;
+  min-height: 200px;
+  padding: 30px 14px 18px;
+  background: linear-gradient(#322a48, #211b33);
+  border: 3px solid var(--gold);
+  box-shadow: 0 0 0 2px #000, 5px 5px 0 var(--ink);
+  color: #fff;
+  font-family: inherit;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 9px;
+}
+
+.lvl-card:hover {
+  background: linear-gradient(#3e3458, #2a2342);
+}
+
+.lvl-key {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  width: 24px;
+  height: 24px;
+  line-height: 24px;
+  background: var(--gold);
+  color: var(--ink);
+  font-weight: bold;
+  font-size: 14px;
+}
+
+.lvl-kind {
+  position: absolute;
+  top: 8px;
+  right: 6px;
+  padding: 2px 8px;
+  color: #15121f;
+  font-size: 10px;
+  font-weight: bold;
+  letter-spacing: 1px;
+}
+
+.lvl-icon {
+  image-rendering: pixelated;
+  background: #15121f;
+  border: 2px solid #000;
+  width: 64px;
+  height: 64px;
+}
+
+.lvl-name {
+  font-size: 18px;
+  font-weight: bold;
+  color: var(--gold);
+}
+
+.lvl-desc {
+  font-size: 13px;
+  color: var(--text-dim);
+  line-height: 1.5;
+}
+
+.levelup-hint {
+  margin-top: 14px;
+  color: var(--text-dim);
+  font-size: 12px;
+}
+
+.levelup-actions {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  margin-top: 16px;
+}
+
+.lvl-action {
+  padding: 8px 22px;
+  background: var(--panel);
+  border: 2px solid #000;
+  box-shadow: 3px 3px 0 var(--ink);
+  color: #fff;
+  font-family: inherit;
+  font-weight: bold;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.lvl-action:hover { border-color: var(--gold); }
+.lvl-action[disabled] { opacity: 0.35; cursor: default; }
+
+/* ── evolution overlay ── */
+.evolution {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  font-family: 'Courier New', monospace;
+  z-index: 50;
+}
+.evolution.hidden { display: none; }
+
+.evo-panel {
+  background: linear-gradient(#3a3052, #211b33);
+  border: 4px solid var(--gold);
+  box-shadow: 0 0 0 2px #000, 0 0 36px rgba(240, 210, 122, 0.55);
+  padding: 24px 40px;
+  text-align: center;
+  animation: evo-rise 0.36s cubic-bezier(0.2, 1.5, 0.4, 1) both;
+}
+
+.evo-tag {
+  color: var(--gold);
+  letter-spacing: 6px;
+  font-size: 12px;
+  margin-bottom: 4px;
+}
+.evo-name {
+  color: var(--gold);
+  font-size: 30px;
+  letter-spacing: 4px;
+  margin-bottom: 14px;
+  text-shadow: 2px 2px 0 var(--ink);
+}
+.evo-icon-wrap {
+  display: inline-block;
+  padding: 6px;
+  background: #15121f;
+  border: 3px solid #000;
+  margin-bottom: 12px;
+}
+.evo-icon { image-rendering: pixelated; display: block; }
+.evo-sub { color: var(--text-dim); font-size: 13px; }
+
+@keyframes evo-rise {
+  from { transform: scale(0.4) translateY(40px); opacity: 0; }
+  to { transform: scale(1) translateY(0); opacity: 1; }
+}
+
+/* --- result screen --- */
+.result {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  justify-content: center;
+  background: rgba(13, 10, 20, 0.82);
+  font-family: 'Courier New', monospace;
+  color: #fff;
+  /* result content is tall (hero card + stats + weapons + dps bars + tips +
+     achievement progress + skills + actions). Padding kept tight so the
+     above-fold content (title → hero → time → key stats → top-3 weapons
+     → top tip → actions) fits inside ~720px viewports without scroll.
+     Lower sections are collapsed by <details> — only the summary bars are
+     visible by default. Scroll remains as a safety net for very short
+     viewports (<640px) or when the user opens both <details>. */
+  overflow-y: auto;
+  padding: 10px 0;
+}
+
+.result.hidden {
+  display: none;
+}
+
+.result-box {
+  text-align: center;
+  min-width: 280px;
+  margin: auto;
+}
+
+.result-title {
+  font-size: 40px;
+  color: var(--hp);
+  letter-spacing: 4px;
+  text-shadow: 3px 3px 0 var(--ink);
+}
+
+.result-time {
+  margin-top: 10px;
+  font-size: 30px;
+  font-weight: bold;
+  text-shadow: 2px 2px 0 var(--ink);
+}
+
+.result-rows {
+  margin: 20px auto 0;
+  width: 240px;
+}
+
+.result-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 0;
+  font-size: 15px;
+  color: var(--text-dim);
+}
+
+.result-gold-row {
+  color: var(--gold);
+  font-weight: bold;
+  border-top: 2px solid var(--panel);
+  margin-top: 4px;
+  padding-top: 10px;
+}
+
+.result-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin-top: 12px;
+}
+
+.result-btn {
+  padding: 12px 22px;
+  background: var(--panel);
+  border: 3px solid #000;
+  box-shadow: 4px 4px 0 var(--ink);
+  color: #fff;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.result-btn-go {
+  color: var(--gold);
+}
+
+.result-btn:hover {
+  border-color: var(--gold);
+}
+
+/* --- game-over additions: hero / weapons / skills --- */
+.result-hero {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.result-icon {
+  image-rendering: pixelated;
+}
+
+.result-hero-name {
+  color: var(--gold);
+  font-size: 14px;
+  font-weight: bold;
+}
+
+.result-section {
+  margin-top: 8px;
+}
+
+.result-label {
+  color: var(--text-dim);
+  font-size: 11px;
+  letter-spacing: 2px;
+  margin-bottom: 4px;
+}
+
+.result-weapons {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.result-skills {
+  display: flex;
+  gap: 4px 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+.result-skill {
+  color: var(--gold);
+}
+
+/* --- skill-unlock toast --- */
+.toast {
+  position: absolute;
+  top: 122px;
+  left: 50%;
+  transform: translateX(-50%);
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.toast-item {
+  padding: 10px 26px;
+  background: linear-gradient(#3a3052, #241d38);
+  border: 3px solid var(--gold);
+  box-shadow: 0 0 0 2px #000, 4px 4px 0 var(--ink);
+  text-align: center;
+  font-family: 'Courier New', monospace;
+  line-height: 1.5; /* #game sets line-height:0 — restore it for stacked text */
+}
+
+.toast-tag {
+  color: var(--gold);
+  font-size: 11px;
+  letter-spacing: 2px;
+}
+
+.toast-name {
+  color: #fff;
+  font-size: 17px;
+  font-weight: bold;
+  margin-top: 3px;
+}
+
+.toast-text {
+  color: var(--text-dim);
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+@keyframes toast-enter {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes toast-exit {
+  to {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+}
+
+.toast-item.toast-enter {
+  animation: toast-enter 0.3s ease-out both;
+}
+
+.toast-item.toast-exit {
+  animation: toast-exit 0.4s ease-in forwards;
+}
+
+/* --- title screen --- */
+.title {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #15121f;
+  font-family: 'Courier New', monospace;
+}
+
+.title.hidden {
+  display: none;
+}
+
+/* Title Scene — full-bleed key-art behind the menu */
+.title-scene {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  image-rendering: pixelated;
+  z-index: 0;
+}
+
+.title-box {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  background: rgba(12, 10, 20, 0.82);
+  padding: 36px 56px 32px;
+  border: 3px solid #000;
+  box-shadow: 0 0 0 2px #3d3050, 8px 8px 0 rgba(0, 0, 0, 0.5), 0 0 28px rgba(240, 210, 122, 0.18);
+  /* a slow pulse on the gold glow ring — gives the menu life without being
+     loud. Pairs with the title-name shimmer below. */
+  animation: title-box-pulse 4.5s ease-in-out infinite;
+}
+@keyframes title-box-pulse {
+  0%, 100% { box-shadow: 0 0 0 2px #3d3050, 8px 8px 0 rgba(0, 0, 0, 0.5), 0 0 22px rgba(240, 210, 122, 0.12); }
+  50%      { box-shadow: 0 0 0 2px #3d3050, 8px 8px 0 rgba(0, 0, 0, 0.5), 0 0 38px rgba(240, 210, 122, 0.32); }
+}
+
+.title-tag {
+  color: var(--text-dim);
+  font-size: 12px;
+  letter-spacing: 8px;
+  margin-bottom: 10px;
+  opacity: 0.75;
+}
+
+.title-name {
+  font-size: 54px;
+  line-height: 1;
+  color: var(--gold);
+  letter-spacing: 8px;
+  text-shadow: 3px 3px 0 var(--ink), 0 0 18px rgba(240, 210, 122, 0.45), 0 0 38px rgba(240, 210, 122, 0.2);
+  margin-bottom: 4px;
+  animation: title-name-shimmer 3.8s ease-in-out infinite;
+}
+@keyframes title-name-shimmer {
+  0%, 100% { text-shadow: 3px 3px 0 var(--ink), 0 0 14px rgba(240, 210, 122, 0.35), 0 0 28px rgba(240, 210, 122, 0.12); }
+  50%      { text-shadow: 3px 3px 0 var(--ink), 0 0 22px rgba(240, 210, 122, 0.65), 0 0 46px rgba(240, 210, 122, 0.3); }
+}
+
+.title-sub {
+  margin-top: 18px;
+  margin-bottom: 6px;
+  color: var(--text-dim);
+  font-size: 13px;
+  letter-spacing: 2px;
+}
+
+.title-btn {
+  display: block;
+  margin: 18px auto 0;
+  width: 220px;
+  padding: 14px;
+  background: var(--panel);
+  border: 3px solid #000;
+  box-shadow: 4px 4px 0 var(--ink);
+  color: #fff;
+  font-family: inherit;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.25s ease, box-shadow 0.4s ease;
+}
+
+.title-btn-go {
+  color: var(--gold);
+}
+
+.title-btn:hover {
+  border-color: var(--gold);
+  box-shadow: 0 0 14px rgba(240, 210, 122, 0.5), inset 0 0 0 1px rgba(240, 210, 122, 0.6), 4px 4px 0 var(--ink);
+  transform: translateY(-1px);
+}
+
+.title-btn:hover .btn-label {
+  text-shadow: 0 0 8px rgba(240, 210, 122, 0.7);
+}
+
+.title-btn:active {
+  transform: translateY(0) scale(0.98);
+}
+
+/* --- character select --- */
+.charselect {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  /* avoid justify-content:center — when the panel exceeds viewport height
+     the top would clip off-screen. flex-start + overflow + padding lets
+     short content sit near the top and long content scroll. */
+  overflow-y: auto;
+  padding: 24px 16px;
+  background: #15121f;
+  font-family: 'Courier New', monospace;
+}
+
+.charselect.hidden {
+  display: none;
+}
+
+.cs-breadcrumb {
+  text-align: center;
+  margin-bottom: 16px;
+  font-size: 13px;
+  color: var(--text-dim);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+}
+
+.cs-crumb-link,
+.arc-crumb-link {
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--text-dim);
+  font: inherit;
+  padding: 4px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+}
+.cs-crumb-link:hover,
+.arc-crumb-link:hover {
+  color: var(--gold);
+  border-color: var(--gold);
+  background: rgba(240, 210, 122, 0.08);
+}
+.cs-crumb-sep,
+.arc-crumb-sep {
+  color: var(--text-dim);
+  opacity: 0.5;
+}
+.cs-crumb-step,
+.arc-crumb-step {
+  color: var(--text-dim);
+  opacity: 0.8;
+}
+
+.arcana-breadcrumb {
+  text-align: center;
+  margin-bottom: 14px;
+  font-size: 13px;
+  color: var(--text-dim);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.cs-head {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.cs-title {
+  color: var(--gold);
+  font-size: 30px;
+  letter-spacing: 6px;
+  text-shadow: 3px 3px 0 var(--ink);
+}
+
+.cs-sub {
+  margin-top: 12px;
+  color: var(--text-dim);
+  font-size: 13px;
+}
+
+.cs-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 196px);
+  gap: 16px;
+  justify-content: center;
+}
+
+.cs-card {
+  width: 196px;
+  min-height: 360px;
+  padding: 16px 12px 18px;
+  background: var(--panel);
+  border: 3px solid #000;
+  box-shadow: 4px 4px 0 var(--ink);
+  color: #fff;
+  font-family: inherit;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.cs-card:not(.locked):hover {
+  border-color: var(--gold);
+}
+
+.cs-gold { color: var(--gold); margin-top: 6px; font-size: 14px; }
+
+.cs-hero-lv {
+  font-size: 12px;
+  color: var(--text-dim);
+  margin-top: 4px;
+}
+.cs-hero-lv b { color: var(--gold); }
+
+.cs-pick, .cs-upgrade {
+  width: 100%;
+  margin-top: 6px;
+  padding: 8px 0;
+  background: var(--panel);
+  border: 2px solid #000;
+  box-shadow: 3px 3px 0 var(--ink);
+  color: #fff;
+  font-family: inherit;
+  font-weight: bold;
+  font-size: 12px;
+  cursor: pointer;
+}
+.cs-pick { border-color: var(--gold); color: var(--gold); }
+.cs-upgrade.disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.cs-portrait {
+  image-rendering: pixelated;
+  background: #15121f;
+  border: 2px solid #000;
+}
+
+.cs-meta {
+  text-align: center;
+}
+
+.cs-name {
+  font-size: 19px;
+  font-weight: bold;
+  color: var(--gold);
+}
+
+.cs-blurb {
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--text-dim);
+  line-height: 1.4;
+}
+
+.cs-perk {
+  margin-top: 8px;
+  font-size: 12px;
+  font-weight: bold;
+  color: #fff;
+}
+
+/* --- title key-art illustration --- */
+.title-art {
+  display: block;
+  margin: 0 auto 14px;
+  image-rendering: pixelated;
+  width: 90%;
+  max-width: 660px;
+  height: auto;
+  border: 3px solid #000;
+  box-shadow: 5px 5px 0 var(--ink);
+}
+
+/* --- map select --- */
+.mapselect {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  /* 6 stage cards in a 3×2 grid + head — used to overflow the 720px game
+     canvas by ~50px so chapters 4-6 got cut off at the bottom. Smaller
+     padding + compressed card spacing keeps everything visible. */
+  overflow-y: auto;
+  padding: 12px 16px;
+  background: #15121f;
+  font-family: 'Courier New', monospace;
+}
+
+.mapselect.hidden {
+  display: none;
+}
+
+.ms-head {
+  text-align: center;
+  margin-bottom: 12px;
+}
+
+.ms-title {
+  color: var(--gold);
+  font-size: 30px;
+  letter-spacing: 6px;
+  text-shadow: 3px 3px 0 var(--ink);
+}
+
+.ms-sub {
+  margin-top: 6px;
+  color: var(--text-dim);
+  font-size: 13px;
+}
+
+.ms-grid {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+  max-width: 880px;
+}
+
+.ms-card {
+  padding: 10px 12px;
+  background: var(--panel);
+  border: 3px solid #000;
+  box-shadow: 4px 4px 0 var(--ink);
+  color: #fff;
+  font-family: inherit;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.ms-card:hover {
+  border-color: var(--gold);
+}
+
+/* locked stage / hero cards (chapter not yet unlocked) */
+.ms-card.locked,
+.cs-card.locked {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.ms-card.locked:hover,
+.cs-card.locked:hover {
+  border-color: #000;
+}
+
+.ms-chapter {
+  color: var(--gold);
+  font-size: 11px;
+  letter-spacing: 2px;
+  margin-bottom: 3px;
+}
+
+.ms-preview {
+  image-rendering: pixelated;
+  border: 2px solid #000;
+}
+
+.ms-meta {
+  text-align: center;
+}
+
+.ms-name {
+  font-size: 19px;
+  font-weight: bold;
+  color: var(--gold);
+}
+
+.ms-desc {
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+/* --- equipped weapon slots (bottom-left) --- */
+.hud-weapons {
+  position: absolute;
+  bottom: 12px;
+  left: 12px;
+  display: flex;
+  gap: 5px;
+}
+
+.hud-weapon {
+  width: 42px;
+  height: 42px;
+  image-rendering: pixelated;
+}
+
+/* --- active signature slot (bottom-right) --- */
+.hud-active {
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+  width: 64px;
+  height: 64px;
+  border: 1px solid #d4a04a;
+  border-radius: 4px;
+  background: rgba(7, 6, 12, 0.55);
+  box-shadow: 0 0 0 1px rgba(7, 6, 12, 0.8), 0 0 12px rgba(212, 160, 74, 0.18);
+}
+
+.hud-active.hidden {
+  display: none;
+}
+
+.hud-active-icon,
+.hud-active-cd {
+  position: absolute;
+  inset: 8px;
+  width: 48px;
+  height: 48px;
+  image-rendering: pixelated;
+}
+
+.hud-active-cd {
+  pointer-events: none;
+}
+
+.hud-active-key {
+  position: absolute;
+  right: 4px;
+  bottom: 1px;
+  font-family: monospace;
+  font-size: 9px;
+  letter-spacing: 0.5px;
+  color: #ece2c8;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9);
+  pointer-events: none;
+}
+
+.hud-active-cd-text {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-family: monospace;
+  font-size: 14px;
+  font-weight: bold;
+  color: #ece2c8;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 1);
+  pointer-events: none;
+  transition: opacity 0.2s;
+}
+
+/* --- boss HP bar (bottom edge while a boss is alive) --- */
+.hud-boss {
+  position: absolute;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 460px;
+  text-align: center;
+}
+
+.hud-boss.hidden {
+  display: none;
+}
+
+.hud-boss-name {
+  color: #ff8a6a;
+  font-size: 14px;
+  font-weight: bold;
+  letter-spacing: 2px;
+  text-shadow: 2px 2px 0 var(--ink);
+  margin-bottom: 4px;
+}
+
+.hud-boss-bar {
+  height: 22px;
+}
+
+.hud-boss-bar .hud-bar-fill {
+  background-size: 460px 22px;
+}
+
+/* --- legendary weapon picker --- */
+.legendary {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  justify-content: center;
+  overflow-y: auto;
+  padding: 24px 0;
+  background: rgba(13, 10, 20, 0.82);
+  font-family: 'Courier New', monospace;
+}
+.legendary-panel { margin: auto; }
+
+.legendary.hidden {
+  display: none;
+}
+
+.legendary-panel {
+  text-align: center;
+}
+
+.legendary-title {
+  color: var(--gold);
+  font-size: 32px;
+  letter-spacing: 6px;
+  text-shadow: 3px 3px 0 var(--ink);
+}
+
+.legendary-sub {
+  margin: 12px 0 22px;
+  color: var(--text-dim);
+  font-size: 13px;
+}
+
+.legendary-cards {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+}
+
+.leg-card {
+  width: 180px;
+  min-height: 196px;
+  padding: 16px 14px;
+  background: linear-gradient(#3a3052, #241d38);
+  border: 3px solid var(--gold);
+  box-shadow: 0 0 0 2px #000, 5px 5px 0 var(--ink);
+  color: #fff;
+  font-family: inherit;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.leg-card:hover {
+  background: linear-gradient(#4a3e68, #2e2546);
+}
+
+.leg-sprite {
+  image-rendering: pixelated;
+  background: #15121f;
+  border: 2px solid #000;
+  /* safety net — a sprite canvas should never be wider than its card. HD
+     pickup_* assets are 48px → at zoom 4 they hit 192px and would burst out
+     of the 180px card if JS forgets to size them down. */
+  max-width: 100%;
+  height: auto;
+}
+
+.leg-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.leg-key {
+  width: 24px;
+  height: 24px;
+  line-height: 24px;
+  background: var(--gold);
+  color: var(--ink);
+  font-weight: bold;
+  font-size: 14px;
+}
+
+.leg-name {
+  font-size: 17px;
+  font-weight: bold;
+  color: var(--gold);
+}
+
+.leg-desc {
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+/* --- title sub-buttons (achievements / arsenal) --- */
+.title-btn-row {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin-top: 14px;
+}
+
+.title-btn-sm {
+  display: block;
+  width: 104px;
+  margin: 0;
+  padding: 12px 8px;
+  font-size: 13px;
+}
+
+.title-sections {
+  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.title-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.title-section-head {
+  font-size: 11px;
+  letter-spacing: 3px;
+  color: var(--text-dim);
+  margin: 0;
+  text-transform: uppercase;
+  opacity: 0.7;
+}
+
+.title-gear {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1px solid var(--frame);
+  background: rgba(20, 16, 28, 0.72);
+  color: var(--text-dim);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.15s ease, border-color 0.15s ease, transform 0.4s ease;
+  z-index: 2;
+}
+.title-gear:hover {
+  color: var(--gold);
+  border-color: var(--gold);
+  transform: rotate(45deg);
+}
+.title-gear:active {
+  transform: rotate(45deg) scale(0.95);
+}
+
+/* --- info pages (achievements / arsenal) --- */
+.page {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #15121f;
+  font-family: 'Courier New', monospace;
+}
+
+.page.hidden {
+  display: none;
+}
+
+.page-panel {
+  width: 92%;
+  max-width: 920px;
+  max-height: 90%;
+  display: flex;
+  flex-direction: column;
+}
+
+.page-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 14px;
+}
+
+.page-title {
+  color: var(--gold);
+  font-size: 26px;
+  letter-spacing: 4px;
+  text-shadow: 2px 2px 0 var(--ink);
+}
+
+.page-close {
+  padding: 8px 22px;
+  background: var(--panel);
+  border: 3px solid #000;
+  box-shadow: 3px 3px 0 var(--ink);
+  color: #fff;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.page-close:hover {
+  border-color: var(--gold);
+}
+
+.page-scroll {
+  overflow-y: auto;
+  padding-right: 6px;
+}
+
+.page-cat {
+  margin-bottom: 16px;
+}
+
+.page-cat-name {
+  color: var(--gold);
+  font-size: 13px;
+  font-weight: bold;
+  letter-spacing: 2px;
+  margin-bottom: 8px;
+}
+
+/* Class affinity subheader inside the basic-weapon section of arsenal. */
+.page-subhead {
+  color: #c5b985;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin: 10px 0 6px;
+  padding: 2px 6px;
+  border-left: 2px solid var(--gold);
+  opacity: 0.8;
+}
+
+/* Perk count chip on arsenal cards — signals weapons with a skill tree. */
+.ach-perk {
+  display: inline-block;
+  margin-top: 2px;
+  padding: 1px 6px;
+  font-size: 10px;
+  color: #8de0c0;
+  background: rgba(141, 224, 192, 0.12);
+  border: 1px solid rgba(141, 224, 192, 0.35);
+  border-radius: 3px;
+  letter-spacing: 0.5px;
+}
+
+/* Hover tooltip on arsenal cards — exposes the full Lv2-5 skill tree so
+   the player sees what each level unlocks before committing. Pinned to
+   the right edge of the parent card via absolute positioning; the .ars-card
+   needs `position: relative` to anchor it. */
+.ars-card { position: relative; }
+/* Hovering creates a stacking context that covers neighbouring cards — the
+   .ars-tip child has z-index:9999, but without lifting the parent .ars-card
+   the tooltip stayed *behind* the next card's own stacking context. Raise
+   the hovered card so its tooltip floats over everything in the grid. */
+.ars-card:hover { z-index: 10000; }
+
+.ars-tip {
+  position: absolute;
+  top: 0;
+  left: calc(100% + 8px);
+  /* Raise above page-panel + adjacent cards. Arsenal grid cards have their
+     own stacking context for the hover highlight, so a high value keeps
+     the tooltip from being clipped by neighbouring cards or the panel border. */
+  z-index: 9999;
+  display: none;
+  min-width: 240px;
+  max-width: 280px;
+  padding: 10px 12px;
+  background: rgba(15, 12, 28, 0.96);
+  border: 1px solid rgba(192, 167, 110, 0.6);
+  border-radius: 4px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6);
+  pointer-events: none;
+}
+
+/* Right-edge cards overflow viewport — JS adds .ars-flip when the card sits
+   on the right half of the grid (works at any column count, unlike the old
+   :nth-child(2n) toggle which broke on 3- or 5-column layouts). */
+.ars-card.ars-flip .ars-tip {
+  left: auto;
+  right: calc(100% + 8px);
+}
+
+.ars-card:hover .ars-tip { display: block; }
+
+.ars-tip-head {
+  color: var(--gold);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid rgba(192, 167, 110, 0.25);
+}
+
+.ars-tip-row {
+  display: grid;
+  grid-template-columns: 36px 1fr;
+  gap: 4px 8px;
+  align-items: baseline;
+  font-size: 11px;
+  margin-bottom: 4px;
+}
+.ars-tip-row:last-child { margin-bottom: 0; }
+
+.ars-tip-lvl {
+  color: #8de0c0;
+  font-weight: 700;
+  text-align: center;
+  padding: 1px 0;
+  background: rgba(141, 224, 192, 0.12);
+  border: 1px solid rgba(141, 224, 192, 0.3);
+  border-radius: 3px;
+  font-size: 10px;
+  letter-spacing: 0.5px;
+  grid-row: span 2;
+}
+.ars-tip-name {
+  color: #f0e8c8;
+  font-weight: 600;
+}
+.ars-tip-mod {
+  color: #b0a890;
+  font-size: 10px;
+  line-height: 1.4;
+  grid-column: 2;
+}
+
+/* Sky-drop FX preview — animated visualization of telegraph → drop → impact
+   for weapons with aoeKit. Appears in the hover tooltip so the player sees
+   what the cast actually looks like before committing to a level-up.
+   Uses CSS keyframes (no canvas, no per-frame JS) — animations pause when
+   the parent tooltip is hidden (.ars-tip display:none → no GPU work). */
+.ars-preview {
+  position: relative;
+  width: 100%;
+  height: 80px;
+  margin: 8px 0 4px;
+  background: linear-gradient(to bottom, rgba(20, 16, 32, 0.6), rgba(40, 28, 20, 0.4));
+  border: 1px solid rgba(192, 167, 110, 0.2);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.ars-preview-stage {
+  position: absolute;
+  inset: 0;
+}
+.ars-preview-tele,
+.ars-preview-drop,
+.ars-preview-impact {
+  position: absolute;
+  image-rendering: pixelated;
+  pointer-events: none;
+}
+/* Telegraph rune sits centered on the "ground" line, fades in/out twice per cycle */
+.ars-preview-tele {
+  width: 36px;
+  height: 36px;
+  bottom: 6px;
+  left: 50%;
+  transform: translateX(-50%);
+  animation: ars-tele 1.6s linear infinite;
+}
+@keyframes ars-tele {
+  0%    { opacity: 0; transform: translateX(-50%) scale(0.6); }
+  15%   { opacity: 0.9; transform: translateX(-50%) scale(1.0); }
+  40%   { opacity: 0.5; transform: translateX(-50%) scale(1.05); }
+  55%   { opacity: 0; transform: translateX(-50%) scale(1.1); }
+  100%  { opacity: 0; transform: translateX(-50%) scale(0.6); }
+}
+/* Drop body falls from above, slows near ground, vanishes on impact */
+.ars-preview-drop {
+  width: 32px;
+  height: 44px;
+  top: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  animation: ars-drop 1.6s linear infinite;
+}
+@keyframes ars-drop {
+  0%    { opacity: 0; top: -10px; }
+  35%   { opacity: 0; top: -10px; }
+  45%   { opacity: 1; top: -10px; }
+  68%   { opacity: 1; top: 30px; }
+  72%   { opacity: 0; top: 36px; }
+  100%  { opacity: 0; top: 36px; }
+}
+/* Impact burst — radial expansion at landing point */
+.ars-preview-impact {
+  width: 44px;
+  height: 44px;
+  bottom: 4px;
+  left: 50%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 240, 200, 0.95) 0%, rgba(240, 138, 42, 0.6) 40%, transparent 70%);
+  transform: translateX(-50%) scale(0);
+  animation: ars-impact 1.6s linear infinite;
+}
+@keyframes ars-impact {
+  0%, 70%  { opacity: 0; transform: translateX(-50%) scale(0); }
+  72%      { opacity: 1; transform: translateX(-50%) scale(0.6); }
+  85%      { opacity: 0.7; transform: translateX(-50%) scale(1.3); }
+  100%     { opacity: 0; transform: translateX(-50%) scale(1.5); }
+}
+.ars-preview-label {
+  position: absolute;
+  bottom: 2px;
+  left: 4px;
+  font-size: 9px;
+  letter-spacing: 0.5px;
+  color: rgba(192, 167, 110, 0.7);
+  text-transform: uppercase;
+  pointer-events: none;
+}
+/* Static projectile preview for non-aoeKit weapons (fan/orbit/melee etc.) —
+   shows the projectile sprite scaled up so it reads bigger than the icon. */
+.ars-preview-static {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.ars-preview-static img,
+.ars-preview-static canvas {
+  image-rendering: pixelated;
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+}
+.ars-preview-static.ars-spin img { animation: ars-spin 1.8s linear infinite; }
+.ars-preview-static.ars-orbit img { animation: ars-orbit 1.5s linear infinite; }
+.ars-preview-static.ars-fan img { animation: ars-fan 1.3s linear infinite; }
+.ars-preview-static.ars-melee img { animation: ars-melee 1.0s ease-in-out infinite; }
+@keyframes ars-spin {
+  0%, 100% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+@keyframes ars-orbit {
+  0%   { transform: translateX(-22px) rotate(0deg); }
+  100% { transform: translateX(-22px) rotate(360deg); }
+}
+@keyframes ars-fan {
+  0%    { transform: translateX(-40px) scale(0.8); opacity: 0; }
+  25%   { opacity: 1; }
+  80%   { transform: translateX(40px) scale(1.1); opacity: 1; }
+  100%  { transform: translateX(40px) scale(1.1); opacity: 0; }
+}
+@keyframes ars-melee {
+  0%, 100% { transform: rotate(-30deg); }
+  50%      { transform: rotate(30deg); }
+}
+
+.page-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(224px, 1fr));
+  gap: 8px;
+}
+
+.page-icon {
+  image-rendering: pixelated;
+  flex-shrink: 0;
+  background: #15121f;
+  border: 2px solid #000;
+  /* hard size cap — without this, HD sprites (48px source × ZOOM 2 = 96px)
+     or FX sprites (fx_explosion is 32-48px source, was hitting 96px) blow
+     out their grid cell. The JS icon() builders now compute zoom dynamically
+     to land inside this box, but the cap is a belt-and-suspenders safety net
+     so a new sprite added later can't crash the layout. */
+  width: 56px;
+  height: 56px;
+  object-fit: contain;
+}
+
+.ach-card,
+.ars-card {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  background: var(--panel);
+  border: 3px solid #000;
+  box-shadow: 2px 2px 0 var(--ink);
+  padding: 8px 10px;
+}
+
+.ars-legendary {
+  border-color: var(--gold);
+}
+
+.ach-info {
+  min-width: 0;
+}
+
+.ach-name {
+  color: var(--gold);
+  font-size: 13px;
+  font-weight: bold;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.ach-blurb {
+  color: var(--text-dim);
+  font-size: 11px;
+  line-height: 1.35;
+  margin-top: 2px;
+}
+
+.ach-reward {
+  font-size: 11px;
+  font-weight: bold;
+  margin-top: 3px;
+}
+
+.ach-locked {
+  opacity: 0.45;
+}
+
+.page-count {
+  font-size: 13px;
+  color: var(--text-dim);
+  letter-spacing: 1px;
+}
+
+/* --- gold shop --- */
+.shop {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  justify-content: center;
+  overflow-y: auto;
+  padding: 20px 0;
+  background: #15121f;
+  font-family: 'Courier New', monospace;
+}
+
+.shop.hidden {
+  display: none;
+}
+
+.shop-panel {
+  width: 92%;
+  max-width: 880px;
+  max-height: 92%;
+  display: flex;
+  flex-direction: column;
+}
+
+.shop-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 14px;
+}
+
+.shop-title {
+  color: var(--gold);
+  font-size: 24px;
+  letter-spacing: 4px;
+  text-shadow: 2px 2px 0 var(--ink);
+}
+
+.shop-gold {
+  color: var(--gold);
+  font-size: 18px;
+  font-weight: bold;
+}
+
+.shop-head-right {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.shop-reset {
+  background: var(--ink);
+  border: 2px solid rgba(231, 198, 106, 0.4);
+  color: var(--gold);
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: bold;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.shop-reset:hover:not(:disabled) { border-color: var(--gold); background: var(--panel); }
+.shop-reset:disabled { opacity: 0.35; cursor: default; }
+
+.shop-sub {
+  color: var(--text-dim);
+  font-size: 12px;
+  margin: -8px 0 12px;
+}
+
+/* all four categories stacked on one page; the container scrolls, not each
+   individual grid (was a per-tab horizontal layout before the VS rework). */
+.shop-cats {
+  overflow-y: auto;
+  padding-right: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.shop-cat-head {
+  color: var(--gold);
+  font-size: 15px;
+  letter-spacing: 1px;
+  margin-bottom: 8px;
+  opacity: 0.92;
+}
+
+/* responsive scroll grid (design-review D2): columns auto-fill to the width */
+/* shop tabs */
+.shop-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.shop-tab {
+  flex: 1;
+  padding: 10px;
+  background: var(--ink);
+  border: 3px solid #000;
+  color: var(--text-dim);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.shop-tab.active {
+  background: var(--panel);
+  border-color: var(--gold);
+  color: var(--gold);
+}
+
+.shop-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 9px;
+}
+
+.shop-tile {
+  background: var(--panel);
+  border: 3px solid #000;
+  box-shadow: 3px 3px 0 var(--ink);
+  color: #fff;
+  font-family: inherit;
+  cursor: pointer;
+  padding: 10px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.shop-icon {
+  image-rendering: pixelated;
+  flex-shrink: 0;
+  background: #15121f;
+  border: 2px solid #000;
+}
+
+.shop-tile-info {
+  min-width: 0;
+  text-align: left;
+}
+
+.shop-tile.afford:hover {
+  border-color: var(--gold);
+}
+
+.shop-tile.locked {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.shop-tile.maxed {
+  opacity: 0.75;
+  cursor: default;
+  border-color: var(--gold);
+}
+
+.tile-name {
+  font-size: 15px;
+  font-weight: bold;
+  color: var(--gold);
+}
+
+.tile-pips {
+  display: flex;
+  gap: 3px;
+}
+
+.pip {
+  width: 8px;
+  height: 8px;
+  background: var(--ink);
+  border: 1px solid #000;
+}
+
+.pip.on {
+  background: var(--gold);
+}
+
+.tile-desc {
+  font-size: 11px;
+  color: var(--text-dim);
+  text-align: center;
+  line-height: 1.4;
+}
+
+.tile-cost {
+  font-size: 13px;
+  font-weight: bold;
+}
+
+.shop-tile.afford .tile-cost {
+  color: var(--gold);
+}
+
+.shop-close {
+  margin-top: 14px;
+  align-self: center;
+  padding: 10px 30px;
+  background: var(--panel);
+  border: 3px solid #000;
+  box-shadow: 3px 3px 0 var(--ink);
+  color: #fff;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.shop-close:hover {
+  border-color: var(--gold);
+}
+
+/* ── treasure-chest gacha modal ── */
+.gacha-cards {
+  display: flex;
+  gap: 14px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin: 8px 0 18px;
+}
+
+.gacha-card {
+  cursor: default;
+  animation: gacha-pop 0.34s cubic-bezier(0.2, 1.4, 0.4, 1) both;
+}
+
+.gacha-card:hover {
+  background: linear-gradient(#3a3052, #241d38);
+}
+
+@keyframes gacha-pop {
+  from { transform: scale(0.3) translateY(20px); opacity: 0; }
+  to { transform: scale(1) translateY(0); opacity: 1; }
+}
+
+/* ── in-game status panel (ESC) ── */
+.pause {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start; /* panel hugs the left so the expanded map
+                                  (rendered centre-right on the canvas) stays
+                                  visible beside it */
+  padding-left: 3vw;
+  background: rgba(8, 6, 14, 0.34); /* light dim — the Pixi big-map overlay
+                                       reads through it */
+  font-family: 'Courier New', monospace;
+  /* let pointer events fall through to the canvas so the expanded map can be
+     dragged; the panel re-enables them on itself below */
+  pointer-events: none;
+}
+
+.pause-panel { pointer-events: auto; }
+
+.pause.hidden { display: none; }
+
+.pause-panel {
+  width: 360px;
+  background: linear-gradient(180deg, #2a2440, #15121f);
+  border: 2px solid rgba(240, 210, 122, 0.4);
+  box-shadow: 0 0 30px rgba(0, 0, 0, 0.8), inset 0 0 30px rgba(240, 210, 122, 0.05), 0 0 0 2px #000, 8px 8px 0 rgba(0, 0, 0, 0.5);
+  padding: 16px 20px 18px;
+  color: #fff;
+  animation: pause-enter 0.3s ease-out;
+}
+
+.pause-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  border-bottom: 2px solid #3d3050;
+  padding-bottom: 8px;
+  margin-bottom: 8px;
+}
+
+.pause-hero { color: var(--gold); font-weight: bold; font-size: 16px; }
+.pause-time { color: #fff; font-size: 18px; font-weight: bold; }
+
+.pause-sec { margin-top: 10px; }
+
+.pause-sec-name {
+  color: #f0d27a;
+  font-size: 11px;
+  letter-spacing: 2px;
+  margin-bottom: 4px;
+  border-bottom: 1px solid #f0d27a;
+  padding-bottom: 3px;
+  text-transform: uppercase;
+  font-weight: bold;
+}
+
+.pause-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  padding: 2px 0;
+}
+
+.pause-row:nth-child(even) {
+  background: rgba(240, 210, 122, 0.04);
+  padding: 2px 4px;
+}
+
+.pause-row span:first-child { color: var(--text-dim); }
+.pause-gold { color: var(--gold); font-weight: bold; }
+
+.pause-bar-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 3px;
+}
+
+.pause-bar-lbl { color: var(--text-dim); font-size: 11px; width: 22px; }
+.pause-bar-val { font-size: 11px; width: 34px; text-align: right; }
+
+.pause-bar {
+  flex: 1;
+  height: 12px;
+  background: #15121f;
+  border: 2px solid #000;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.6);
+  overflow: hidden;
+}
+
+.pause-bar-fill {
+  height: 100%;
+  transition: width 0.3s ease;
+}
+.pause-hp {
+  background: linear-gradient(90deg, #c8332a, #e85c4a);
+  box-shadow: 0 0 8px rgba(200, 51, 42, 0.4);
+}
+
+.pause-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 2px;
+}
+
+.pause-slot {
+  position: relative;
+  background: #15121f;
+  border: 2px solid #000;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pause-slot-passive { border-color: #3a6a8a; }
+.pause-icon { image-rendering: pixelated; }
+
+.pause-slot-lv {
+  position: absolute;
+  right: -2px;
+  bottom: -4px;
+  background: var(--gold);
+  color: var(--ink);
+  font-size: 10px;
+  font-weight: bold;
+  padding: 0 3px;
+}
+
+.pause-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 16px;
+  justify-content: center;
+}
+
+/* ──────────────────────────────────────────────────────────────────────────
+ * share7 design polish pass (3-agent audit)
+ * - checkerboard icon frames (so sprite transparency reads as deliberate)
+ * - serif-feel section headers + page-title gold glow
+ * - card gradient + radial accent (charselect / mapselect / page cards)
+ * - achievement unlock/lock states · bestiary boss highlight
+ * - shop tile state polish · page-grid tightening
+ * ────────────────────────────────────────────────────────────────────────── */
+
+/* shared checker pattern utility — applied to icon frames across all pages */
+.page-icon,
+.cs-portrait,
+.evo-icon-wrap,
+.lvl-icon,
+.pause-slot,
+.pause-icon {
+  background-color: #15121f;
+  background-image:
+    linear-gradient(45deg, #221a36 25%, transparent 25%),
+    linear-gradient(-45deg, #221a36 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #221a36 75%),
+    linear-gradient(-45deg, transparent 75%, #221a36 75%);
+  background-size: 10px 10px;
+  background-position: 0 0, 0 5px, 5px -5px, -5px 0;
+}
+
+/* page section header — accent split + soft glow */
+.page-cat-name {
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: var(--gold);
+  text-shadow: 0 2px 6px #000, 0 0 12px rgba(212, 160, 122, 0.25);
+  padding-bottom: 6px;
+  border-bottom: 1px solid rgba(212, 160, 122, 0.25);
+  margin-bottom: 10px;
+}
+
+/* page title — gold halo over the existing pixel shadow */
+.page-title {
+  text-shadow: 2px 2px 0 var(--ink), 0 0 16px rgba(240, 210, 122, 0.4);
+}
+
+/* tighter page grid — closer to the showcase density */
+.page-grid {
+  gap: 10px;
+  grid-template-columns: repeat(auto-fill, minmax(232px, 1fr));
+}
+
+/* card gradient + radial accent — applies to most card surfaces */
+.cs-card,
+.ms-chapter,
+.ach-card,
+.ars-card {
+  position: relative;
+  background: linear-gradient(180deg, #322a48, #211b33);
+  isolation: isolate;
+}
+.cs-card::before,
+.ms-chapter::before,
+.ach-card::before,
+.ars-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 0%, rgba(240, 210, 122, 0.14), transparent 60%);
+  pointer-events: none;
+  z-index: -1;
+}
+
+/* bestiary boss highlight — bigger card, blood-coloured border */
+.ach-card.role-boss {
+  border-color: #c8332a;
+  grid-column: span 2;
+  background: linear-gradient(180deg, #3a2030, #1d1424);
+}
+.ach-card.role-elite { border-color: var(--gold); }
+.ach-card.role-basic { /* default */ }
+
+/* arsenal legendary — gold border + faint glow */
+.ars-card.ars-legendary { border-color: var(--gold); box-shadow: 0 0 0 2px #000, 5px 5px 0 var(--ink), 0 0 14px rgba(240, 210, 122, 0.22); }
+
+/* achievement done / locked — clear visual states */
+.ach-card.ach-done {
+  background: linear-gradient(180deg, #3a3052, #211b33);
+  box-shadow: 0 0 0 2px #000, 5px 5px 0 var(--ink), 0 0 14px rgba(240, 210, 122, 0.18);
+}
+.ach-card.ach-locked {
+  opacity: 0.5;
+  filter: grayscale(0.55);
+}
+.ach-card.ach-locked::before { background: none; }
+
+/* shop tile states — disabled and maxed read clearly */
+.shop-tile.locked {
+  opacity: 0.55;
+  filter: grayscale(0.5);
+  cursor: not-allowed;
+}
+.shop-tile.maxed {
+  opacity: 0.78;
+  border-color: var(--gold);
+}
+.shop-tile.maxed .tile-cost { color: var(--gold); }
+.shop-tile.afford { box-shadow: 0 0 0 2px #000, 5px 5px 0 var(--ink), 0 0 14px rgba(240, 210, 122, 0.22); }
+
+/* keyboard-hint emphasis */
+.levelup-hint { color: var(--text-dim); font-size: 11px; letter-spacing: 0.1em; }
+
+/* level-up cards stay above the radial pseudo (they have their own colour border) */
+.lvl-card { z-index: 1; }
+
+/* ──────────────────────────────────────────────────────────────────────────
+ * TASK A: Result screen redesign — cinematic backdrop + stat grid
+ * ────────────────────────────────────────────────────────────────────────── */
+
+/* radial backdrop layer for result screen */
+.result-bg {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at center, rgba(180, 40, 40, 0.35), rgba(0, 0, 0, 0.9) 60%);
+  pointer-events: none;
+}
+
+.result.victory .result-bg {
+  background: radial-gradient(circle at center, rgba(240, 210, 122, 0.35), rgba(0, 0, 0, 0.9) 60%);
+}
+
+/* YOU DIED title — large serif-feel, blood red, animated glow + drop-in.
+   Sized 44px (down from 56) to free vertical budget — the radial bg gradient
+   + drop shadow already do the dramatic lift, so the title can stay punchy
+   without dominating the result viewport. */
+.result-title-die {
+  font-size: 44px;
+  color: #c8332a;
+  letter-spacing: 6px;
+  text-shadow:
+    3px 3px 0 var(--ink),
+    0 0 14px rgba(200, 51, 42, 0.75),
+    0 0 32px rgba(200, 51, 42, 0.45);
+  margin: 0 0 8px;
+  animation: result-die-enter 0.85s ease-out both, result-die-pulse 3.2s ease-in-out 0.85s infinite;
+}
+@keyframes result-die-enter {
+  0%   { opacity: 0; transform: translateY(-30px) scale(0.92); filter: blur(6px); }
+  60%  { opacity: 1; filter: blur(0); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes result-die-pulse {
+  0%, 100% { text-shadow: 3px 3px 0 var(--ink), 0 0 12px rgba(200, 51, 42, 0.65), 0 0 22px rgba(200, 51, 42, 0.3); }
+  50%      { text-shadow: 3px 3px 0 var(--ink), 0 0 20px rgba(200, 51, 42, 0.85), 0 0 42px rgba(200, 51, 42, 0.55); }
+}
+
+/* hero card — gradient frame with portrait left + info right */
+.result-hero-card {
+  display: flex;
+  align-items: center;
+  margin: 8px auto 10px;
+  padding: 8px 14px;
+  width: 280px;
+  background: linear-gradient(180deg, #322a48, #211b33);
+  border: 3px solid #000;
+  box-shadow: 0 0 0 2px #000, 4px 4px 0 var(--ink), 0 0 14px rgba(240, 210, 122, 0.18);
+  position: relative;
+}
+.result-hero-card.hidden { display: none; }
+
+.result-hero-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 0%, rgba(240, 210, 122, 0.1), transparent 60%);
+  pointer-events: none;
+}
+
+.result-hero-card > * {
+  position: relative;
+  z-index: 1;
+}
+
+.result-hero-card .result-icon {
+  flex-shrink: 0;
+  background: #15121f;
+  border: 2px solid #000;
+  background-color: #15121f;
+  background-image:
+    linear-gradient(45deg, #221a36 25%, transparent 25%),
+    linear-gradient(-45deg, #221a36 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #221a36 75%),
+    linear-gradient(-45deg, transparent 75%, #221a36 75%);
+  background-size: 10px 10px;
+  background-position: 0 0, 0 5px, 5px -5px, -5px 0;
+}
+
+.result-hero-name {
+  color: var(--gold);
+  font-size: 14px;
+  font-weight: bold;
+}
+
+/* 2x2 stat grid */
+.result-stat-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin: 0 auto 16px;
+  width: 280px;
+}
+
+.result-stat {
+  background: #1a1626;
+  border: 2px solid #3a3250;
+  padding: 8px 10px;
+  text-align: center;
+}
+
+.result-stat-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-dim);
+  margin-bottom: 4px;
+}
+
+.result-stat-value {
+  font-size: 22px;
+  font-weight: bold;
+  color: var(--gold);
+}
+
+/* entry animation for result screen */
+@keyframes result-enter {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.result-box {
+  animation: result-enter 0.45s ease-out both;
+}
+
+/* shorthand MUST come before delay — `animation:` resets delay to 0 otherwise */
+.result-stat { animation: result-enter 0.45s ease-out both; }
+.result-stat:nth-child(1) { animation-delay: 0.05s; }
+.result-stat:nth-child(2) { animation-delay: 0.08s; }
+.result-stat:nth-child(3) { animation-delay: 0.10s; }
+
+/* new above-fold layout */
+.result-stat-survival {
+  text-align: center;
+  margin: 6px 0;
+  animation: result-enter 0.45s ease-out both;
+  animation-delay: 0.02s;
+}
+
+.result-stat-value-large {
+  font-size: 36px;
+  font-weight: bold;
+  color: var(--gold);
+  line-height: 1.1;
+}
+
+.result-stat-survival-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-dim);
+  margin-top: 4px;
+}
+
+.result-key-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin: 6px auto 10px;
+  width: 280px;
+  animation: result-enter 0.45s ease-out both;
+  animation-delay: 0.04s;
+}
+
+.result-key-stat {
+  background: #1a1626;
+  border: 2px solid #3a3250;
+  padding: 5px 8px;
+  text-align: center;
+}
+
+.result-key-stat .result-stat-label {
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-dim);
+  margin-bottom: 4px;
+}
+
+.result-key-stat .result-stat-value {
+  font-size: 18px;
+  font-weight: bold;
+  color: var(--gold);
+}
+
+.result-tips-single {
+  margin: 6px auto 8px;
+  width: 320px;
+  animation: result-enter 0.45s ease-out both;
+  animation-delay: 0.06s;
+}
+
+.result-tips-single .result-tip {
+  margin: 0;
+}
+
+/* collapsible details sections */
+.result-details {
+  background: #1a1626;
+  border: 2px solid #3a3250;
+  border-radius: 4px;
+  margin: 8px auto;
+  width: 320px;
+  animation: result-enter 0.45s ease-out both;
+  animation-delay: 0.58s;
+}
+.result-details:first-of-type {
+  animation-delay: 0.60s;
+}
+.result-details:last-of-type {
+  animation-delay: 0.65s;
+}
+
+.result-summary {
+  padding: 10px 12px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: bold;
+  color: var(--gold);
+  user-select: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.result-summary::marker {
+  color: var(--gold);
+}
+
+.result-details[open] .result-summary {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.result-details > *:not(.result-summary) {
+  padding: 0 12px 12px;
+}
+
+/* ──────────────────────────────────────────────────────────────────────────
+ * TASK B: Boss bar fade-in/out animations
+ * ────────────────────────────────────────────────────────────────────────── */
+
+@keyframes boss-enter {
+  0% {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.95);
+    filter: brightness(1.4);
+  }
+  60% {
+    filter: brightness(1.4);
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+    filter: brightness(1);
+  }
+}
+
+@keyframes boss-exit {
+  from {
+    opacity: 1;
+    transform: none;
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-10px);
+    filter: brightness(2);
+  }
+}
+
+.hud-boss {
+  opacity: 0;
+  transform: translateY(-10px);
+  transition: opacity 0.4s ease-out, transform 0.4s ease-out;
+}
+
+.hud-boss.boss-enter {
+  animation: boss-enter 0.5s ease-out forwards;
+}
+
+.hud-boss.boss-exit {
+  animation: boss-exit 0.6s ease-out forwards;
+}
+
+/* boss name pulse glow */
+@keyframes boss-name-pulse {
+  0%, 100% {
+    text-shadow: 2px 2px 0 var(--ink), 0 0 8px rgba(200, 51, 42, 0.6);
+  }
+  50% {
+    text-shadow: 2px 2px 0 var(--ink), 0 0 14px rgba(255, 80, 80, 0.9);
+  }
+}
+
+.hud-boss-name {
+  animation: boss-name-pulse 2s ease-in-out infinite;
+}
+
+/* boss bar fill subtle breathing glow */
+@keyframes boss-bar-pulse {
+  0%, 100% {
+    filter: brightness(1);
+  }
+  50% {
+    filter: brightness(1.08);
+  }
+}
+
+.hud-boss-bar .hud-bar-fill {
+  animation: boss-bar-pulse 2.5s ease-in-out infinite;
+}
+
+/* ──────────────────────────────────────────────────────────────────────────
+ * TASK C: Achievements progress bar + tier left-stripe
+ * ────────────────────────────────────────────────────────────────────────── */
+
+.ach-progress {
+  width: 100%;
+  height: 6px;
+  background: #15121f;
+  border: 1px solid #3a3250;
+  margin-top: 8px;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.ach-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #f0d27a, #ffe7a8);
+  transition: width 0.6s ease-out;
+  box-shadow: 0 0 8px rgba(240, 210, 122, 0.4);
+}
+
+/* achievement card — left tier-color stripe instead of full border */
+.ach-card {
+  border-left: 4px solid var(--tier-color, #2a2535);
+  border-right: 3px solid #000;
+  border-top: 3px solid #000;
+  border-bottom: 3px solid #000;
+}
+
+/* --- Task 1: Level-up card state badges + evolution shimmer --- */
+.lvl-state {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  background: rgba(0, 0, 0, 0.6);
+  border: 1px solid;
+  font-size: 9px;
+  padding: 2px 6px;
+  border-radius: 3px;
+  letter-spacing: 0.5px;
+  font-weight: bold;
+}
+
+.lvl-state.lvl-state-new {
+  color: #88e0c0;
+  border-color: rgba(136, 224, 192, 0.5);
+}
+
+.lvl-state.lvl-state-evo {
+  color: #f0d27a;
+  border-color: rgba(240, 210, 122, 0.7);
+  animation: lvl-shimmer 1.6s ease-in-out infinite;
+}
+
+.lvl-state.lvl-state-max {
+  color: #cfc8e0;
+  opacity: 0.6;
+}
+
+/* Pattern chip — weapon pattern label (AoE 강하 / 낙뢰 / 공전 ...).
+   Sits at the bottom-left of weapon cards so the player can read what
+   the weapon actually does before picking. Quieter than state badges. */
+.lvl-pattern {
+  position: absolute;
+  bottom: 6px;
+  left: 6px;
+  background: rgba(0, 0, 0, 0.55);
+  border: 1px solid rgba(208, 200, 224, 0.35);
+  color: #d8d2e8;
+  font-size: 9px;
+  padding: 2px 6px;
+  border-radius: 3px;
+  letter-spacing: 0.4px;
+  pointer-events: none;
+}
+
+/* Evolution hint line — small italic text below the desc. Tells the
+   player which paired passive completes the recipe. P3 fix. */
+.lvl-evo-hint {
+  display: block;
+  margin-top: 4px;
+  font-size: 10px;
+  line-height: 1.3;
+  letter-spacing: 0.2px;
+  padding: 0 4px;
+}
+.lvl-evo-hint-ready {
+  color: #ffe69a;
+  text-shadow: 0 0 6px rgba(240, 210, 122, 0.5);
+  font-weight: bold;
+}
+.lvl-evo-hint-avail {
+  color: #f0d27a;
+  opacity: 0.92;
+}
+.lvl-evo-hint-dormant {
+  color: #b8b0c8;
+  opacity: 0.75;
+  font-style: italic;
+}
+
+@keyframes lvl-shimmer {
+  0%, 100% {
+    box-shadow: 0 0 0 rgba(240, 210, 122, 0);
+  }
+  50% {
+    box-shadow: 0 0 10px rgba(240, 210, 122, 0.8);
+  }
+}
+
+.lvl-card.has-evo {
+  border-color: #f0d27a;
+  box-shadow: 0 0 14px rgba(240, 210, 122, 0.45), 0 0 0 2px #000, 5px 5px 0 var(--ink);
+  overflow: hidden;
+  position: relative;
+}
+
+.lvl-card.has-evo::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255, 220, 140, 0.18), transparent);
+  animation: lvl-sweep 2s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes lvl-sweep {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* --- Task 2: Shop hero unlock row --- */
+.shop-section-head {
+  font-size: 11px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  opacity: 0.7;
+  margin: 6px 0 6px;
+  font-weight: bold;
+}
+
+.shop-heroes {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+  gap: 8px;
+  margin-bottom: 12px;
+  padding: 10px;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 4px;
+}
+
+.shop-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  cursor: default;
+}
+
+.shop-hero-portrait-wrap {
+  position: relative;
+  width: 52px;
+  height: 52px;
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.shop-hero-portrait {
+  width: 48px;
+  height: 48px;
+  border: 2px solid #3a3250;
+  border-radius: 2px;
+  background: #15121f;
+  padding: 2px;
+  image-rendering: pixelated;
+  box-sizing: content-box;
+}
+
+.shop-hero-name {
+  font-size: 11px;
+  color: #f0d27a;
+  font-weight: bold;
+  text-align: center;
+}
+
+.shop-hero.locked .shop-hero-portrait {
+  opacity: 0.4;
+  filter: grayscale(0.7);
+}
+
+.shop-hero.locked .shop-hero-name {
+  color: #cfc8e0;
+  opacity: 0.6;
+}
+
+.shop-hero.locked .shop-hero-portrait-wrap::after {
+  content: '🔒';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 20px;
+  text-shadow: 0 0 4px #000;
+  pointer-events: none;
+}
+
+.shop-hero-sub {
+  font-size: 9px;
+  color: #cfc8e0;
+  text-align: center;
+  margin-top: 2px;
+  opacity: 0.85;
+}
+
+/* --- Task 5: Pause menu panel polish --- */
+@keyframes pause-enter {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* ──────────────────────────────────────────────────────────────────────────
+ * Task 2: Achievements category tab bar
+ * ────────────────────────────────────────────────────────────────────────── */
+
+.page-tabs {
+  display: flex;
+  gap: 4px;
+  margin: 8px 0;
+  border-bottom: 1px solid rgba(240, 210, 122, 0.2);
+  /* per W3C spec, setting overflow-x: auto implicitly forces overflow-y to
+     auto too — and that was clipping the top of the tab buttons because the
+     flex container resolved shorter than its 21-px children. Use clip on x
+     (horizontal scroll if we ever overflow) + visible on y (let the buttons
+     breathe). flex-shrink:0 prevents the page-panel flex column from
+     squeezing this row when contents push against max-height. */
+  overflow-x: auto;
+  overflow-y: visible;
+  flex-shrink: 0;
+  padding: 4px 0 6px;
+}
+
+.page-tab {
+  padding: 6px 14px;
+  background: transparent;
+  border: 2px solid transparent;
+  border-bottom: none;
+  color: var(--text-dim);
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: bold;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.page-tab:hover {
+  color: var(--gold);
+}
+
+.page-tab.active {
+  color: var(--gold);
+  background: rgba(240, 210, 122, 0.08);
+  border-bottom: 2px solid var(--gold);
+  padding-bottom: 4px;
+}
+
+/* ──────────────────────────────────────────────────────────────────────────
+ * Task 3: Mobile / tablet breakpoints
+ * ────────────────────────────────────────────────────────────────────────── */
+
+@media (max-width: 1024px) {
+  /* Tablet adjustments */
+  .page-grid {
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  }
+
+  .cs-card,
+  .lvl-card {
+    padding: 12px 10px;
+  }
+
+  .shop-heroes {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .page-scroll {
+    max-height: 60vh;
+  }
+}
+
+@media (max-width: 640px) {
+  /* Phone adjustments */
+  .page-panel {
+    width: 100%;
+    padding: 12px;
+    max-height: 100%;
+  }
+
+  .page-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .result-stat-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .hud-lvl,
+  .hud-kills {
+    font-size: 12px;
+  }
+
+  .hud-time {
+    font-size: 20px;
+  }
+
+  .hud-boss {
+    width: 90%;
+    max-width: 240px;
+  }
+
+  .page-close,
+  .lvl-action,
+  .result-btn,
+  .title-btn {
+    min-height: 44px;
+  }
+
+  .levelup-cards {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .lvl-card {
+    width: 100%;
+  }
+
+  .title-btn-row {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .title-btn-sm {
+    width: 100%;
+  }
+
+  .shop-heroes {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .page-tabs {
+    flex-wrap: wrap;
+    overflow-x: visible; /* wrap mode — the desktop x-scrollbar would be a stub */
+    padding-bottom: 4px;
+  }
+
+  .page-tab {
+    font-size: 11px;
+    padding: 5px 10px;
+  }
+}
+
+/* ──────────────────────────────────────────────────────────────────────────
+ * Task 1: Arcana select overlay (migrated from arcanaselect.js)
+ * ────────────────────────────────────────────────────────────────────────── */
+
+.arcana { position: fixed; inset: 0; background: rgba(8,6,16,0.88); display: flex;
+  justify-content: center; overflow-y: auto; padding: 24px 0; z-index: 200; }
+.arcana .arcana-panel { margin: auto; }
+.arcana.hidden { display: none; }
+.arcana-panel { background: linear-gradient(180deg, #2a2440, #15121f);
+  border: 2px solid rgba(240,210,122,0.4); border-radius: 12px; padding: 28px 36px;
+  max-width: 920px; width: 90%; box-shadow: 0 0 30px rgba(0,0,0,0.8),
+  inset 0 0 30px rgba(240,210,122,0.05); text-align: center;
+  animation: arc-enter 0.32s ease-out both; }
+@keyframes arc-enter { from { opacity:0; transform: scale(0.97) translateY(8px); }
+  to { opacity:1; transform: none; } }
+.arcana-title { color: #f0d27a; font-family: 'Georgia', serif; letter-spacing: 4px;
+  font-size: 26px; margin: 0 0 6px;
+  text-shadow: 0 0 12px rgba(240,210,122,0.55), 0 0 24px rgba(240,210,122,0.25); }
+.arcana-sub { color: #cfc8e0; opacity: 0.7; font-size: 13px; margin: 0 0 20px; }
+.arcana-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+.arc-card { position: relative; padding: 18px 14px 16px; border-radius: 10px;
+  border: 2px solid; background: linear-gradient(180deg, #221a36, #15121f);
+  color: #cfc8e0; cursor: pointer; font-family: inherit;
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+  transition: transform 0.15s ease, box-shadow 0.2s ease;
+  overflow: hidden; animation: arc-card-enter 0.36s ease-out both; }
+.arc-card:nth-child(1) { animation-delay: 0.05s; }
+.arc-card:nth-child(2) { animation-delay: 0.1s; }
+.arc-card:nth-child(3) { animation-delay: 0.15s; }
+@keyframes arc-card-enter { from { opacity: 0; transform: scale(0.92); }
+  to { opacity: 1; transform: scale(1); } }
+.arc-card::before { content: ''; position: absolute; inset: 0;
+  background: radial-gradient(circle at 50% 0%, rgba(255,255,255,0.06), transparent 60%);
+  pointer-events: none; }
+.arc-card:hover { transform: translateY(-4px);
+  box-shadow: 0 0 20px rgba(240,210,122,0.55); }
+.arc-key { position: absolute; top: 8px; left: 10px; font-size: 11px;
+  color: #cfc8e0; opacity: 0.55; }
+.arc-band { position: absolute; top: 0; left: 0; right: 0; height: 3px; opacity: 0.85; }
+.arc-icon { width: 56px; height: 56px; image-rendering: pixelated;
+  /* solid panel — was a checkerboard that read as a "missing image"
+     placeholder and made every card (even ones with icons) look broken. */
+  background: radial-gradient(circle at 50% 40%, #221a36 0%, #15121f 100%);
+  border-radius: 6px; padding: 4px; margin-top: 4px; }
+.arc-name { font-size: 16px; font-weight: bold; letter-spacing: 1px; }
+.arc-desc { font-size: 12px; line-height: 1.45; opacity: 0.85; min-height: 32px; }
+.arcana-actions { margin-top: 18px; }
+.arc-action { padding: 8px 18px; background: rgba(0,0,0,0.4);
+  border: 1px solid rgba(207,200,224,0.3); border-radius: 6px;
+  color: #cfc8e0; cursor: pointer; font-family: inherit; font-size: 13px;
+  transition: all 0.15s; }
+.arc-action:hover { background: rgba(207,200,224,0.1); }
+.arcana-hint { margin: 12px 0 0; font-size: 11px; color: #cfc8e0; opacity: 0.45; }
+
+/* ──────────────────────────────────────────────────────────────────────────
+ * Task 2: Settings panel overlay (migrated from settings.js)
+ * ────────────────────────────────────────────────────────────────────────── */
+
+.settings { position: fixed; inset: 0; background: rgba(8,6,16,0.85);
+  display: flex; align-items: center; justify-content: center; z-index: 200; }
+.settings.hidden { display: none; }
+.settings-panel { background: linear-gradient(180deg, #2a2440, #15121f);
+  border: 2px solid rgba(240,210,122,0.4); border-radius: 12px; padding: 28px 36px;
+  min-width: 480px; box-shadow: 0 0 30px rgba(0,0,0,0.8),
+  inset 0 0 30px rgba(240,210,122,0.05);
+  animation: set-enter 0.28s ease-out both; }
+@keyframes set-enter { from { opacity:0; transform: scale(0.97); } to { opacity:1; transform: none; } }
+.settings-title { color: #f0d27a; font-family: 'Georgia', serif; letter-spacing: 4px;
+  font-size: 24px; margin: 0 0 20px; text-align: center;
+  text-shadow: 0 0 12px rgba(240,210,122,0.55); }
+.set-row { display: grid; grid-template-columns: 160px 1fr; align-items: center;
+  gap: 16px; padding: 10px 4px; border-bottom: 1px solid rgba(207,200,224,0.08); }
+.set-label { color: #cfc8e0; font-size: 14px; }
+.set-control { display: flex; align-items: center; gap: 10px; }
+.set-control input[type=range] { flex: 1; accent-color: #f0d27a; }
+.set-control input[type=checkbox] { width: 18px; height: 18px; accent-color: #f0d27a; }
+.set-control select { background: #15121f; color: #cfc8e0; border: 1px solid rgba(207,200,224,0.3);
+  border-radius: 4px; padding: 4px 8px; font-family: inherit; font-size: 13px; }
+.set-value { color: #f0d27a; font-size: 12px; min-width: 36px; text-align: right; }
+.settings-actions { display: flex; justify-content: flex-end; margin-top: 20px; }
+.set-close { padding: 8px 22px; background: rgba(240,210,122,0.12);
+  border: 1px solid rgba(240,210,122,0.55); border-radius: 6px; color: #f0d27a;
+  cursor: pointer; font-family: inherit; transition: all 0.15s; }
+.set-close:hover { background: rgba(240,210,122,0.22); transform: translateY(-1px); }
+
+/* ──────────────────────────────────────────────────────────────────────────
+ * Task 3: HUD arcana badge
+ * ────────────────────────────────────────────────────────────────────────── */
+
+.hud-arcana {
+  position: absolute;
+  top: 110px;
+  right: 36px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: 1px solid;
+  font-size: 12px;
+  font-weight: bold;
+  letter-spacing: 0.5px;
+}
+.hud-arcana.hidden { display: none; }
+.hud-arcana-icon {
+  display: block;
+  width: 24px;
+  height: 24px;
+  image-rendering: pixelated;
+  flex-shrink: 0;
+}
+.hud-arcana-name {
+  display: block;
+}
+
+/* ──────────────────────────────────────────────────────────────────────────
+ * Task 3b: Result arcana card
+ * ────────────────────────────────────────────────────────────────────────── */
+
+.result-arcana {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 12px auto 0;
+  padding: 10px 12px;
+  width: 240px;
+  background: linear-gradient(180deg, #322a48, #211b33);
+  border: 3px solid #000;
+  box-shadow: 0 0 0 2px #000, 4px 4px 0 var(--ink), 0 0 12px rgba(240, 210, 122, 0.12);
+  position: relative;
+}
+.result-arcana::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 0%, rgba(240, 210, 122, 0.1), transparent 60%);
+  pointer-events: none;
+}
+.result-arcana > * {
+  position: relative;
+  z-index: 1;
+}
+.result-arcana-icon {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  image-rendering: pixelated;
+}
+.result-arcana-info {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+.result-arcana-label {
+  font-size: 10px;
+  letter-spacing: 1px;
+  color: var(--text-dim);
+  opacity: 0.7;
+  text-transform: uppercase;
+}
+.result-arcana-name {
+  font-size: 13px;
+  font-weight: bold;
+}
+
+/* result screen — combat record (avg DPS / crit / max combo + per-weapon dmg bars) */
+.result-combat { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+.result-pill {
+  flex: 1 1 100px; min-width: 88px;
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  padding: 8px 10px; border-radius: 8px;
+  background: linear-gradient(180deg, #221a36, #15121f);
+  border: 1px solid rgba(207,200,224,0.12);
+}
+.result-pill-label { font-size: 10px; color: #cfc8e0; opacity: 0.7; letter-spacing: 1px; text-transform: uppercase; }
+.result-pill-value { font-size: 18px; font-weight: bold; letter-spacing: 1px; }
+.result-dps-rows { display: flex; flex-direction: column; gap: 4px; }
+.result-dps-row {
+  display: flex; align-items: center; gap: 8px;
+  padding: 4px 6px; border-radius: 6px;
+  background: rgba(0,0,0,0.25);
+}
+.result-dps-row canvas { image-rendering: pixelated; }
+.result-dps-name { font-size: 11px; color: #cfc8e0; min-width: 88px; }
+.result-dps-bar {
+  flex: 1; height: 10px; border-radius: 5px; overflow: hidden;
+  background: rgba(0,0,0,0.45);
+  border: 1px solid rgba(240,210,122,0.18);
+}
+.result-dps-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #f0d27a, #ffe7a8);
+  box-shadow: 0 0 6px rgba(240,210,122,0.55);
+  transition: width 0.6s ease;
+}
+.result-dps-val { font-size: 11px; color: #f0d27a; min-width: 30px; text-align: right; }
+
+/* result screen — build recommendation tips (each row: tier-coloured left bar) */
+.result-tips { display: flex; flex-direction: column; gap: 6px; }
+.result-tip {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 8px 10px; border-radius: 6px;
+  background: linear-gradient(180deg, rgba(34,26,54,0.7), rgba(21,18,31,0.7));
+  border-left: 3px solid #f0d27a;
+}
+.result-tip canvas { flex-shrink: 0; image-rendering: pixelated; margin-top: 2px; }
+.result-tip-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.result-tip-head { font-size: 12px; font-weight: bold; letter-spacing: 1px; }
+.result-tip-body { font-size: 12px; color: #cfc8e0; opacity: 0.9; line-height: 1.4; }
+
+/* stats page — lifetime totals grid */
+.stats-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px;
+}
+.stats-card {
+  display: flex; flex-direction: column; gap: 4px;
+  padding: 12px 14px; border-radius: 8px;
+  background: linear-gradient(180deg, #221a36, #15121f);
+  border: 1px solid rgba(207,200,224,0.1);
+  border-left: 4px solid #f0d27a;
+  position: relative; overflow: hidden;
+}
+.stats-card::before {
+  content: ''; position: absolute; inset: 0;
+  background: radial-gradient(circle at 100% 0%, rgba(255,255,255,0.05), transparent 60%);
+  pointer-events: none;
+}
+.stats-card-label {
+  font-size: 11px; color: #cfc8e0; opacity: 0.7;
+  letter-spacing: 1.5px; text-transform: uppercase;
+}
+.stats-card-value {
+  font-size: 24px; font-weight: bold; letter-spacing: 1px;
+  font-family: 'Georgia', serif;
+}
+
+/* achievement notifications — top-right corner, golden border, stack downward */
+.toast.toast-corner {
+  position: absolute;
+  top: 16px;
+  right: 24px;
+  left: auto;
+  transform: none;
+  align-items: flex-end;
+  gap: 8px;
+  z-index: 60;
+}
+.toast-item.toast-ach {
+  padding: 10px 16px;
+  background: linear-gradient(180deg, #3a2c14, #1f1608);
+  border: 2px solid #f0d27a;
+  box-shadow: 0 0 0 1px #000, 0 0 14px rgba(240,210,122,0.5);
+  min-width: 220px; max-width: 320px;
+  text-align: left;
+}
+.toast-item.toast-ach .toast-tag {
+  color: #f0d27a;
+  text-shadow: 0 0 6px rgba(240,210,122,0.8);
+}
+.toast-item.toast-ach .toast-name {
+  font-weight: bold;
+  color: #ffe7a8;
+  font-size: 14px;
+  margin-top: 2px;
+}
+.toast-item.toast-ach .toast-text {
+  font-size: 11px;
+  color: #cfc8e0;
+  opacity: 0.85;
+  margin-top: 2px;
+}
+
+/* result screen — top 3 weapons hero strip */
+.result-top-weapons {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px;
+  margin: 4px 0;
+}
+.result-top-weapon {
+  display: flex; align-items: center; gap: 8px;
+  padding: 6px 10px; border-radius: 8px;
+  background: linear-gradient(180deg, rgba(34,26,54,0.85), rgba(21,18,31,0.85));
+  border: 2px solid #3a3052;
+  position: relative; overflow: hidden;
+}
+.result-top-weapon::before {
+  content: ''; position: absolute; inset: 0;
+  background: radial-gradient(circle at 100% 0%, rgba(255,255,255,0.08), transparent 60%);
+  pointer-events: none;
+}
+.result-top-weapon canvas {
+  flex-shrink: 0; image-rendering: pixelated;
+  background-color: #15121f;
+  background-image:
+    linear-gradient(45deg, #221a36 25%, transparent 25%),
+    linear-gradient(-45deg, #221a36 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #221a36 75%),
+    linear-gradient(-45deg, transparent 75%, #221a36 75%);
+  background-size: 10px 10px;
+  background-position: 0 0, 0 5px, 5px -5px, -5px 0;
+  border-radius: 4px;
+  padding: 2px;
+}
+.result-top-weapon-info {
+  display: flex; flex-direction: column; gap: 2px; min-width: 0;
+}
+.result-top-weapon-rank {
+  font-size: 11px; font-weight: bold; letter-spacing: 1.5px;
+  text-shadow: 0 0 8px currentColor;
+}
+.result-top-weapon-name {
+  font-size: 13px; color: #cfc8e0; font-weight: bold;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.result-top-weapon-meta {
+  font-size: 11px; color: #cfc8e0; opacity: 0.7;
+}
+
+/* shield overlay — a thin cyan band that grows from the HP bar's right edge
+   when the player has a damage shield. Sits inside .hud-hp so it shares the
+   same width budget as the HP fill, but visually overlays the upper edge. */
+.hud-shield-overlay {
+  position: absolute;
+  left: 0; top: 0;
+  height: 6px;
+  width: 0%;
+  background: linear-gradient(90deg, rgba(136,200,255,0.85), rgba(180,224,255,0.95));
+  border-top: 1px solid rgba(255,255,255,0.5);
+  border-bottom: 1px solid rgba(0,32,80,0.55);
+  pointer-events: none;
+  transition: width 0.18s ease;
+  filter: drop-shadow(0 0 4px rgba(136,200,255,0.6));
+}
+
+/* next-event countdown chip — sits under the arcana pill (top-right), tells
+   the player when the next boss / mini-boss / blood moon arrives so build
+   pacing matters */
+.hud-next {
+  position: absolute;
+  top: 152px;
+  right: 24px;
+  display: flex; align-items: center; gap: 6px;
+  padding: 4px 10px;
+  background: rgba(15, 12, 25, 0.78);
+  border: 1px solid rgba(207, 200, 224, 0.25);
+  border-radius: 4px;
+  font-size: 11px;
+  letter-spacing: 1px;
+  z-index: 50;
+}
+.hud-next.hidden { display: none; }
+.hud-next-tag {
+  color: #cfc8e0; opacity: 0.6; font-size: 9px;
+}
+.hud-next-label {
+  color: #f0d27a;
+  text-shadow: 0 0 6px rgba(240,210,122,0.45);
+}
+.hud-next-time {
+  color: #ffe7a8;
+  font-weight: bold;
+  font-variant-numeric: tabular-nums;
+  margin-left: 4px;
+}
+
+/* spirit slots — same visual language as weapon slots, stacked above them */
+.hud-spirits {
+  position: absolute;
+  bottom: 60px;
+  left: 12px;
+  display: flex;
+  gap: 5px;
+}
+.hud-spirit {
+  width: 38px;
+  height: 38px;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 0 4px rgba(136, 200, 255, 0.45));
+}
+
+/* spirit fusion strip — 3 icons + 2 glyphs side by side at the top of a
+   fusion card so the recipe reads as "A + B → result" at a glance */
+.fusion-strip {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 0;
+}
+.fusion-strip canvas { flex-shrink: 0; }
+.fusion-glyph {
+  color: #f0d27a;
+  font-size: 14px;
+  font-weight: bold;
+  opacity: 0.7;
+  text-shadow: 0 0 6px rgba(240, 210, 122, 0.4);
+}
+
+/* HUD hidden state — applied on title / menus / charselect so the run-only
+   chrome doesn't bleed into menu screens. startRun() removes the class. */
+.hud.hidden { display: none; }
+
+/* result screen — pending achievement rows: tier-coloured stripe + progress
+   bar + percent. Sits between the build-tips section and the skills list. */
+.result-pending { display: flex; flex-direction: column; gap: 4px; }
+.result-pending-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 6px 10px; border-radius: 6px;
+  background: rgba(0, 0, 0, 0.3);
+  border-left: 3px solid #cfc8e0;
+}
+.result-pending-info { display: flex; flex-direction: column; gap: 1px; min-width: 110px; }
+.result-pending-name { font-size: 11px; color: #f0d27a; font-weight: bold; }
+.result-pending-target { font-size: 10px; color: #cfc8e0; opacity: 0.7; }
+.result-pending-bar {
+  flex: 1; height: 6px; border-radius: 3px; overflow: hidden;
+  background: rgba(0, 0, 0, 0.5);
+}
+.result-pending-fill { height: 100%; transition: width 0.5s ease; }
+.result-pending-pct {
+  font-size: 11px; font-weight: bold;
+  min-width: 36px; text-align: right;
+}
+
+/* tab counter pill (X/Y) next to each .page-tab label — visualises category
+   completion without leaving the achievement page */
+.page-tab-count {
+  margin-left: 6px;
+  padding: 1px 6px;
+  font-size: 10px;
+  font-weight: bold;
+  color: #ffe7a8;
+  background: rgba(240, 210, 122, 0.16);
+  border: 1px solid rgba(240, 210, 122, 0.35);
+  border-radius: 8px;
+  letter-spacing: 0;
+}
+.page-tab.active .page-tab-count {
+  background: rgba(240, 210, 122, 0.3);
+  color: #fff5cc;
+}
+
+/* spirit page — discovery state for fusion cards. Unlocked cards glow gold;
+   locked cards stay dim until the player triggers the recipe in-run. */
+.ach-card.fusion-locked { opacity: 0.55; filter: grayscale(0.45); }
+.ach-card.fusion-locked .fusion-strip canvas { filter: brightness(0.7); }
+.ach-card.fusion-found {
+  box-shadow: 0 0 12px rgba(240, 210, 122, 0.35);
+}
+.fusion-found-tag {
+  color: #88e0c0 !important;
+  border-color: rgba(136, 224, 192, 0.5) !important;
+  background: rgba(136, 224, 192, 0.12) !important;
+}
+
+/* low-HP vignette — a red gradient pulsing on the screen edge when the
+   player drops below 25% HP. Tied to .low-hp class on #game, toggled by
+   main.js. Two layered radial gradients build the inner darkening + outer
+   red glow. */
+#game.low-hp::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse at center, transparent 50%, rgba(200, 50, 40, 0.35) 100%),
+    radial-gradient(ellipse at center, transparent 70%, rgba(0, 0, 0, 0.4) 100%);
+  animation: low-hp-pulse 0.9s ease-in-out infinite;
+  z-index: 35;
+}
+@keyframes low-hp-pulse {
+  0%, 100% { opacity: 0.55; }
+  50% { opacity: 1; }
+}
+
+/* player-hurt punch — a brief red vignette over the screen edge when the
+   player gets hit. Stacks with the camera shake + hitstop in main.js so
+   "getting damaged" reads as impactful, not just a HP bar decrement. The
+   200ms fade keeps it crisp without obscuring gameplay. */
+#game.player-hurt-flash::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at center, transparent 32%, rgba(220, 40, 30, 0.55) 95%),
+    radial-gradient(ellipse at center, transparent 50%, rgba(0, 0, 0, 0.35) 100%);
+  pointer-events: none;
+  z-index: 40;
+  animation: player-hurt-fade 0.22s ease-out forwards;
+}
+@keyframes player-hurt-fade {
+  0%   { opacity: 0; }
+  18%  { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+/* boss-kill cinematic flash — a quick white overlay + slight zoom punch
+   draped over #game when the boss dies. Pairs with the hitstop in main.js
+   so the moment reads as a "kill cam" beat. */
+#game.boss-kill-flash::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at center, rgba(255, 240, 200, 0.6), rgba(255, 200, 80, 0.2) 40%, transparent 70%);
+  pointer-events: none;
+  z-index: 80;
+  animation: boss-kill-fade 0.6s ease-out forwards;
+}
+@keyframes boss-kill-fade {
+  0%   { opacity: 0; transform: scale(0.96); }
+  18%  { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.02); }
+}
+
+/* hover tooltip — generic info popover used by HUD weapon slots + levelup
+   cards + pause menu loadout grids. Hidden until a parent applies
+   `tooltip-target` and the user hovers; uses `data-tip` attribute as the
+   text. Floats above the element. */
+[data-tip] { position: relative; }
+[data-tip]:hover::after {
+  content: attr(data-tip);
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 6px 10px;
+  background: linear-gradient(180deg, #2a2440, #15121f);
+  border: 1px solid rgba(240, 210, 122, 0.5);
+  border-radius: 4px;
+  font-size: 11px;
+  color: #cfc8e0;
+  white-space: pre-line;
+  pointer-events: none;
+  z-index: 100;
+  max-width: 240px;
+  text-align: center;
+  letter-spacing: 0.5px;
+  line-height: 1.5;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+}
+[data-tip]:hover::before {
+  content: '';
+  position: absolute;
+  bottom: calc(100% + 2px);
+  left: 50%;
+  transform: translateX(-50%);
+  border: 4px solid transparent;
+  border-top-color: rgba(240, 210, 122, 0.5);
+  z-index: 100;
+}
+
+/* boss signature line in the boss bar — small italic gold beneath the
+   name + above the bar. Shows the boss's named ability (뼈 폭풍 etc.). */
+.hud-boss-sig {
+  font-size: 11px;
+  color: #f0d27a;
+  letter-spacing: 1px;
+  margin-top: 2px;
+  text-align: center;
+  text-shadow: 0 0 6px rgba(240, 210, 122, 0.5);
+  min-height: 14px;
+}
+
+/* hell mode indicators — corner badge on the title (visible whenever it's
+   unlocked) and a faint red border around the playfield while a run is in
+   hell mode. Both are non-blocking + subtle so they don't drown the UI. */
+.title-hell-badge {
+  position: absolute;
+  top: 14px;
+  right: 20px;
+  padding: 4px 12px;
+  font-size: 12px;
+  color: #ffe7a8;
+  background: linear-gradient(180deg, #6a1a18, #2a0a0a);
+  border: 1px solid #e0584a;
+  border-radius: 4px;
+  box-shadow: 0 0 12px rgba(200, 51, 42, 0.55);
+  letter-spacing: 2px;
+  z-index: 60;
+}
+.title-hell-badge.toggleable { cursor: pointer; }
+.title-hell-badge.toggleable:hover { background: linear-gradient(180deg, #7a2018, #3a0a0a); }
+#game.hell-mode::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  box-shadow: inset 0 0 60px 8px rgba(200, 51, 42, 0.3);
+  z-index: 30;
+}
+
+/* Korean typography polish — small Korean text rendered "들쭉날쭉"-y because
+   Courier New / monospace doesn't ship a CJK glyph set; the browser falls
+   back per-character. Set an explicit Korean font stack so all Hangul lands
+   on a consistent face and disable kerning that mis-spaces 한글. */
+body, .page, .hud, .result, .charselect, .mapselect, .arcana, .pause-overlay,
+.settings, .levelup, .toast, .title, .shop {
+  font-family: 'Pretendard', 'Apple SD Gothic Neo', 'Noto Sans KR',
+    'Nanum Gothic', 'Malgun Gothic', '맑은 고딕', 'Courier New', monospace;
+  letter-spacing: 0.5px;
+  font-feature-settings: 'kern' 0;
+  text-rendering: geometricPrecision;
+}
+/* keep the pixel-art monospace look on the few elements that earn it —
+   damage numbers, the title brand, the in-game timer */
+.title-name, .hud-time, .hud-lvl, .stats-card-value, .result-pill-value,
+.result-stat-value, .result-title-die, .arcana-title, .settings-title {
+  font-family: 'Georgia', 'Times New Roman', serif;
+}
+
+/* title parallax — three subtle moving layers float behind the menu box:
+   drifting mist (slow), pulsing stars (medium), an occasional bat silhouette
+   crossing the moon (fast). All CSS-only, GPU-accelerated transforms. */
+.title-fog {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse at 20% 70%, rgba(120,100,180,0.18), transparent 40%),
+    radial-gradient(ellipse at 80% 60%, rgba(80,60,120,0.15), transparent 50%);
+  animation: title-fog-drift 22s ease-in-out infinite alternate;
+  z-index: 1;
+}
+@keyframes title-fog-drift {
+  0%   { transform: translateX(0) translateY(0); }
+  100% { transform: translateX(-40px) translateY(-10px); }
+}
+.title-twinkle {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    radial-gradient(2px 2px at 15% 18%, rgba(255,240,180,0.95), transparent 50%),
+    radial-gradient(1.5px 1.5px at 30% 12%, rgba(255,240,200,0.9), transparent 50%),
+    radial-gradient(2px 2px at 55% 22%, rgba(220,200,180,0.85), transparent 50%),
+    radial-gradient(1px 1px at 70% 8%, rgba(220,210,180,0.9), transparent 50%),
+    radial-gradient(1.5px 1.5px at 85% 14%, rgba(255,240,200,0.95), transparent 50%);
+  animation: title-twinkle 3.6s ease-in-out infinite;
+  z-index: 1;
+}
+@keyframes title-twinkle {
+  0%, 100% { opacity: 0.4; }
+  50%      { opacity: 1.0; }
+}
+.title-bat {
+  position: absolute;
+  top: 10%;
+  left: -40px;
+  width: 16px;
+  height: 8px;
+  pointer-events: none;
+  background: radial-gradient(circle at center, #1a0a1a, transparent 70%);
+  animation: title-bat 28s linear infinite;
+  z-index: 1;
+}
+@keyframes title-bat {
+  0%   { transform: translateX(0)    translateY(0)   rotate(-5deg); opacity: 0; }
+  5%   { opacity: 0.6; }
+  50%  { transform: translateX(60vw) translateY(-20px) rotate(8deg);  opacity: 0.7; }
+  95%  { opacity: 0.5; }
+  100% { transform: translateX(120vw) translateY(20px)  rotate(-3deg); opacity: 0; }
+}
+
+/* small text buttons inside the settings panel — used for the save
+   export / import row. Match the .set-close button's visual weight but
+   pair them side-by-side. */
+.set-mini-btn {
+  padding: 4px 12px;
+  background: rgba(240, 210, 122, 0.08);
+  border: 1px solid rgba(240, 210, 122, 0.4);
+  border-radius: 4px;
+  color: #cfc8e0;
+  font-family: inherit;
+  font-size: 11px;
+  cursor: pointer;
+  margin-right: 6px;
+  transition: all 0.15s;
+}
+.set-mini-btn:hover {
+  background: rgba(240, 210, 122, 0.16);
+  color: #ffe7a8;
+}
+
+/* in-run hell badge — small red label that sits just under the next-event
+   chip while the player is in hell mode */
+.hud-hell {
+  position: absolute;
+  top: 178px;
+  right: 24px;
+  padding: 3px 10px;
+  font-size: 11px;
+  color: #ffe7a8;
+  background: linear-gradient(180deg, rgba(106, 26, 24, 0.85), rgba(42, 10, 10, 0.85));
+  border: 1px solid rgba(224, 88, 74, 0.7);
+  border-radius: 4px;
+  letter-spacing: 2px;
+  box-shadow: 0 0 10px rgba(200, 51, 42, 0.45);
+  z-index: 50;
+}
+.hud-hell.hidden { display: none; }
+
+/* result screen — extend the stagger to combat pills, top-weapon cards,
+   per-weapon dps rows + pending achievement rows. Each cascades after the
+   stat-grid block so the eye reads them in sequence. */
+.result-pill        { animation: result-enter 0.4s ease-out both; }
+.result-pill:nth-child(1) { animation-delay: 0.30s; }
+.result-pill:nth-child(2) { animation-delay: 0.35s; }
+.result-pill:nth-child(3) { animation-delay: 0.40s; }
+.result-top-weapon  { animation: result-enter 0.4s ease-out both; }
+.result-top-weapon:nth-child(1) { animation-delay: 0.45s; }
+.result-top-weapon:nth-child(2) { animation-delay: 0.50s; }
+.result-top-weapon:nth-child(3) { animation-delay: 0.55s; }
+.result-dps-row     { animation: result-enter 0.35s ease-out both; }
+.result-dps-row:nth-child(1) { animation-delay: 0.60s; }
+.result-dps-row:nth-child(2) { animation-delay: 0.65s; }
+.result-dps-row:nth-child(3) { animation-delay: 0.70s; }
+.result-dps-row:nth-child(4) { animation-delay: 0.75s; }
+.result-dps-row:nth-child(5) { animation-delay: 0.80s; }
+.result-pending-row { animation: result-enter 0.35s ease-out both; }
+.result-pending-row:nth-child(1) { animation-delay: 0.85s; }
+.result-pending-row:nth-child(2) { animation-delay: 0.90s; }
+.result-pending-row:nth-child(3) { animation-delay: 0.95s; }
+.result-tip         { animation: result-enter 0.35s ease-out both; }
+.result-tip:nth-child(1) { animation-delay: 1.00s; }
+.result-tip:nth-child(2) { animation-delay: 1.05s; }
+.result-tip:nth-child(3) { animation-delay: 1.10s; }

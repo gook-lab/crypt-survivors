@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Pickups HD2 · Crypt Asset Pack</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="../showcase.css" />
+<style>
+  .pickup-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 10px;
+  }
+  .pickup-card {
+    background: var(--panel);
+    border: 1px solid var(--gold);
+    padding: 10px;
+    text-align: center;
+  }
+  .pickup-card .row {
+    background-color: #1a1428;
+    background-image:
+      linear-gradient(45deg, #221a36 25%, transparent 25%),
+      linear-gradient(-45deg, #221a36 25%, transparent 25%);
+    background-size: 10px 10px;
+    border: 1px solid var(--line);
+    padding: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    min-height: 80px;
+    margin-bottom: 6px;
+  }
+  .pickup-card canvas { image-rendering: pixelated; }
+  .pickup-card .arr { color: var(--gold); font-size: 14px; font-weight: 700; }
+  .pickup-card .nm {
+    font-family: 'Cinzel', serif;
+    color: var(--ink);
+    font-size: 11px;
+    letter-spacing: 0.04em;
+    font-weight: 700;
+  }
+  .pickup-card .sub {
+    color: var(--ink-dim);
+    font-size: 9px;
+    letter-spacing: 0.1em;
+    margin-top: 2px;
+  }
+  .section-head {
+    color: var(--gold-hi);
+    font-family: 'Cinzel', serif;
+    font-size: 14px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    margin: 18px 0 10px;
+    padding-bottom: 6px;
+    border-bottom: 1px dashed var(--line);
+  }
+  .section-head small { color: var(--ink-dim); margin-left: 10px; font-weight: 400; letter-spacing: 0.04em; text-transform: none; }
+</style>
+</head>
+<body>
+<header class="masthead">
+  <div class="eyebrow">PAGE · 30 · PICKUPS HD2 · 정교 패스</div>
+  <h1>Pickups + Potions <span class="accent">HD2</span> · 19종</h1>
+  <p class="lede">
+    XP 젬·골드·하트·자석·폭탄·치킨·포션 5색·두루마리·열쇠·룬·시간계·별·영혼 오브를 다시 그렸어요.
+    부드러운 그라데이션 + 외곽선 + 다중-톤 + 코어 스펙. <code>_hd2</code> 접미사로 등록.
+    데이터: <code>art/pickups_hd2.js</code>.
+  </p>
+</header>
+<main id="content"></main>
+
+<script src="../palette.js"></script>
+<script src="../sprites.js"></script>
+<script src="../pickups_hd2.js"></script>
+<script src="../heroes_hd.js"></script>
+<script src="../heroes_hd3.js"></script>
+<script src="../heroes_smooth_walk.js"></script>
+<script src="../heroes_xhd.js"></script>
+<script src="../bosses_hd.js"></script>
+<script src="../enemies_hd.js"></script>
+<script src="../enemies_hd2.js"></script>
+<script src="../weapons_hd.js"></script>
+<script src="../projectiles_hd.js"></script>
+<script src="../skills_hd.js"></script>
+<script src="../chests_polished.js"></script>
+<script src="../structures.js"></script>
+<script src="../structures_extra.js"></script>
+<script src="../tiles_unified.js"></script>
+<script src="../tiles_natural.js"></script>
+<script src="../hd2_apply.js"></script>
+<script src="../effects_hd3.js"></script>
+<script src="../lightning_polish.js"></script>
+<script src="../atlas.js"></script>
+<script src="../showcase.js"></script>
+<script>
+Showcase.renderNav('pickups_hd2');
+
+function paint(canvas, name, scale) {
+  if (!SPRITES[name]) return;
+  const f = SPRITES[name][0];
+  canvas.width = f[0].length * scale;
+  canvas.height = f.length * scale;
+  const ctx = canvas.getContext('2d');
+  ctx.imageSmoothingEnabled = false;
+  ctx.drawImage(AtlasBuilder.renderFrame(name, 0), 0, 0, canvas.width, canvas.height);
+}
+
+const GROUPS = [
+  { title: 'XP 젬 · 골드', items: [
+    { o: 'pickup_xp_blue', h: 'pickup_xp_blue_hd2', n: '청 젬', s: '1 XP' },
+    { o: 'pickup_xp_green', h: 'pickup_xp_green_hd2', n: '녹 젬', s: '5 XP' },
+    { o: 'pickup_xp_red', h: 'pickup_xp_red_hd2', n: '적 젬', s: '25 XP' },
+    { o: 'pickup_gold', h: 'pickup_gold_hd2', n: '골드', s: '4f spin' },
+  ]},
+  { title: '회복 · 유틸', items: [
+    { o: 'pickup_heart', h: 'pickup_heart_hd2', n: '하트', s: '+HP' },
+    { o: 'pickup_chicken', h: 'pickup_chicken_hd2', n: '치킨', s: '30% HP' },
+    { o: 'pickup_magnet', h: 'pickup_magnet_hd2', n: '자석', s: '자동 흡수' },
+    { o: 'pickup_bomb', h: 'pickup_bomb_hd2', n: '폭탄', s: '전체 피해' },
+  ]},
+  { title: '포션 5색', items: [
+    { o: 'pickup_potion_hp', h: 'pickup_potion_hp_hd2', n: '체력 물약', s: '회복' },
+    { o: 'pickup_potion_might', h: 'pickup_potion_might_hd2', n: '힘의 물약', s: '+피해' },
+    { o: 'pickup_potion_mana', h: 'pickup_potion_mana_hd2', n: '마나 물약', s: '-쿨다운' },
+    { o: 'pickup_potion_swift', h: 'pickup_potion_swift_hd2', n: '신속 물약', s: '+이동' },
+    { o: 'pickup_potion_arcane', h: 'pickup_potion_arcane_hd2', n: '아케인 물약', s: '+원소' },
+  ]},
+  { title: '특수 아이템', items: [
+    { o: 'pickup_scroll', h: 'pickup_scroll_hd2', n: '두루마리', s: '리롤 토큰' },
+    { o: 'pickup_key', h: 'pickup_key_hd2', n: '열쇠', s: '잠긴 문' },
+    { o: 'pickup_rune', h: 'pickup_rune_hd2', n: '룬스톤', s: '랜덤 패시브' },
+    { o: null, h: 'pickup_hourglass_hd2', n: '시간계', s: '시간 정지' },
+    { o: null, h: 'pickup_star_hd2', n: '별', s: '무적 5초' },
+    { o: null, h: 'pickup_soul_orb_hd2', n: '영혼 오브', s: '4f 펄스' },
+  ]},
+];
+
+const content = document.getElementById('content');
+const sec = document.createElement('section'); sec.className = 'bay';
+content.appendChild(sec);
+
+for (const g of GROUPS) {
+  const head = document.createElement('div'); head.className = 'section-head';
+  head.innerHTML = g.title + ' <small>' + g.items.length + ' 종</small>';
+  sec.appendChild(head);
+  const grid = document.createElement('div'); grid.className = 'pickup-grid';
+  for (const p of g.items) {
+    const card = document.createElement('div'); card.className = 'pickup-card';
+    const row = document.createElement('div'); row.className = 'row';
+
+    if (p.o && SPRITES[p.o]) {
+      const c1 = document.createElement('canvas');
+      const f1 = SPRITES[p.o][0];
+      const s1 = Math.max(4, Math.floor(60 / Math.max(f1.length, f1[0].length)));
+      paint(c1, p.o, s1);
+      Showcase.animState.push({ canvas: c1, name: p.o, elapsed: 0 });
+      row.appendChild(c1);
+      const arr = document.createElement('span'); arr.className = 'arr'; arr.textContent = '→';
+      row.appendChild(arr);
+    }
+    if (SPRITES[p.h]) {
+      const c2 = document.createElement('canvas');
+      const f2 = SPRITES[p.h][0];
+      const s2 = Math.max(4, Math.floor(60 / Math.max(f2.length, f2[0].length)));
+      paint(c2, p.h, s2);
+      Showcase.animState.push({ canvas: c2, name: p.h, elapsed: 0 });
+      row.appendChild(c2);
+    }
+    card.appendChild(row);
+    card.innerHTML += '<div class="nm">' + p.n + '</div>' +
+                      '<div class="sub">' + p.s + '</div>';
+    grid.appendChild(card);
+  }
+  sec.appendChild(grid);
+}
+</script>
+</body>
+</html>

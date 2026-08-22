@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>FX · Crypt Asset Pack</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="../showcase.css" />
+<style>
+  /* status row */
+  .status-row {
+    display: flex; gap: 12px; flex-wrap: wrap;
+  }
+  .status-chip {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    padding: 10px 12px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .status-chip canvas { image-rendering: pixelated; width: 40px; height: 40px; }
+  .status-chip .meta { font-size: 11px; color: var(--ink); }
+  .status-chip .meta small { display: block; color: var(--ink-dim); font-size: 9px; letter-spacing: 0.06em; }
+  /* HUD frames */
+  .hud-bay {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    padding: 18px;
+    display: flex; flex-direction: column; gap: 14px;
+  }
+  .hud-bay h3 {
+    font-family: 'Cinzel', serif;
+    color: var(--gold-hi);
+    font-size: 13px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    margin: 0;
+  }
+  .hud-bay canvas { image-rendering: pixelated; }
+  .hud-bay .barwrap { display: flex; align-items: center; gap: 12px; }
+  .hud-bay .barwrap .label { font-size: 11px; color: var(--ink-dim); width: 60px; }
+  .hud-bay .slots { display: flex; gap: 8px; }
+</style>
+</head>
+<body>
+
+<header class="masthead">
+  <div class="eyebrow">PAGE · 07 · FX · HUD</div>
+  <h1>The <span class="accent">Crypt</span> · FX &amp; HUD</h1>
+  <p class="lede">상태이상 아이콘 · 적 사망 이펙트 · 레벨업 / 발자국 / 크리티컬 폰트 · HUD 프레임 · 커서 풀세트.</p>
+</header>
+
+<main>
+
+<section class="bay">
+  <h2>01 · Status Icons</h2>
+  <p class="bay-sub">적 머리 위에 띄울 8×8 디버프/버프 아이콘. 점멸 애니메이션은 런타임에 알파만 토글.</p>
+  <div class="status-row" id="status-row"></div>
+</section>
+
+<section class="bay">
+  <h2>02 · Enemy Death FX</h2>
+  <p class="bay-sub">적 종류별 사망 시 재생. 좀비는 녹고, 해골은 부서지고, 슬라임은 튀고, 박쥐는 깃털, 그 외엔 generic 적용.</p>
+  <div id="death"></div>
+</section>
+
+<section class="bay">
+  <h2>03 · Level Up &amp; Footstep</h2>
+  <p class="bay-sub">레벨업은 플레이어 위에 6프레임 황금 부르스트, 발자국 먼지는 워크 사이클에 맞춰 짧게.</p>
+  <div id="leveldust"></div>
+</section>
+
+<section class="bay">
+  <h2>04 · Critical Font</h2>
+  <p class="bay-sub">기본 데미지 폰트(0-9)에 <code>CRIT!</code> 글리프 추가. 크리티컬 히트 시 큰 빨간 텍스트로 호출.</p>
+  <div id="crit-preview" style="background: var(--panel); border: 1px solid var(--line); padding: 24px; display: flex; gap: 24px; align-items: center;">
+    <canvas id="crit-canvas"></canvas>
+    <span style="color: var(--ink-dim); font-size: 11px;">"CRIT!" · 4× · 빨간 외곽선 · 노란 광택</span>
+  </div>
+</section>
+
+<section class="bay">
+  <h2>05 · HUD Frames</h2>
+  <p class="bay-sub">HP/XP 바, 무기 슬롯, 코너 장식. 게임 코드에서 가운데 진행률만 가변 채워주면 OK.</p>
+  <div class="hud-bay">
+    <h3>HP / XP bars (64×8, 6× preview)</h3>
+    <div class="barwrap"><span class="label">HP</span><canvas id="hp-bar"></canvas></div>
+    <div class="barwrap"><span class="label">XP</span><canvas id="xp-bar"></canvas></div>
+    <h3>Weapon slots</h3>
+    <div class="slots" id="slots"></div>
+    <h3>Corner ornament</h3>
+    <canvas id="corner"></canvas>
+  </div>
+</section>
+
+<section class="bay">
+  <h2>06 · Cursors / Aim</h2>
+  <p class="bay-sub">크로스헤어, 회전 타겟 마커, 자동조준 표시 인디케이터.</p>
+  <div id="cursors"></div>
+</section>
+
+</main>
+
+<script src="../palette.js"></script>
+<script src="../sprites.js"></script>
+<script src="../heroes_hd.js"></script>
+<script src="../heroes_hd3.js"></script>
+<script src="../heroes_smooth_walk.js"></script>
+<script src="../heroes_xhd.js"></script>
+<script src="../bosses_hd.js"></script>
+<script src="../enemies_hd.js"></script>
+<script src="../enemies_hd2.js"></script>
+<script src="../weapons_hd.js"></script>
+<script src="../projectiles_hd.js"></script>
+<script src="../skills_hd.js"></script>
+<script src="../pickups_hd2.js"></script>
+<script src="../chests_polished.js"></script>
+<script src="../structures.js"></script>
+<script src="../structures_extra.js"></script>
+<script src="../tiles_unified.js"></script>
+<script src="../tiles_natural.js"></script>
+<script src="../hd2_apply.js"></script>
+<script src="../effects_hd3.js"></script>
+<script src="../lightning_polish.js"></script>
+<script src="../atlas.js"></script>
+<script src="../showcase.js"></script>
+<script>
+Showcase.renderNav('fx');
+
+// ── Status icons ─────────────────────────────────────────────
+const STATUS = [
+  ['status_burn',   '화상',  'DOT · 1.5x 화염 데미지'],
+  ['status_freeze', '빙결',  '5s 정지 · 다음 피해 +50%'],
+  ['status_poison', '독',    'DOT · 회복 무효'],
+  ['status_shock',  '감전',  '0.5s마다 0.1s 스턴 체인'],
+  ['status_stun',   '스턴',  '1s 행동불가'],
+  ['status_bleed',  '출혈',  'DOT · 이동시 가중'],
+  ['status_slow',   '둔화',  '이동/공격 속도 -40%'],
+  ['status_shield', '방벽',  '다음 1회 피해 무효'],
+];
+const sr = document.getElementById('status-row');
+for (const [id, name, desc] of STATUS) {
+  const chip = document.createElement('div'); chip.className = 'status-chip';
+  const c = document.createElement('canvas'); c.width = 40; c.height = 40;
+  chip.appendChild(c);
+  const meta = document.createElement('div'); meta.className = 'meta';
+  meta.innerHTML = name + '<small>' + desc + '</small>';
+  chip.appendChild(meta);
+  sr.appendChild(chip);
+  const ctx = c.getContext('2d'); ctx.imageSmoothingEnabled = false;
+  ctx.drawImage(AtlasBuilder.renderFrame(id, 0), 0, 0, c.width, c.height);
+}
+
+Showcase.renderGroups(document.getElementById('death'), [
+  { title: 'Death FX', items: ['fx_death_zombie', 'fx_death_skeleton', 'fx_death_slime', 'fx_death_bat', 'fx_death_generic'] },
+]);
+Showcase.renderGroups(document.getElementById('leveldust'), [
+  { title: 'Level Up & Footstep', items: ['fx_levelup', 'fx_footdust'] },
+]);
+
+// ── Critical font preview ────────────────────────────────────
+{
+  const c = document.getElementById('crit-canvas');
+  const scale = 4;
+  const word = 'CRIT!';
+  const glyphW = 4, glyphH = 6, pad = 1;
+  c.width = (glyphW + pad) * word.length * scale;
+  c.height = glyphH * scale;
+  const ctx = c.getContext('2d'); ctx.imageSmoothingEnabled = false;
+  let cx = 0;
+  for (const ch of word) {
+    const g = FONT[ch]; if (!g) { cx += (glyphW + pad) * scale; continue; }
+    // shadow (red outline)
+    for (let y = 0; y < g.length; y++) for (let x = 0; x < g[y].length; x++) {
+      if (g[y][x] !== 'P') continue;
+      ctx.fillStyle = '#c8332a';
+      for (const [dx, dy] of [[1,0],[-1,0],[0,1],[0,-1]]) {
+        ctx.fillRect(cx + (x+dx) * scale, (y+dy) * scale, scale, scale);
+      }
+    }
+    // glyph itself (gold)
+    for (let y = 0; y < g.length; y++) for (let x = 0; x < g[y].length; x++) {
+      if (g[y][x] !== 'P') continue;
+      ctx.fillStyle = '#f0d27a';
+      ctx.fillRect(cx + x * scale, y * scale, scale, scale);
+    }
+    cx += (glyphW + pad) * scale;
+  }
+}
+
+// ── HUD bars ─────────────────────────────────────────────────
+function drawSpriteAt(id, canvasId, scale) {
+  const c = document.getElementById(canvasId);
+  const f = SPRITES[id][0];
+  c.width = f[0].length * scale; c.height = f.length * scale;
+  const ctx = c.getContext('2d'); ctx.imageSmoothingEnabled = false;
+  ctx.drawImage(AtlasBuilder.renderFrame(id, 0), 0, 0, c.width, c.height);
+}
+drawSpriteAt('hud_bar_hp', 'hp-bar', 6);
+drawSpriteAt('hud_bar_xp', 'xp-bar', 6);
+drawSpriteAt('hud_corner', 'corner', 6);
+// weapon slots — 6 slots (matching VS-style 6-weapon cap)
+const slotsHost = document.getElementById('slots');
+for (let i = 0; i < 6; i++) {
+  const c = document.createElement('canvas');
+  const f = SPRITES.hud_weapon_slot[0];
+  const scale = 3;
+  c.width = f[0].length * scale; c.height = f.length * scale;
+  slotsHost.appendChild(c);
+  const ctx = c.getContext('2d'); ctx.imageSmoothingEnabled = false;
+  ctx.drawImage(AtlasBuilder.renderFrame('hud_weapon_slot', 0), 0, 0, c.width, c.height);
+  // overlay weapon icon for first few
+  if (i < 4) {
+    const icons = ['icon_wand', 'icon_axe', 'icon_nova', 'icon_arrow'];
+    const wsub = AtlasBuilder.renderFrame(icons[i], 0);
+    ctx.drawImage(wsub, 4, 4, c.width - 8, c.height - 8);
+  }
+}
+
+Showcase.renderGroups(document.getElementById('cursors'), [
+  { title: 'Cursors', items: ['cursor_aim', 'cursor_target', 'aim_indicator'] },
+]);
+</script>
+</body>
+</html>

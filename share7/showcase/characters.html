@@ -1,0 +1,384 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Characters · Crypt Asset Pack</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="../showcase.css" />
+<style>
+  /* Title scene */
+  .title-frame {
+    position: relative;
+    background: #07060c;
+    border: 1px solid var(--line);
+    padding: 16px;
+    display: flex;
+    justify-content: center;
+    overflow: hidden;
+  }
+  .title-frame canvas {
+    image-rendering: pixelated;
+    width: min(100%, 960px);
+    height: auto;
+    border: 1px solid var(--line);
+  }
+  .title-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    padding: 0 24px 8%;
+    pointer-events: none;
+  }
+  .title-overlay .title-eyebrow {
+    color: var(--ink-dim);
+    font-size: 12px;
+    letter-spacing: 0.32em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+    text-shadow: 0 1px 4px #000;
+  }
+  .title-overlay .title-main {
+    font-family: 'Cinzel', serif;
+    font-weight: 700;
+    font-size: clamp(28px, 6vw, 64px);
+    color: var(--ink);
+    letter-spacing: 0.08em;
+    text-shadow: 0 2px 6px #000, 0 0 12px rgba(212,160,74,0.4);
+  }
+  .title-overlay .title-main span { color: var(--gold-hi); }
+  .title-overlay .title-sub {
+    color: var(--gold-hi);
+    font-size: 12px;
+    letter-spacing: 0.4em;
+    text-transform: uppercase;
+    margin-top: 8px;
+    text-shadow: 0 1px 4px #000;
+    animation: pulse 1.6s ease-in-out infinite;
+  }
+  @keyframes pulse { 0%,100%{opacity:.4;} 50%{opacity:1;} }
+
+  /* Hero cards */
+  .hero-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 14px;
+  }
+  .hero-card {
+    background: linear-gradient(180deg, var(--panel), var(--bg-2));
+    border: 1px solid var(--line);
+    padding: 18px 16px 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 50% 0%, rgba(212,160,74,0.10), transparent 60%);
+    pointer-events: none;
+  }
+  .hero-card .portrait {
+    background-color: #1a1428;
+    background-image:
+      linear-gradient(45deg, #221a36 25%, transparent 25%),
+      linear-gradient(-45deg, #221a36 25%, transparent 25%),
+      linear-gradient(45deg, transparent 75%, #221a36 75%),
+      linear-gradient(-45deg, transparent 75%, #221a36 75%);
+    background-size: 14px 14px;
+    background-position: 0 0, 0 7px, 7px -7px, -7px 0;
+    border: 1px solid var(--line);
+    padding: 10px;
+    margin-bottom: 14px;
+  }
+  .hero-card .portrait canvas { image-rendering: pixelated; }
+  .hero-card .name {
+    font-family: 'Cinzel', serif; font-weight: 700;
+    color: var(--ink); font-size: 17px; letter-spacing: 0.06em; margin-bottom: 2px;
+  }
+  .hero-card .role {
+    color: var(--gold-hi); font-size: 10px; letter-spacing: 0.22em;
+    text-transform: uppercase; margin-bottom: 8px;
+  }
+  .hero-card .desc {
+    color: var(--ink-dim); font-size: 11px; text-align: center;
+    line-height: 1.5; min-height: 48px;
+  }
+  .hero-card .weapon {
+    margin-top: 10px; padding-top: 10px;
+    border-top: 1px dashed var(--line);
+    width: 100%; display: flex; gap: 8px; align-items: center; justify-content: center;
+  }
+  .hero-card .weapon canvas { image-rendering: pixelated; width: 32px; height: 32px; }
+  .hero-card .weapon .wlabel { font-size: 10px; color: var(--ink-dim); letter-spacing: 0.05em; }
+  .hero-card .weapon .wlabel b { color: var(--ink); }
+
+  /* Spirit cards */
+  .spirit-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+    gap: 14px;
+  }
+  .spirit-card {
+    background: linear-gradient(180deg, var(--panel), var(--bg-2));
+    border: 1px solid var(--line);
+    padding: 16px 18px;
+    position: relative;
+    overflow: hidden;
+  }
+  .spirit-card::before { content: ''; position: absolute; inset: 0; pointer-events: none; }
+  .spirit-card[data-element="fairy"]::before { background: radial-gradient(circle at 100% 0%, rgba(212,160,74,0.12), transparent 60%); }
+  .spirit-card[data-element="water"]::before { background: radial-gradient(circle at 100% 0%, rgba(58,120,200,0.18), transparent 60%); }
+  .spirit-card[data-element="earth"]::before { background: radial-gradient(circle at 100% 0%, rgba(74,138,58,0.16), transparent 60%); }
+  .spirit-card[data-element="fire"]  ::before{ background: radial-gradient(circle at 100% 0%, rgba(240,138,42,0.18), transparent 60%); }
+  .spirit-card .head { display: flex; align-items: baseline; gap: 10px; margin-bottom: 4px; }
+  .spirit-card .head h3 {
+    font-family: 'Cinzel', serif; font-weight: 700;
+    color: var(--ink); font-size: 18px; letter-spacing: 0.05em; margin: 0;
+  }
+  .spirit-card .head .role { font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; }
+  .spirit-card[data-element="fairy"] .role { color: var(--gold-hi); }
+  .spirit-card[data-element="water"] .role { color: #6fb4dc; }
+  .spirit-card[data-element="earth"] .role { color: #88b85a; }
+  .spirit-card[data-element="fire"]  .role { color: #f08a2a; }
+  .spirit-card .blurb {
+    color: var(--ink-dim); font-size: 11px; margin-bottom: 14px; line-height: 1.55;
+  }
+  .spirit-card .stages { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .spirit-card .stage {
+    background-color: #1a1428;
+    background-image:
+      linear-gradient(45deg, #221a36 25%, transparent 25%),
+      linear-gradient(-45deg, #221a36 25%, transparent 25%),
+      linear-gradient(45deg, transparent 75%, #221a36 75%),
+      linear-gradient(-45deg, transparent 75%, #221a36 75%);
+    background-size: 10px 10px;
+    background-position: 0 0, 0 5px, 5px -5px, -5px 0;
+    border: 1px solid var(--line);
+    padding: 8px 6px;
+    display: flex; flex-direction: column; align-items: center; gap: 6px;
+  }
+  .spirit-card .stage canvas { image-rendering: pixelated; }
+  .spirit-card .stage .tier {
+    font-size: 9px; letter-spacing: 0.18em; color: var(--gold); text-transform: uppercase;
+  }
+  .spirit-card .stage .label {
+    font-size: 10px; color: var(--ink); text-align: center; line-height: 1.3;
+  }
+  .spirit-card .stage .label small {
+    display: block; color: var(--ink-dim); font-size: 9px; margin-top: 2px;
+  }
+</style>
+</head>
+<body>
+
+<header class="masthead">
+  <div class="eyebrow">PAGE · 01 · CHARACTERS</div>
+  <h1>The <span class="accent">Crypt</span> · Characters</h1>
+  <p class="lede">플레이 가능 영웅 5종 · 정령 4×3 진화 · 메뉴 배경 일러스트.</p>
+</header>
+
+<main>
+
+<section class="bay" id="bay-title-scene">
+  <h2>00 · Title Scene</h2>
+  <p class="bay-sub">메인 메뉴 배경 일러스트 · 240×135 픽셀 (16:9).</p>
+  <div class="title-frame">
+    <canvas id="title-canvas"></canvas>
+    <div class="title-overlay">
+      <div class="title-eyebrow">A Bullet-Heaven</div>
+      <div class="title-main">CRYPT <span>SURVIVORS</span></div>
+      <div class="title-sub">PRESS · ANY · KEY</div>
+    </div>
+  </div>
+</section>
+
+<section class="bay" id="bay-heroes">
+  <h2>01 · Heroes</h2>
+  <p class="bay-sub">16×16 · 4프레임 워크 사이클 · 시그니처 무기 매칭.</p>
+  <div class="hero-grid" id="hero-grid"></div>
+</section>
+
+<section class="bay" id="bay-spirits">
+  <h2>02 · Spirits</h2>
+  <p class="bay-sub">정령 4종 × 3단계 진화. 요정/물은 서포터, 대지/불은 어태커.</p>
+  <div class="spirit-grid" id="spirit-grid"></div>
+</section>
+
+</main>
+
+<script src="../palette.js"></script>
+<script src="../sprites.js"></script>
+<script src="../heroes_hd.js"></script>
+<script src="../heroes_hd3.js"></script>
+<script src="../heroes_smooth_walk.js"></script>
+<script src="../heroes_xhd.js"></script>
+<script src="../bosses_hd.js"></script>
+<script src="../enemies_hd.js"></script>
+<script src="../enemies_hd2.js"></script>
+<script src="../weapons_hd.js"></script>
+<script src="../projectiles_hd.js"></script>
+<script src="../skills_hd.js"></script>
+<script src="../pickups_hd2.js"></script>
+<script src="../chests_polished.js"></script>
+<script src="../structures.js"></script>
+<script src="../structures_extra.js"></script>
+<script src="../tiles_unified.js"></script>
+<script src="../tiles_natural.js"></script>
+<script src="../hd2_apply.js"></script>
+<script src="../effects_hd3.js"></script>
+<script src="../lightning_polish.js"></script>
+<script src="../atlas.js"></script>
+<script src="../showcase.js"></script>
+<script>
+Showcase.renderNav('characters');
+
+// ── Title scene ──────────────────────────────────────────────
+const tc = document.getElementById('title-canvas');
+const scene = window.SPRITES.scene_title[0];
+const sceneW = scene[0].length, sceneH = scene.length;
+const scale = 4;
+tc.width = sceneW * scale;
+tc.height = sceneH * scale;
+const tctx = tc.getContext('2d');
+tctx.imageSmoothingEnabled = false;
+tctx.drawImage(AtlasBuilder.renderFrame('scene_title', 0), 0, 0, tc.width, tc.height);
+
+// ── Heroes ───────────────────────────────────────────────────
+const HEROES = [
+  { id: 'knight_walk',   name: 'Knight',   role: 'BASIC · 기사',
+    desc: '철갑의 수호자. 하늘에서 내리는 마법 탄환으로 적을 괴멸한다.',
+    weapon: 'proj_wand', wName: '매직 완드' },
+  { id: 'warrior_walk',  name: 'Warrior',  role: 'BERSERK · 전사',
+    desc: '야수의 혈통. 회전하는 도끼를 던져 광폭을 대운다.',
+    weapon: 'proj_axe', wName: '광전사의 도끼' },
+  { id: 'mage_walk',     name: 'Mage',     role: 'ARCANE · 마법사',
+    desc: '고대 주문을 다루는 최후의 을어따. 폭발하는 노바를 소환.',
+    weapon: 'proj_nova', wName: '노바' },
+  { id: 'huntress_walk', name: 'Huntress', role: 'RANGED · 궁수',
+    desc: '숨을 죽이고 잠복하는 명사수. 총알같은 화살을 쌧는다.',
+    weapon: 'proj_arrow', wName: '사냥차의 화살' },
+  { id: 'cleric_walk',   name: 'Cleric',   role: 'HOLY · 성직자',
+    desc: '성광으로 전장을 정화한다. 성수와 국자가를 다룬다.',
+    weapon: 'proj_holywater', wName: '성수병' },
+];
+const heroGrid = document.getElementById('hero-grid');
+for (const h of HEROES) {
+  const card = document.createElement('div'); card.className = 'hero-card';
+  const portrait = document.createElement('div'); portrait.className = 'portrait';
+  const c = document.createElement('canvas');
+  c.width = 16 * 6; c.height = 16 * 6;
+  portrait.appendChild(c);
+  card.appendChild(portrait);
+  const nm = document.createElement('div'); nm.className = 'name'; nm.textContent = h.name;
+  card.appendChild(nm);
+  const role = document.createElement('div'); role.className = 'role'; role.textContent = h.role;
+  card.appendChild(role);
+  const desc = document.createElement('div'); desc.className = 'desc'; desc.textContent = h.desc;
+  card.appendChild(desc);
+  const wp = document.createElement('div'); wp.className = 'weapon';
+  const wpC = document.createElement('canvas');
+  const wf = SPRITES[h.weapon][0];
+  const wfMax = Math.max(wf.length, wf[0].length);
+  const wScale = Math.max(2, Math.floor(32 / wfMax));
+  wpC.width = wf[0].length * wScale;
+  wpC.height = wf.length * wScale;
+  wp.appendChild(wpC);
+  const wl = document.createElement('span'); wl.className = 'wlabel';
+  wl.innerHTML = '시그니철 <b>' + h.wName + '</b>';
+  wp.appendChild(wl);
+  card.appendChild(wp);
+  heroGrid.appendChild(card);
+
+  // Eager paint + register
+  const _pctx = c.getContext('2d');
+  _pctx.imageSmoothingEnabled = false;
+  _pctx.drawImage(AtlasBuilder.renderFrame(h.id, 0), 0, 0, c.width, c.height);
+  Showcase.animState.push({ canvas: c, name: h.id, elapsed: 0 });
+  const _wctx = wpC.getContext('2d');
+  _wctx.imageSmoothingEnabled = false;
+  _wctx.drawImage(AtlasBuilder.renderFrame(h.weapon, 0), 0, 0, wpC.width, wpC.height);
+  Showcase.animState.push({ canvas: wpC, name: h.weapon, elapsed: 0 });
+}
+
+// ── Spirits ──────────────────────────────────────────────────
+const SPIRITS = [
+  { el: 'fairy', name: '요정 Fay', role: 'SUPPORTER · HEAL',
+    blurb: '플레이어 주위를 떠도며 근거리 아군을 치유합니다. 최종단계에서는 철회자 적용.',
+    stages: [
+      { id: 'spirit_fairy_1', t: '마나 윕스프', d: '힐 +1 / 8s' },
+      { id: 'spirit_fairy_2', t: '궁정 요정', d: '힐 +3 / 6s · MAX HP +5' },
+      { id: 'spirit_fairy_3', t: '아크페이', d: '힐 +6 / 4s · 광역 힐 +1 · 구원' },
+    ] },
+  { el: 'water', name: '물 Naiad', role: 'SUPPORTER · SHIELD',
+    blurb: '플레이어에게 물의 장막을 씌워주고, 접촉 적을 늘어 속도를 단계별로 느리게 합니다.',
+    stages: [
+      { id: 'spirit_water_1', t: '물방울', d: '피해 -8% 서포트' },
+      { id: 'spirit_water_2', t: '우어육', d: '쉴드 · 적 속도 -15%' },
+      { id: 'spirit_water_3', t: '해양 론면이도', d: '부욱쉴드 · 적 -30% · 동결' },
+    ] },
+  { el: 'earth', name: '대지 Petrus', role: 'ATTACKER · BOULDER',
+    blurb: '바위조각을 괴로 던저 단일 대상에 강력한 피해 입힌다. 최종단계에서는 지진으로 광역 기절.',
+    stages: [
+      { id: 'spirit_earth_1', t: '조약조각', d: '6s마다 18피해' },
+      { id: 'spirit_earth_2', t: '골렘 코어', d: '4s마다 42피해 · 논백' },
+      { id: 'spirit_earth_3', t: '고입 골렘', d: '3s마다 80피해 · 광역 기절' },
+    ] },
+  { el: 'fire', name: '불 Pyra', role: 'ATTACKER · BURN',
+    blurb: '불꽃을 끝없이 날려 도연(DOT) 을 입힙니다. 진화 시 공격 회수 단축 + 폭발 반경 증가.',
+    stages: [
+      { id: 'spirit_fire_1', t: '불꽃 윕스프', d: '파이어볼 · 4dmg/0.8s + 2 DOT' },
+      { id: 'spirit_fire_2', t: '이프릿', d: '우주 소환 · 8dmg/0.6s + 3 DOT' },
+      { id: 'spirit_fire_3', t: '피닉스', d: '광역 폭발 · 16dmg/0.4s + 6 DOT' },
+    ] },
+];
+const spiritGrid = document.getElementById('spirit-grid');
+for (const sp of SPIRITS) {
+  const card = document.createElement('div');
+  card.className = 'spirit-card';
+  card.dataset.element = sp.el;
+
+  const head = document.createElement('div'); head.className = 'head';
+  const h3 = document.createElement('h3'); h3.textContent = sp.name;
+  const role = document.createElement('span'); role.className = 'role'; role.textContent = sp.role;
+  head.appendChild(h3); head.appendChild(role);
+  card.appendChild(head);
+
+  const blurb = document.createElement('div'); blurb.className = 'blurb'; blurb.textContent = sp.blurb;
+  card.appendChild(blurb);
+
+  const stages = document.createElement('div'); stages.className = 'stages';
+  for (let i = 0; i < sp.stages.length; i++) {
+    const s = sp.stages[i];
+    const stage = document.createElement('div'); stage.className = 'stage';
+    const tier = document.createElement('div'); tier.className = 'tier'; tier.textContent = 'Stage ' + (i + 1);
+    const c = document.createElement('canvas');
+    const f0 = SPRITES[s.id][0];
+    const fw = f0[0].length;
+    const scale = fw <= 8 ? 6 : fw <= 12 ? 5 : 4;
+    c.width = f0[0].length * scale;
+    c.height = f0.length * scale;
+    const label = document.createElement('div'); label.className = 'label';
+    label.innerHTML = s.t + '<small>' + s.d + '</small>';
+    stage.appendChild(tier); stage.appendChild(c); stage.appendChild(label);
+    stages.appendChild(stage);
+
+    const _ctx = c.getContext('2d');
+    _ctx.imageSmoothingEnabled = false;
+    _ctx.drawImage(AtlasBuilder.renderFrame(s.id, 0), 0, 0, c.width, c.height);
+    Showcase.animState.push({ canvas: c, name: s.id, elapsed: 0 });
+  }
+  card.appendChild(stages);
+  spiritGrid.appendChild(card);
+}
+</script>
+
+</body>
+</html>

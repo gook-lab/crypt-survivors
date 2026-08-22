@@ -1,0 +1,531 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Hit Reactions · Crypt Asset Pack</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="../showcase.css" />
+<style>
+  /* Demo stage */
+  .demo-row {
+    display: grid;
+    grid-template-columns: 1fr 280px;
+    gap: 14px;
+    margin-bottom: 14px;
+  }
+  .demo-stage {
+    background: #07060c;
+    border: 1px solid var(--line);
+    padding: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .demo-stage canvas { image-rendering: pixelated; display: block; }
+  .demo-controls {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .demo-controls .ctrl-title {
+    font-family: 'Cinzel', serif;
+    color: var(--gold-hi);
+    font-size: 13px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    border-bottom: 1px dashed var(--line);
+    padding-bottom: 6px;
+    margin-bottom: 6px;
+  }
+  .demo-controls .ctrl-hint {
+    color: var(--ink-dim);
+    font-size: 10px;
+    line-height: 1.5;
+    margin-bottom: 6px;
+  }
+  .demo-controls button {
+    background: var(--bg-2);
+    color: var(--ink);
+    border: 1px solid var(--line);
+    padding: 8px 12px;
+    font-family: inherit;
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    cursor: pointer;
+    text-align: left;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .demo-controls button:hover {
+    background: var(--gold);
+    color: var(--bg);
+    border-color: var(--gold);
+  }
+  .demo-controls button .key {
+    background: var(--bg);
+    border: 1px solid var(--line);
+    padding: 2px 5px;
+    color: var(--gold);
+    font-weight: 700;
+    font-size: 9px;
+  }
+  .demo-controls button:hover .key { color: var(--bg); border-color: var(--bg); }
+  /* Technique grid */
+  .tech-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 12px;
+  }
+  .tech-card {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    padding: 14px;
+  }
+  .tech-card.recommended { border-color: var(--gold); }
+  .tech-card .num {
+    color: var(--gold);
+    font-family: 'Cinzel', serif;
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    font-weight: 700;
+  }
+  .tech-card h3 {
+    margin: 4px 0 6px;
+    font-family: 'Cinzel', serif;
+    font-size: 14px;
+    color: var(--ink);
+    letter-spacing: 0.04em;
+  }
+  .tech-card.recommended h3 { color: var(--gold-hi); }
+  .tech-card .desc {
+    color: var(--ink-dim);
+    font-size: 11px;
+    line-height: 1.55;
+    min-height: 50px;
+  }
+  .tech-card .code {
+    background: var(--bg-2);
+    border: 1px solid var(--line);
+    padding: 8px 10px;
+    margin-top: 8px;
+    font-size: 10px;
+    color: var(--gold-hi);
+    overflow-x: auto;
+  }
+  /* HP bar */
+  .hp-readout {
+    display: flex; align-items: center; gap: 10px;
+    color: var(--ink-dim);
+    font-size: 11px;
+    margin-top: 8px;
+  }
+  .hp-readout .bar {
+    flex: 1;
+    height: 8px;
+    background: var(--bg);
+    border: 1px solid var(--line);
+    overflow: hidden;
+    position: relative;
+  }
+  .hp-readout .fill {
+    height: 100%;
+    background: linear-gradient(90deg, #c8332a, #f08a2a, #88b85a);
+    transition: width 0.2s;
+  }
+  .hp-readout button {
+    background: var(--bg-2); color: var(--ink);
+    border: 1px solid var(--line);
+    padding: 4px 10px;
+    font-family: inherit;
+    font-size: 10px;
+    cursor: pointer;
+  }
+  .hp-readout button:hover { background: var(--blood); color: var(--ink); border-color: var(--blood); }
+  .hp-readout .pct { color: var(--gold-hi); font-weight: 700; min-width: 38px; text-align: right; }
+</style>
+</head>
+<body>
+
+<header class="masthead">
+  <div class="eyebrow">PAGE · 18 · HIT REACTIONS · 피격 강화</div>
+  <h1>Hit <span class="accent">Reactions</span> · 피격 · 저체력 · 사망</h1>
+  <p class="lede">
+    <b>"느낌이 안 사는" 픽셀 게임의 가장 큰 원인</b>은 피격이 약한 거. 흔들림 · 화이트 플래시 · 넉백 · 히트스톱 · 저HP 빨강 글로우 · 사망 컬랩스
+    8가지 기법을 라이브로 토글해 비교하세요. 각 기법마다 게임 코드 레시피 포함.
+  </p>
+</header>
+
+<main>
+
+<!-- Live demo stage -->
+<section class="bay">
+  <h2>01 · Live Demo Stage</h2>
+  <p class="bay-sub">버튼을 누르면 캐릭터가 즉시 반응. 키보드 1-8 단축키 지원. HP 슬라이더로 저체력 글로우 토글.</p>
+  <div class="demo-row">
+    <div class="demo-stage">
+      <canvas id="stage" width="640" height="360"></canvas>
+    </div>
+    <div class="demo-controls">
+      <div class="ctrl-title">반응 트리거</div>
+      <div class="ctrl-hint">버튼 클릭 또는 키보드 숫자로 즉시 효과 발동.</div>
+      <button data-act="shake"><span class="key">1</span>흔들림</button>
+      <button data-act="flash"><span class="key">2</span>화이트 플래시</button>
+      <button data-act="knockback"><span class="key">3</span>넉백 푸시</button>
+      <button data-act="hitstop"><span class="key">4</span>히트스톱</button>
+      <button data-act="number"><span class="key">5</span>데미지 숫자</button>
+      <button data-act="screen_shake"><span class="key">6</span>화면 흔들기</button>
+      <button data-act="crit"><span class="key">7</span>크리티컬 (콤보)</button>
+      <button data-act="death"><span class="key">8</span>사망</button>
+      <div class="hp-readout">
+        <button id="dmg-btn">DMG -10</button>
+        <div class="bar"><div class="fill" id="hp-fill" style="width: 100%"></div></div>
+        <span class="pct" id="hp-pct">100%</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Technique cards -->
+<section class="bay">
+  <h2>02 · 기법별 코드 레시피</h2>
+  <p class="bay-sub">위 데모에서 사용된 각 기법을 게임 엔진에 적용하는 방법.</p>
+  <div class="tech-grid" id="tech-grid"></div>
+</section>
+
+</main>
+
+<script src="../palette.js"></script>
+<script src="../sprites.js"></script>
+<script src="../heroes_hd.js"></script>
+<script src="../heroes_hd3.js"></script>
+<script src="../heroes_smooth_walk.js"></script>
+<script src="../heroes_xhd.js"></script>
+<script src="../bosses_hd.js"></script>
+<script src="../enemies_hd.js"></script>
+<script src="../enemies_hd2.js"></script>
+<script src="../weapons_hd.js"></script>
+<script src="../projectiles_hd.js"></script>
+<script src="../skills_hd.js"></script>
+<script src="../pickups_hd2.js"></script>
+<script src="../chests_polished.js"></script>
+<script src="../structures.js"></script>
+<script src="../structures_extra.js"></script>
+<script src="../tiles_unified.js"></script>
+<script src="../tiles_natural.js"></script>
+<script src="../hd2_apply.js"></script>
+<script src="../effects_hd3.js"></script>
+<script src="../lightning_polish.js"></script>
+<script src="../atlas.js"></script>
+<script src="../showcase.js"></script>
+<script>
+Showcase.renderNav('hit_react');
+
+// ── Demo state ──────────────────────────────────────────────
+const stage = document.getElementById('stage');
+const sctx = stage.getContext('2d');
+sctx.imageSmoothingEnabled = false;
+
+// Logical viewport at 160×90, scaled up 4× to 640×360
+const VW = 160, VH = 90, SCALE = 4;
+
+const player = {
+  name: 'knight_walk',
+  x: 80, y: 50,
+  hp: 100, maxHp: 100,
+  shake: 0,       // shake intensity remaining (px)
+  flash: 0,       // flash alpha 0..1
+  pushX: 0, pushY: 0, // knockback offset
+  hitstop: 0,     // ms of pause
+  dying: 0,       // 1 = death anim playing (0 → 1)
+};
+const screenShake = { intensity: 0 };
+const damageNumbers = []; // { x, y, value, life, color }
+
+function applyHit(action) {
+  // Always add some baseline reaction
+  player.shake = Math.max(player.shake, 4);
+  player.flash = 1;
+  player.pushX = (Math.random() - 0.5) * 6;
+  player.pushY = -2;
+  player.hitstop = 60;
+  switch (action) {
+    case 'shake':
+      player.shake = 6;
+      player.flash = 0;
+      player.pushX = 0; player.pushY = 0;
+      player.hitstop = 0;
+      break;
+    case 'flash':
+      player.flash = 1;
+      player.shake = 0;
+      player.pushX = 0; player.pushY = 0;
+      player.hitstop = 0;
+      break;
+    case 'knockback':
+      player.pushX = 14;
+      player.pushY = -4;
+      player.shake = 2;
+      player.flash = 0;
+      player.hitstop = 0;
+      break;
+    case 'hitstop':
+      player.hitstop = 200;
+      player.shake = 0;
+      player.flash = 0.5;
+      break;
+    case 'number':
+      damageNumbers.push({ x: player.x + 4, y: player.y - 8, value: 12, life: 1, color: '#f0d27a' });
+      player.shake = 0; player.flash = 0; player.hitstop = 0; player.pushX = 0;
+      break;
+    case 'screen_shake':
+      screenShake.intensity = 5;
+      player.shake = 0; player.flash = 0; player.pushX = 0;
+      break;
+    case 'crit':
+      // Full combo
+      player.shake = 8;
+      player.flash = 1;
+      player.pushX = 8;
+      player.pushY = -3;
+      player.hitstop = 180;
+      screenShake.intensity = 4;
+      damageNumbers.push({ x: player.x + 4, y: player.y - 10, value: 'CRIT! 47', life: 1.4, color: '#c8332a' });
+      break;
+    case 'death':
+      player.dying = 0.001;  // start animation
+      damageNumbers.push({ x: player.x + 4, y: player.y - 10, value: 999, life: 1.6, color: '#c8332a' });
+      break;
+  }
+  damage(player.hp); // mock damage
+}
+
+function damage(amount) {
+  // Tiny dmg number with most hits
+  if (player.hp > 0) {
+    damageNumbers.push({
+      x: player.x + (Math.random() - 0.5) * 8,
+      y: player.y - 12,
+      value: Math.floor(8 + Math.random() * 6),
+      life: 0.8,
+      color: '#ece2c8',
+    });
+  }
+}
+
+document.querySelectorAll('.demo-controls button[data-act]').forEach(b => {
+  b.onclick = () => applyHit(b.dataset.act);
+});
+window.addEventListener('keydown', (e) => {
+  const map = ['shake','flash','knockback','hitstop','number','screen_shake','crit','death'];
+  const idx = '12345678'.indexOf(e.key);
+  if (idx >= 0 && map[idx]) applyHit(map[idx]);
+});
+
+// HP slider
+document.getElementById('dmg-btn').onclick = () => {
+  player.hp = Math.max(0, player.hp - 10);
+  document.getElementById('hp-fill').style.width = (player.hp / player.maxHp * 100) + '%';
+  document.getElementById('hp-pct').textContent = Math.round(player.hp / player.maxHp * 100) + '%';
+  damage(10);
+};
+
+// ── Rendering ───────────────────────────────────────────────
+let last = performance.now();
+function tick(now) {
+  const dt = Math.min(0.05, (now - last) / 1000);
+  last = now;
+
+  // ── Update state ──
+  if (player.hitstop > 0) {
+    player.hitstop -= dt * 1000;
+  } else {
+    if (player.shake > 0) player.shake = Math.max(0, player.shake - dt * 24);
+    if (player.flash > 0) player.flash = Math.max(0, player.flash - dt * 4);
+    player.pushX *= 0.85;
+    player.pushY *= 0.85;
+    if (player.dying > 0 && player.dying < 1) player.dying = Math.min(1, player.dying + dt * 1.2);
+  }
+  if (screenShake.intensity > 0) screenShake.intensity = Math.max(0, screenShake.intensity - dt * 12);
+  for (let i = damageNumbers.length - 1; i >= 0; i--) {
+    damageNumbers[i].life -= dt;
+    damageNumbers[i].y -= dt * 18;
+    if (damageNumbers[i].life <= 0) damageNumbers.splice(i, 1);
+  }
+
+  // ── Draw ──
+  const buf = document.createElement('canvas');
+  buf.width = VW; buf.height = VH;
+  const b = buf.getContext('2d');
+  b.imageSmoothingEnabled = false;
+
+  // Floor — mossy stone with some atmosphere
+  const tilePool = ['tile_stone_1','tile_stone_2','tile_bones','tile_blood','tile_moss'];
+  for (let y = 0; y < 6; y++) for (let x = 0; x < 10; x++) {
+    const t = tilePool[(x*7+y*13) % tilePool.length];
+    b.drawImage(AtlasBuilder.renderFrame(t, 0), x*16, y*16);
+  }
+
+  // Some enemies around as flavor
+  const enemies = [
+    { name: 'walker_walk', x: 30, y: 25 },
+    { name: 'walker_walk', x: 130, y: 70 },
+    { name: 'runner_walk', x: 120, y: 30 },
+  ];
+  for (const e of enemies) {
+    const f = AtlasBuilder.renderFrame(e.name, 0);
+    b.drawImage(f, e.x - f.width / 2, e.y - f.height / 2);
+  }
+
+  // Player
+  const t = (now / 1000);
+  const knightSprite = AtlasBuilder.renderFrame(player.name, Math.floor(t * 6) % 4);
+
+  // Shake offset
+  const shakeX = (Math.random() - 0.5) * player.shake;
+  const shakeY = (Math.random() - 0.5) * player.shake;
+  const px = Math.round(player.x + player.pushX + shakeX);
+  const py = Math.round(player.y + player.pushY + shakeY);
+
+  if (player.dying > 0) {
+    // Death anim: shrink + fade + red overlay
+    const k = player.dying;
+    const sw = knightSprite.width * (1 - k * 0.6);
+    const sh = knightSprite.height * (1 - k * 0.7);
+    b.globalAlpha = 1 - k;
+    b.drawImage(knightSprite, Math.round(px - sw / 2), Math.round(py - sh / 2 + k * 4), sw, sh);
+    b.globalAlpha = 1;
+    if (k < 0.4) {
+      b.fillStyle = 'rgba(200, 51, 42, ' + (0.6 - k) + ')';
+      b.fillRect(0, 0, VW, VH);
+    }
+  } else {
+    b.drawImage(knightSprite, Math.round(px - knightSprite.width / 2), Math.round(py - knightSprite.height / 2));
+    // Flash overlay: redraw sprite tinted
+    if (player.flash > 0) {
+      const tint = document.createElement('canvas');
+      tint.width = knightSprite.width;
+      tint.height = knightSprite.height;
+      const tctx = tint.getContext('2d');
+      tctx.imageSmoothingEnabled = false;
+      tctx.drawImage(knightSprite, 0, 0);
+      tctx.globalCompositeOperation = 'source-in';
+      tctx.fillStyle = 'rgba(255,255,255,' + player.flash + ')';
+      tctx.fillRect(0, 0, tint.width, tint.height);
+      tctx.globalCompositeOperation = 'source-over';
+      b.drawImage(tint, Math.round(px - knightSprite.width / 2), Math.round(py - knightSprite.height / 2));
+    }
+  }
+
+  // ── Damage numbers ──
+  for (const dn of damageNumbers) {
+    drawDmgText(b, Math.round(dn.x - String(dn.value).length * 2), Math.round(dn.y),
+                String(dn.value), dn.color, dn.life);
+  }
+
+  // ── Low-HP vignette ──
+  if (player.hp / player.maxHp < 0.35 && player.dying === 0) {
+    const pulse = 0.4 + 0.25 * Math.sin(t * 6);
+    b.fillStyle = 'rgba(200, 51, 42, ' + (pulse * (1 - player.hp / player.maxHp)) + ')';
+    // Vignette ring
+    const g = b.createRadialGradient(player.x, player.y, 30, player.x, player.y, 90);
+    g.addColorStop(0, 'rgba(200, 51, 42, 0)');
+    g.addColorStop(1, 'rgba(200, 51, 42, ' + pulse + ')');
+    b.fillStyle = g;
+    b.fillRect(0, 0, VW, VH);
+    // Sprite red glow ring around feet
+    const fg = b.createRadialGradient(player.x, player.y + 4, 0, player.x, player.y + 4, 14);
+    fg.addColorStop(0, 'rgba(255, 100, 80, ' + pulse + ')');
+    fg.addColorStop(1, 'rgba(255, 100, 80, 0)');
+    b.fillStyle = fg;
+    b.fillRect(player.x - 14, player.y + 4 - 14, 28, 28);
+  }
+
+  // ── HitStop bar (visual indicator while paused) ──
+  if (player.hitstop > 0) {
+    b.fillStyle = 'rgba(255,255,255,0.06)';
+    b.fillRect(0, 0, VW, VH);
+  }
+
+  // ── Apply to stage with screen shake ──
+  const sx = (Math.random() - 0.5) * screenShake.intensity;
+  const sy = (Math.random() - 0.5) * screenShake.intensity;
+  sctx.fillStyle = '#07060c';
+  sctx.fillRect(0, 0, stage.width, stage.height);
+  sctx.imageSmoothingEnabled = false;
+  sctx.drawImage(buf, Math.round(sx) * SCALE, Math.round(sy) * SCALE,
+                 VW * SCALE, VH * SCALE);
+
+  requestAnimationFrame(tick);
+}
+function drawDmgText(ctx, x, y, text, color, life) {
+  ctx.globalAlpha = Math.min(1, life);
+  for (const ch of text) {
+    const g = FONT[ch];
+    if (!g) { x += 5; continue; }
+    for (let yy = 0; yy < g.length; yy++) for (let xx = 0; xx < g[yy].length; xx++) {
+      if (g[yy][xx] !== 'P') continue;
+      ctx.fillStyle = '#000';
+      ctx.fillRect(x + xx, y + yy + 1, 1, 1);
+      ctx.fillStyle = color;
+      ctx.fillRect(x + xx, y + yy, 1, 1);
+    }
+    x += 5;
+  }
+  ctx.globalAlpha = 1;
+}
+requestAnimationFrame(tick);
+
+// ── Technique cards ─────────────────────────────────────────
+const TECH = [
+  { n: '01', name: '흔들림 (Sprite Shake)',
+    desc: '피격 직후 스프라이트를 0.1-0.2초간 랜덤 픽셀로 진동. 가장 저렴하고 효과 큼.',
+    code: 'player.shakeRem = 0.15;\n// each frame: x += (rand-0.5) * shakeRem * 8' },
+  { n: '02', name: '화이트 플래시 (Hit Flash)',
+    desc: '스프라이트 전체를 잠시 흰색으로 칠함. source-in composite로 구현. 데미지 명확성 최고.',
+    code: 'ctx.globalCompositeOperation = "source-in";\nctx.fillStyle = "rgba(255,255,255,a)";' },
+  { n: '03', name: '넉백 푸시 (Knockback)',
+    desc: '피해 받은 방향 반대로 짧게 밀려난다. 감속하며 원위치 복귀. 무게감 부여.',
+    code: 'player.pushX = -dirX * 14;\n// each frame: pushX *= 0.85' },
+  { n: '04', name: '히트스톱 (Hit Stop)',
+    desc: '피해 순간 게임 시간을 0.06-0.18s 정지. "묵직한 한방" 느낌. 큰 적/크리티컬에만.',
+    code: 'world.frozen = 0.18;\n// skip update while frozen > 0' },
+  { n: '05', name: '데미지 숫자 (Damage Numbers)',
+    desc: '피해량을 적 머리 위에 띄움. 위로 살짝 떠오르며 페이드. 크리는 빨강 + 크게.', recommended: true,
+    code: 'numbers.push({x, y, value, life: 0.8, color});' },
+  { n: '06', name: '화면 흔들기 (Screen Shake)',
+    desc: '카메라 자체를 흔든다. 폭발/보스 처치/큰 피해에만 — 남용 시 어지러움.', recommended: false,
+    code: 'cam.shake = 5;\n// each frame: cam.x += rand * shake' },
+  { n: '07', name: '⭐ 크리티컬 콤보',
+    desc: '흔들림 + 플래시 + 강한 넉백 + 화면쉐이크 + 빨간 큰 숫자 한꺼번에. 결정타에만.',
+    recommended: true,
+    code: 'applyHit({ shake: 8, flash: 1,\n  push: 8, hitstop: 0.18,\n  screenShake: 4, crit: true });' },
+  { n: '08', name: '사망 컬랩스 (Death Anim)',
+    desc: '캐릭터가 축소 + 페이드 + 빨강 오버레이로 사라짐. 1초 정도 길게 — 죽는 순간 명확.',
+    recommended: true,
+    code: 'player.dying = lerp(0, 1, dt * 1.2);\n// sprite shrinks, alpha fades' },
+  { n: '09', name: '⭐ 저HP 빨간 글로우 (Low-HP)',
+    desc: 'HP < 35%일 때 캐릭터 발 밑 빨간 펄스 + 화면 가장자리 빨간 vignette. 위협 강조.',
+    recommended: true,
+    code: 'if (hp/maxHp < 0.35) {\n  const pulse = sin(t*6);\n  vignette("#c8332a", pulse);\n}' },
+];
+const grid = document.getElementById('tech-grid');
+for (const t of TECH) {
+  const card = document.createElement('div'); card.className = 'tech-card' + (t.recommended ? ' recommended' : '');
+  card.innerHTML =
+    '<div class="num">' + t.n + '</div>' +
+    '<h3>' + t.name + '</h3>' +
+    '<div class="desc">' + t.desc + '</div>' +
+    '<pre class="code">' + t.code + '</pre>';
+  grid.appendChild(card);
+}
+</script>
+</body>
+</html>

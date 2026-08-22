@@ -1,0 +1,443 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Friend-or-Foe ID · Crypt Asset Pack</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="../showcase.css" />
+<style>
+  .id-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+    gap: 14px;
+  }
+  .id-card {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .id-card.recommended { border-color: var(--gold); background: linear-gradient(180deg, var(--panel), rgba(212,160,74,0.06)); }
+  .id-card .head {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    margin-bottom: 4px;
+  }
+  .id-card .num {
+    color: var(--gold);
+    font-family: 'Cinzel', serif;
+    font-size: 12px;
+    letter-spacing: 0.18em;
+    font-weight: 700;
+  }
+  .id-card .name {
+    font-family: 'Cinzel', serif;
+    font-size: 15px;
+    color: var(--ink);
+    letter-spacing: 0.04em;
+    font-weight: 700;
+  }
+  .id-card.recommended .name { color: var(--gold-hi); }
+  .id-card .tag {
+    margin-left: auto;
+    font-size: 9px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ink-dim);
+    padding: 2px 6px;
+    border: 1px solid var(--line);
+  }
+  .id-card.recommended .tag {
+    color: var(--bg);
+    background: var(--gold);
+    border-color: var(--gold);
+  }
+  .id-card .blurb {
+    color: var(--ink-dim);
+    font-size: 11px;
+    line-height: 1.55;
+  }
+  .id-card .preview {
+    background-color: #1a1428;
+    border: 1px solid var(--line);
+    overflow: hidden;
+    margin-top: 4px;
+  }
+  .id-card .preview canvas {
+    image-rendering: pixelated;
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+  .id-card .pros-cons {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    font-size: 10px;
+    line-height: 1.55;
+    padding-top: 8px;
+    border-top: 1px dashed var(--line);
+  }
+  .id-card .pros { color: #88b85a; }
+  .id-card .cons { color: #c8332a; }
+  .id-card .pros b, .id-card .cons b {
+    display: block;
+    font-size: 9px;
+    letter-spacing: 0.16em;
+    margin-bottom: 2px;
+  }
+  /* recipe code box */
+  .recipe-box {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    padding: 18px;
+    margin-top: 18px;
+  }
+  .recipe-box pre {
+    background: var(--bg-2);
+    border: 1px solid var(--line);
+    padding: 14px;
+    font-size: 11px;
+    color: var(--ink);
+    overflow-x: auto;
+    margin: 0;
+    line-height: 1.55;
+  }
+  .recipe-box pre .kw { color: var(--arcane); }
+  .recipe-box pre .str { color: var(--gold-hi); }
+  .recipe-box pre .com { color: var(--ink-dim); font-style: italic; }
+  .recipe-box pre .num { color: var(--cyan); }
+</style>
+</head>
+<body>
+
+<header class="masthead">
+  <div class="eyebrow">PAGE · 17 · IDENTITY · 피아 식별</div>
+  <h1>Friend or <span class="accent">Foe</span> · 시인성 개선</h1>
+  <p class="lede">
+    타일 위에서 영웅 / 적이 묻혀 보이는 문제. 8가지 렌더 기법을 같은 장면에 비교 — 어느 게 가장 잘 보이는지,
+    트레이드오프는 뭔지 골라보세요. <b>2번 그림자 + 4번 외곽선</b> 조합이 가장 무난하게 게임 분위기를 해치지 않고 명확성을 줍니다.
+    렌더 코드는 페이지 하단 레시피에.
+  </p>
+</header>
+
+<main>
+
+<section class="bay">
+  <h2>01 · Identification Techniques</h2>
+  <p class="bay-sub">각 카드: 같은 장면 (타일 + Knight + Walker × 2 + Runner + Brute), 다른 렌더 기법 적용.</p>
+  <div class="id-grid" id="grid"></div>
+</section>
+
+<section class="bay">
+  <h2>02 · 게임 코드 레시피</h2>
+  <p class="bay-sub">PixiJS / canvas 양쪽에서 쓸 수 있는 outline + drop-shadow 헬퍼.</p>
+  <div class="recipe-box">
+    <pre><span class="com">// Renderer-side: pre-compute outline texture once per sprite.</span>
+<span class="com">// Cached so we don't redo it every frame.</span>
+<span class="kw">function</span> outlinedTexture(srcCanvas, color) {
+  <span class="kw">const</span> c = <span class="kw">document</span>.createElement(<span class="str">'canvas'</span>);
+  c.width = srcCanvas.width + <span class="num">2</span>;
+  c.height = srcCanvas.height + <span class="num">2</span>;
+  <span class="kw">const</span> ctx = c.getContext(<span class="str">'2d'</span>);
+  ctx.imageSmoothingEnabled = <span class="kw">false</span>;
+  <span class="com">// 8-direction stamp in target color</span>
+  ctx.fillStyle = color;
+  <span class="kw">for</span> (<span class="kw">const</span> [dx, dy] <span class="kw">of</span> [[-<span class="num">1</span>,<span class="num">0</span>],[<span class="num">1</span>,<span class="num">0</span>],[<span class="num">0</span>,-<span class="num">1</span>],[<span class="num">0</span>,<span class="num">1</span>],
+                            [-<span class="num">1</span>,-<span class="num">1</span>],[<span class="num">1</span>,-<span class="num">1</span>],[-<span class="num">1</span>,<span class="num">1</span>],[<span class="num">1</span>,<span class="num">1</span>]]) {
+    ctx.drawImage(srcCanvas, dx + <span class="num">1</span>, dy + <span class="num">1</span>);
+  }
+  <span class="com">// Re-color the outline silhouette</span>
+  ctx.globalCompositeOperation = <span class="str">'source-in'</span>;
+  ctx.fillRect(<span class="num">0</span>, <span class="num">0</span>, c.width, c.height);
+  ctx.globalCompositeOperation = <span class="str">'source-over'</span>;
+  <span class="com">// Stamp original sprite on top</span>
+  ctx.drawImage(srcCanvas, <span class="num">1</span>, <span class="num">1</span>);
+  <span class="kw">return</span> c;
+}
+
+<span class="com">// At draw time:</span>
+<span class="kw">function</span> drawEntity(entity, ctx) {
+  <span class="kw">const</span> sprite = atlas[entity.type];
+  <span class="kw">const</span> color = entity.team === <span class="str">'hero'</span> ? <span class="str">'#49d0e0'</span>     <span class="com">// cyan</span>
+              : entity.elite              ? <span class="str">'#f0d27a'</span>     <span class="com">// gold</span>
+              : entity.boss               ? <span class="str">'#c8332a'</span>     <span class="com">// blood red</span>
+              :                              <span class="str">'#0a0814'</span>;     <span class="com">// dark (pop off tile)</span>
+  <span class="com">// 1. Soft shadow on ground</span>
+  ctx.fillStyle = <span class="str">'rgba(0,0,0,0.45)'</span>;
+  ctx.beginPath();
+  ctx.ellipse(entity.x, entity.y + sprite.h/<span class="num">2</span>, sprite.w/<span class="num">2</span>, <span class="num">2</span>, <span class="num">0</span>, <span class="num">0</span>, Math.PI*<span class="num">2</span>);
+  ctx.fill();
+  <span class="com">// 2. Outlined sprite</span>
+  <span class="kw">const</span> tex = outlinedTexture(sprite.canvas, color);
+  ctx.drawImage(tex, entity.x - tex.width/<span class="num">2</span>, entity.y - tex.height/<span class="num">2</span>);
+}</pre>
+  </div>
+</section>
+
+</main>
+
+<script src="../palette.js"></script>
+<script src="../sprites.js"></script>
+<script src="../heroes_hd.js"></script>
+<script src="../heroes_hd3.js"></script>
+<script src="../heroes_smooth_walk.js"></script>
+<script src="../heroes_xhd.js"></script>
+<script src="../bosses_hd.js"></script>
+<script src="../enemies_hd.js"></script>
+<script src="../enemies_hd2.js"></script>
+<script src="../weapons_hd.js"></script>
+<script src="../projectiles_hd.js"></script>
+<script src="../skills_hd.js"></script>
+<script src="../pickups_hd2.js"></script>
+<script src="../chests_polished.js"></script>
+<script src="../structures.js"></script>
+<script src="../structures_extra.js"></script>
+<script src="../tiles_unified.js"></script>
+<script src="../tiles_natural.js"></script>
+<script src="../hd2_apply.js"></script>
+<script src="../effects_hd3.js"></script>
+<script src="../lightning_polish.js"></script>
+<script src="../atlas.js"></script>
+<script src="../showcase.js"></script>
+<script>
+Showcase.renderNav('identity');
+
+const W = 240, H = 135;  // logical viewport per card
+const SCALE = 2;  // displayed at 2× = 480×270
+
+// Scene: tile floor + knight in center + 4 enemies around
+function paintScene(ctx, technique) {
+  const buf = document.createElement('canvas');
+  buf.width = W; buf.height = H;
+  const b = buf.getContext('2d');
+  b.imageSmoothingEnabled = false;
+
+  // ── Floor ──
+  const tilePool = ['tile_stone_1','tile_stone_2','tile_stone_crack','tile_bones','tile_blood','tile_moss'];
+  for (let y = 0; y < 9; y++) for (let x = 0; x < 16; x++) {
+    const t = tilePool[(x * 7 + y * 13) % tilePool.length];
+    b.drawImage(AtlasBuilder.renderFrame(t, 0), x * 16, y * 16);
+  }
+
+  // ── Sprite positions ──
+  const entities = [
+    { name: 'knight_walk',  x: 120, y: 70,  team: 'hero', hp: 0.85 },
+    { name: 'walker_walk',  x: 60,  y: 50,  team: 'enemy', hp: 0.6 },
+    { name: 'walker_walk',  x: 70,  y: 95,  team: 'enemy', hp: 0.4 },
+    { name: 'runner_walk',  x: 180, y: 90,  team: 'enemy', elite: true, hp: 0.7 },
+    { name: 'brute_walk',   x: 195, y: 40,  team: 'enemy', elite: true, hp: 0.3 },
+    { name: 'bat_fly',      x: 30,  y: 22,  team: 'enemy', hp: 0.9 },
+  ];
+
+  for (const e of entities) {
+    const sprite = AtlasBuilder.renderFrame(e.name, 0);
+    drawWithTechnique(b, e, sprite, technique);
+  }
+
+  // ── Stamp scaled to ctx ──
+  ctx.imageSmoothingEnabled = false;
+  ctx.drawImage(buf, 0, 0, ctx.canvas.width, ctx.canvas.height);
+}
+
+// ── Technique implementations ──────────────────────────────
+function drawWithTechnique(ctx, e, sprite, tech) {
+  const x = Math.round(e.x - sprite.width / 2);
+  const y = Math.round(e.y - sprite.height / 2);
+
+  // Pre-compute team color
+  const color = e.team === 'hero' ? '#49d0e0'
+              : e.elite           ? '#f0d27a'
+              : '#0a0814';
+  const teamColor = e.team === 'hero' ? '#49d0e0'
+                  : e.elite           ? '#f0d27a'
+                  : '#c8332a';
+
+  switch (tech) {
+    case 'vanilla':
+      ctx.drawImage(sprite, x, y);
+      break;
+
+    case 'shadow':
+      drawShadow(ctx, e, sprite);
+      ctx.drawImage(sprite, x, y);
+      break;
+
+    case 'outline_dark':
+      drawOutlined(ctx, sprite, x, y, '#0a0814');
+      break;
+
+    case 'outline_team': {
+      const c = e.team === 'hero' ? '#49d0e0'
+              : e.elite           ? '#f0d27a'
+              : '#c8332a';
+      drawOutlined(ctx, sprite, x, y, c);
+      break;
+    }
+
+    case 'underglow': {
+      drawUnderglow(ctx, e, sprite, teamColor);
+      ctx.drawImage(sprite, x, y);
+      break;
+    }
+
+    case 'arrow': {
+      ctx.drawImage(sprite, x, y);
+      drawTopArrow(ctx, e, sprite);
+      break;
+    }
+
+    case 'hpbar': {
+      ctx.drawImage(sprite, x, y);
+      drawHPBar(ctx, e, sprite);
+      break;
+    }
+
+    case 'combo': {
+      drawShadow(ctx, e, sprite);
+      drawOutlined(ctx, sprite, x, y,
+        e.team === 'hero' ? '#49d0e0' :
+        e.elite           ? '#f0d27a' :
+                            '#0a0814');
+      if (e.team !== 'hero') drawHPBar(ctx, e, sprite);
+      break;
+    }
+  }
+}
+
+function drawShadow(ctx, e, sprite) {
+  ctx.fillStyle = 'rgba(0,0,0,0.55)';
+  ctx.beginPath();
+  ctx.ellipse(e.x, e.y + sprite.height / 2 - 1,
+              sprite.width / 2 - 1, 2, 0, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+function drawOutlined(ctx, sprite, x, y, color) {
+  // 4-direction stamp on a scratch canvas to recolor as silhouette
+  const c = document.createElement('canvas');
+  c.width = sprite.width + 2;
+  c.height = sprite.height + 2;
+  const sc = c.getContext('2d');
+  sc.imageSmoothingEnabled = false;
+  for (const [dx, dy] of [[-1,0],[1,0],[0,-1],[0,1],[-1,-1],[1,-1],[-1,1],[1,1]]) {
+    sc.drawImage(sprite, dx + 1, dy + 1);
+  }
+  sc.globalCompositeOperation = 'source-in';
+  sc.fillStyle = color;
+  sc.fillRect(0, 0, c.width, c.height);
+  sc.globalCompositeOperation = 'source-over';
+  sc.drawImage(sprite, 1, 1);
+  ctx.drawImage(c, x - 1, y - 1);
+}
+
+function drawUnderglow(ctx, e, sprite, color) {
+  const cx = e.x, cy = e.y + sprite.height / 2 - 2;
+  const r = sprite.width / 2 + 3;
+  const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
+  g.addColorStop(0, color + 'cc');  // semi-opaque
+  g.addColorStop(0.6, color + '40');
+  g.addColorStop(1, color + '00');
+  ctx.fillStyle = g;
+  ctx.fillRect(cx - r, cy - r, r * 2, r * 2);
+}
+
+function drawTopArrow(ctx, e, sprite) {
+  const top = e.y - sprite.height / 2 - 4;
+  const color = e.team === 'hero' ? '#49d0e0'
+              : e.elite           ? '#f0d27a'
+              : '#c8332a';
+  ctx.fillStyle = color;
+  // pixel triangle pointing down for enemies, up for hero
+  if (e.team === 'hero') {
+    ctx.fillRect(e.x - 1, top, 2, 1);
+    ctx.fillRect(e.x - 2, top - 1, 4, 1);
+    ctx.fillRect(e.x - 3, top - 2, 6, 1);
+  } else {
+    ctx.fillRect(e.x - 3, top - 2, 6, 1);
+    ctx.fillRect(e.x - 2, top - 1, 4, 1);
+    ctx.fillRect(e.x - 1, top, 2, 1);
+  }
+}
+
+function drawHPBar(ctx, e, sprite) {
+  const top = e.y - sprite.height / 2 - 3;
+  const w = sprite.width;
+  // background
+  ctx.fillStyle = '#0a0814';
+  ctx.fillRect(e.x - w / 2, top, w, 2);
+  // fill
+  const color = e.team === 'hero' ? '#49d0e0'
+              : e.elite           ? '#f0d27a'
+              : '#c8332a';
+  ctx.fillStyle = color;
+  ctx.fillRect(e.x - w / 2, top, Math.floor(w * e.hp), 2);
+}
+
+// ── Build cards ──────────────────────────────────────────────
+const TECHNIQUES = [
+  { id: 'vanilla',       name: 'Vanilla', tag: 'before',
+    blurb: '아무 처리 없음. 적과 바닥 타일 색감이 비슷할 때 묻혀 보임.',
+    pros: '원본 픽셀아트 그대로. 분위기 보존.',
+    cons: '시인성 낮음. 군중 속에서 플레이어 추적 어려움.' },
+  { id: 'shadow',        name: '바닥 그림자', tag: 'lightweight',
+    blurb: '캐릭터 발 밑에 반투명 검정 타원. 깊이감을 주고 떠 있는 느낌 제거.',
+    pros: '저렴, 자연스러움, 분위기 유지.',
+    cons: '시인성은 약간만 개선. 단독으론 부족.' },
+  { id: 'outline_dark',  name: '검정 외곽선', tag: 'subtle',
+    blurb: '8방향 1px 검정 외곽선. 캐릭터 실루엣을 강조해 타일에서 분리.',
+    pros: '모든 캐릭터 명확. 분위기 유지.',
+    cons: '피아 구분은 안됨 — 영웅과 적 모두 검정.' },
+  { id: 'outline_team',  name: '팀 색상 외곽선', tag: '★ recommended', recommended: true,
+    blurb: '영웅 시안, 일반 적 검정, 엘리트/보스 황금/빨강. 한눈에 위협도 파악.',
+    pros: '피아 식별 즉시 + 위협도 표시. 다른 게임에서 검증된 기법.',
+    cons: '빨강/노랑이 강하면 약간 만화 같은 느낌.' },
+  { id: 'underglow',     name: '언더글로우', tag: 'fancy',
+    blurb: '발 밑에서 팀 색이 발광. 신비로운 느낌. 컬러풀하고 화려함.',
+    pros: '매우 명확, 분위기 있음. 영웅이 빛난다.',
+    cons: '많은 적이 화면에 있으면 빛이 겹쳐 어수선.' },
+  { id: 'arrow',         name: '머리 위 화살표', tag: 'gamey',
+    blurb: '영웅 위 ▲ / 적 위 ▼. RTS / MOBA 식 명확한 표시.',
+    pros: '읽기 쉬움, 가독성 최고.',
+    cons: '게임적인 느낌이 강해 다크판타지 분위기와 충돌 가능.' },
+  { id: 'hpbar',         name: 'HP 바', tag: 'info-dense',
+    blurb: '각 적 머리 위 2px 컬러 바. 색상으로 팀 구분 + HP 정보.',
+    pros: '정보 풍부, 우선순위 적 파악.',
+    cons: '화면에 적이 50+ 있을 때 시각 노이즈. 보스/엘리트만 표시 권장.' },
+  { id: 'combo',         name: '⭐ 풀 콤보', tag: '★ best look', recommended: true,
+    blurb: '그림자 + 팀 외곽선 + 적 HP바. 분위기 + 시인성 둘 다 최대.',
+    pros: '모든 정보 명확 + 분위기 유지. 게임 출시 권장 조합.',
+    cons: '렌더 비용 약간 증가 (캐싱하면 무시 가능).' },
+];
+
+const grid = document.getElementById('grid');
+for (const t of TECHNIQUES) {
+  const card = document.createElement('div');
+  card.className = 'id-card' + (t.recommended ? ' recommended' : '');
+  card.innerHTML =
+    '<div class="head">' +
+      '<span class="num">' + String(TECHNIQUES.indexOf(t) + 1).padStart(2, '0') + '</span>' +
+      '<span class="name">' + t.name + '</span>' +
+      '<span class="tag">' + t.tag + '</span>' +
+    '</div>' +
+    '<div class="blurb">' + t.blurb + '</div>' +
+    '<div class="preview">' +
+      '<canvas width="' + W * SCALE + '" height="' + H * SCALE + '"></canvas>' +
+    '</div>' +
+    '<div class="pros-cons">' +
+      '<div class="pros"><b>장점</b>' + t.pros + '</div>' +
+      '<div class="cons"><b>단점</b>' + t.cons + '</div>' +
+    '</div>';
+  grid.appendChild(card);
+  const ctx = card.querySelector('canvas').getContext('2d');
+  paintScene(ctx, t.id);
+}
+</script>
+</body>
+</html>

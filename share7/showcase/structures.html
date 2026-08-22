@@ -1,0 +1,346 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Map Structures · Crypt Asset Pack</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="../showcase.css" />
+<style>
+  /* Biome scene preview */
+  .biome-scene {
+    background: #07060c;
+    border: 1px solid var(--line);
+    padding: 14px;
+    overflow: hidden;
+  }
+  .biome-scene canvas {
+    image-rendering: pixelated;
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+  .biome-section {
+    background: linear-gradient(180deg, var(--panel), var(--bg-2));
+    border: 1px solid var(--line);
+    padding: 18px 22px;
+    margin-bottom: 22px;
+    position: relative;
+    overflow: hidden;
+  }
+  .biome-section::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: radial-gradient(circle at 100% 0%, var(--accent), transparent 60%);
+    opacity: 0.16;
+    pointer-events: none;
+  }
+  .biome-section h3 {
+    font-family: 'Cinzel', serif;
+    color: var(--ink);
+    font-size: 22px;
+    letter-spacing: 0.06em;
+    margin: 0 0 4px;
+    position: relative; z-index: 1;
+  }
+  .biome-section .lede {
+    color: var(--ink-dim);
+    font-size: 11px;
+    margin: 0 0 14px;
+    position: relative; z-index: 1;
+  }
+  .props-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 10px;
+    position: relative; z-index: 1;
+  }
+  .prop-card {
+    background: var(--bg-2);
+    border: 1px solid var(--line);
+    padding: 10px 8px;
+    display: flex; flex-direction: column; align-items: center;
+    gap: 6px;
+  }
+  .prop-card .pair {
+    background-color: #1a1428;
+    background-image:
+      linear-gradient(45deg, #221a36 25%, transparent 25%),
+      linear-gradient(-45deg, #221a36 25%, transparent 25%);
+    background-size: 10px 10px;
+    border: 1px solid var(--line);
+    padding: 8px;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+  .prop-card .pair canvas { image-rendering: pixelated; }
+  .prop-card .pair .arr {
+    color: var(--gold);
+    font-weight: 700;
+    font-size: 14px;
+    margin: 0 2px;
+  }
+  .prop-card .nm {
+    font-size: 10px;
+    color: var(--ink);
+    text-align: center;
+    line-height: 1.4;
+  }
+  .prop-card .nm small {
+    display: block;
+    color: var(--ink-dim);
+    font-size: 8px;
+    letter-spacing: 0.1em;
+    margin-top: 2px;
+  }
+</style>
+</head>
+<body>
+
+<header class="masthead">
+  <div class="eyebrow">PAGE · 20 · MAP STRUCTURES</div>
+  <h1>Map <span class="accent">Structures</span> · 35+ 자산 + 풍경 미리보기</h1>
+  <p class="lede">
+    각 바이옴에 어울리는 구조물 — 묘비·석상·다리·성·우물·울타리·제단. 모든 구조물은 <b>원본 + HD 버전</b>으로 등록됩니다.
+    풍경 미리보기에 실제로 배치한 모습을 보여드리고, 아래에 카테고리별로 원본↔HD 비교.
+    데이터: <code>art/structures.js</code>.
+  </p>
+</header>
+
+<main>
+
+<section class="bay">
+  <h2>01 · Biome Scenes · 배치 미리보기</h2>
+  <p class="bay-sub">각 바이옴 풍경에 구조물 + 영웅 + 적을 배치한 실제 게임 같은 미리보기.</p>
+  <div class="biome-scene">
+    <canvas id="scene-canvas" width="1920" height="540"></canvas>
+  </div>
+</section>
+
+<section class="bay">
+  <h2>02 · Structures · 카테고리별</h2>
+  <p class="bay-sub">각 바이옴별 + 공용 구조물. 좌측 원본 → 우측 HD (외곽선 + 다중-톤 셰이딩).</p>
+  <div id="biomes"></div>
+</section>
+
+</main>
+
+<script src="../palette.js"></script>
+<script src="../sprites.js"></script>
+<script src="../structures.js"></script>
+<script src="../heroes_hd.js"></script>
+<script src="../heroes_hd3.js"></script>
+<script src="../heroes_smooth_walk.js"></script>
+<script src="../heroes_xhd.js"></script>
+<script src="../bosses_hd.js"></script>
+<script src="../enemies_hd.js"></script>
+<script src="../enemies_hd2.js"></script>
+<script src="../weapons_hd.js"></script>
+<script src="../projectiles_hd.js"></script>
+<script src="../skills_hd.js"></script>
+<script src="../pickups_hd2.js"></script>
+<script src="../chests_polished.js"></script>
+<script src="../structures_extra.js"></script>
+<script src="../tiles_unified.js"></script>
+<script src="../tiles_natural.js"></script>
+<script src="../hd2_apply.js"></script>
+<script src="../effects_hd3.js"></script>
+<script src="../lightning_polish.js"></script>
+<script src="../atlas.js"></script>
+<script src="../showcase.js"></script>
+<script>
+Showcase.renderNav('structures');
+
+// ── Biome scene preview ─────────────────────────────────────
+const sc = document.getElementById('scene-canvas');
+const sctx = sc.getContext('2d');
+sctx.imageSmoothingEnabled = false;
+
+// Build 4 mini-scenes (one per biome) side by side at 240×135 logical
+// scaled up to 480×270 each — total 1920×270, plus 270 padding row
+const BIOME_W = 240, BIOME_H = 135, SCALE = 2;
+
+function tileFloor(b, tileNames, x0, y0, cols, rows) {
+  for (let y = 0; y < rows; y++)
+    for (let x = 0; x < cols; x++) {
+      const t = tileNames[(x * 7 + y * 13) % tileNames.length];
+      b.drawImage(AtlasBuilder.renderFrame(t, 0), x0 + x * 16, y0 + y * 16);
+    }
+}
+
+function placeProp(b, name, x, y, anchor) {
+  const sub = AtlasBuilder.renderFrame(name, 0);
+  let dx = x, dy = y;
+  if (anchor === 'bottom') {
+    dx = x - sub.width / 2;
+    dy = y - sub.height;
+  } else if (anchor === 'center') {
+    dx = x - sub.width / 2;
+    dy = y - sub.height / 2;
+  }
+  b.drawImage(sub, Math.round(dx), Math.round(dy));
+}
+
+function paintScene(ctx, biomeId, offsetX) {
+  const buf = document.createElement('canvas');
+  buf.width = BIOME_W; buf.height = BIOME_H;
+  const b = buf.getContext('2d');
+  b.imageSmoothingEnabled = false;
+
+  if (biomeId === 'crypt') {
+    tileFloor(b, ['tile_stone_1', 'tile_stone_2', 'tile_bones', 'tile_stone_crack', 'tile_blood', 'tile_moss'], 0, 0, 16, 10);
+    // Castle tower in background
+    placeProp(b, 'prop_castle_tower', 200, 110, 'bottom');
+    placeProp(b, 'prop_gargoyle', 50, 110, 'bottom');
+    placeProp(b, 'prop_tombstone', 80, 100, 'bottom');
+    placeProp(b, 'prop_tombstone', 110, 105, 'bottom');
+    placeProp(b, 'prop_pillar_broken', 140, 110, 'bottom');
+    placeProp(b, 'prop_sarcophagus', 165, 100, 'bottom');
+    placeProp(b, 'prop_candelabra', 30, 95, 'bottom');
+    placeProp(b, 'knight_walk', 100, 85, 'bottom');
+  } else if (biomeId === 'forest') {
+    tileFloor(b, ['tile_grass_full', 'tile_grass_dark', 'tile_dirt', 'tile_grass', 'tile_moss'], 0, 0, 16, 10);
+    placeProp(b, 'prop_dead_tree', 30, 115, 'bottom');
+    placeProp(b, 'prop_dead_tree', 220, 115, 'bottom');
+    placeProp(b, 'prop_forest_shrine', 130, 115, 'bottom');
+    placeProp(b, 'prop_mushroom', 65, 110, 'bottom');
+    placeProp(b, 'prop_mushroom', 85, 108, 'bottom');
+    placeProp(b, 'prop_stone_wall', 175, 115, 'bottom');
+    placeProp(b, 'huntress_walk', 100, 85, 'bottom');
+    placeProp(b, 'forest_wolf', 70, 80, 'bottom');
+  } else if (biomeId === 'volcano') {
+    tileFloor(b, ['tile_volcano_rock', 'tile_volcano_ash', 'tile_volcano_lava'], 0, 0, 16, 10);
+    placeProp(b, 'prop_obsidian_pillar', 30, 120, 'bottom');
+    placeProp(b, 'prop_obsidian_pillar', 220, 120, 'bottom');
+    placeProp(b, 'prop_fire_altar', 130, 120, 'bottom');
+    placeProp(b, 'prop_lava_crack', 60, 90, 'center');
+    placeProp(b, 'prop_lava_crack', 170, 80, 'center');
+    placeProp(b, 'prop_bone_pile', 90, 105, 'bottom');
+    placeProp(b, 'prop_brazier', 175, 110, 'bottom');
+    placeProp(b, 'warrior_walk', 100, 80, 'bottom');
+  } else if (biomeId === 'ice') {
+    tileFloor(b, ['tile_ice_floor', 'tile_ice_crack', 'tile_ice_snow'], 0, 0, 16, 10);
+    placeProp(b, 'prop_ice_spike', 30, 115, 'bottom');
+    placeProp(b, 'prop_ice_spike', 220, 115, 'bottom');
+    placeProp(b, 'prop_frozen_statue', 130, 115, 'bottom');
+    placeProp(b, 'prop_ice_crystal', 60, 115, 'bottom');
+    placeProp(b, 'prop_ice_crystal', 90, 110, 'bottom');
+    placeProp(b, 'prop_ice_crystal', 175, 105, 'bottom');
+    placeProp(b, 'mage_walk', 100, 85, 'bottom');
+    placeProp(b, 'ice_spider', 70, 80, 'bottom');
+  }
+
+  ctx.drawImage(buf, offsetX, 0, BIOME_W * SCALE, BIOME_H * SCALE);
+
+  // Biome label
+  ctx.fillStyle = 'rgba(0,0,0,0.75)';
+  ctx.fillRect(offsetX + 8, BIOME_H * SCALE - 24, 100, 20);
+  ctx.fillStyle = '#f0d27a';
+  ctx.font = 'bold 12px monospace';
+  ctx.fillText(biomeId.toUpperCase(), offsetX + 16, BIOME_H * SCALE - 10);
+}
+
+paintScene(sctx, 'crypt',   0);
+paintScene(sctx, 'forest',  480);
+paintScene(sctx, 'volcano', 960);
+paintScene(sctx, 'ice',     1440);
+
+// ── Structure cards by biome ─────────────────────────────
+const BIOMES = [
+  { id: 'crypt',   name: '망자의 묘소',  accent: '#8d83a0',
+    items: ['prop_tombstone','prop_pillar_broken','prop_sarcophagus','prop_gargoyle','prop_candelabra'] },
+  { id: 'forest',  name: '저주받은 숲',  accent: '#88b85a',
+    items: ['prop_dead_tree','prop_mushroom','prop_forest_shrine','prop_stone_wall'] },
+  { id: 'volcano', name: '화산 분지',    accent: '#f08a2a',
+    items: ['prop_obsidian_pillar','prop_fire_altar','prop_lava_crack','prop_bone_pile'] },
+  { id: 'ice',     name: '얼음 동굴',    accent: '#6fb4dc',
+    items: ['prop_ice_spike','prop_frozen_statue','prop_ice_crystal'] },
+  { id: 'shared',  name: '공용 (성/다리/우물/배너/대문)', accent: '#d4a04a',
+    items: ['prop_castle_tower','prop_bridge','prop_fountain','prop_banner','prop_well','prop_brazier','prop_gate'] },
+];
+
+const NAMES = {
+  prop_tombstone: '묘비',
+  prop_pillar_broken: '부서진 기둥',
+  prop_sarcophagus: '석관',
+  prop_gargoyle: '가고일 석상',
+  prop_candelabra: '촛대 (애니)',
+  prop_dead_tree: '죽은 나무',
+  prop_mushroom: '독버섯',
+  prop_forest_shrine: '숲 사당',
+  prop_stone_wall: '돌담',
+  prop_obsidian_pillar: '흑요석 기둥',
+  prop_fire_altar: '화염 제단 (애니)',
+  prop_lava_crack: '용암 균열',
+  prop_bone_pile: '뼈 더미',
+  prop_ice_spike: '얼음 가시',
+  prop_frozen_statue: '얼어붙은 기사',
+  prop_ice_crystal: '얼음 결정',
+  prop_castle_tower: '성탑 (창문 점등 애니)',
+  prop_bridge: '석교',
+  prop_fountain: '분수 (애니)',
+  prop_banner: '깃발 (애니)',
+  prop_well: '우물',
+  prop_brazier: '횃불대 (애니)',
+  prop_gate: '대문',
+};
+
+function paint(canvas, name, scale) {
+  if (!SPRITES[name]) return;
+  const f = SPRITES[name][0];
+  canvas.width = f[0].length * scale;
+  canvas.height = f.length * scale;
+  const ctx = canvas.getContext('2d');
+  ctx.imageSmoothingEnabled = false;
+  ctx.drawImage(AtlasBuilder.renderFrame(name, 0), 0, 0, canvas.width, canvas.height);
+}
+
+const host = document.getElementById('biomes');
+for (const bio of BIOMES) {
+  const section = document.createElement('section');
+  section.className = 'biome-section';
+  section.style.setProperty('--accent', bio.accent);
+  section.innerHTML = '<h3>' + bio.name + '</h3>' +
+    '<div class="lede">' + bio.items.length + ' 가지 구조물</div>';
+  const grid = document.createElement('div'); grid.className = 'props-grid';
+
+  for (const id of bio.items) {
+    const card = document.createElement('div'); card.className = 'prop-card';
+    const pair = document.createElement('div'); pair.className = 'pair';
+
+    const f0 = SPRITES[id][0];
+    const maxDim = Math.max(f0.length, f0[0].length);
+    const scale = maxDim > 30 ? 2 : (maxDim > 20 ? 3 : (maxDim > 14 ? 4 : 5));
+
+    const c1 = document.createElement('canvas');
+    paint(c1, id, scale);
+    pair.appendChild(c1);
+    Showcase.animState.push({ canvas: c1, name: id, elapsed: 0 });
+
+    // Show HD version if exists, else just original twice
+    if (SPRITES[id + '_hd']) {
+      const arr = document.createElement('span'); arr.className = 'arr'; arr.textContent = '→';
+      pair.appendChild(arr);
+      const c2 = document.createElement('canvas');
+      paint(c2, id + '_hd', scale);
+      pair.appendChild(c2);
+      Showcase.animState.push({ canvas: c2, name: id + '_hd', elapsed: 0 });
+    }
+    card.appendChild(pair);
+
+    const nm = document.createElement('div'); nm.className = 'nm';
+    const dims = f0[0].length + '×' + f0.length;
+    nm.innerHTML = (NAMES[id] || id) + '<small>' + dims +
+      (SPRITES[id + '_hd'] ? ' · HD avail' : '') + '</small>';
+    card.appendChild(nm);
+    grid.appendChild(card);
+  }
+  section.appendChild(grid);
+  host.appendChild(section);
+}
+</script>
+</body>
+</html>
