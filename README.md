@@ -16,6 +16,10 @@
 > 형제 프로젝트: `../dragon-game` (던전크래프트 — 드퀘풍 턴제 JRPG).
 > 히어로/에셋을 공유하지만 아키텍처는 완전히 다르다.
 
+## 스크린샷
+
+<img src="docs/screenshots/01-title.png" width="600">
+
 ## 실행
 
 ```bash
