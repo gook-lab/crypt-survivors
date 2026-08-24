@@ -1,6 +1,6 @@
 # Crypt Survivors
 
-**한국어** · [English](README.en.md)
+**한국어** | [English](README.en.md)
 
 > **About (EN)** — A Vampire Survivors-style bullet-heaven roguelite in plain
 > JavaScript, PixiJS v8 and Vite. Move to kite the swarm; weapons fire on their

@@ -1,6 +1,6 @@
 # Crypt Survivors
 
-[한국어](README.md) · **English**
+[한국어](README.md) | **English**
 
 A Vampire Survivors-style bullet-heaven roguelite in plain JavaScript (Node ≥18, no transpilation) + PixiJS v8 + Vite.
 
