@@ -1,0 +1,8 @@
+flowchart TD
+  UI["ui/ — DOM 오버레이"] -->|입력| MAIN["main.js — 상태 기계"]
+  MAIN -->|매 틱| LOOP["engine/loop — FIXED_DT 1/60"]
+  LOOP --> SYS["systems/* — 순수 시뮬 · Pixi 미참조"]
+  SYS --> WORLD[("engine/world — 엔티티 풀")]
+  WORLD -->|"스냅샷 + events"| REN["engine/renderer — 유일한 PixiJS 소비자"]
+  SYS -.->|"fire · kill 이벤트"| AUDIO["audio + FX — main.js 가 재생"]
+  BAL["scripts/balance.js — 헤드리스 하네스"] -.->|"renderer 없이 같은 루프"| SYS
