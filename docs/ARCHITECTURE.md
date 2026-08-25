@@ -227,7 +227,7 @@ MaxHealth·Armor·Recovery·MoveSpeed·Revival / Growth·Greed·Luck·Magnet·Cu
 
 ---
 
-## 15. 콘텐츠는 데이터입니다
+## 15. 데이터 주도 콘텐츠
 
 무기·패시브·적·진화·상점 강화·아르카나·정령·맵은 전부 `content/`의 순수 데이터입니다.
 추가는 엔진 코드가 아니라 데이터 편집입니다 — 단계별 체크리스트가
