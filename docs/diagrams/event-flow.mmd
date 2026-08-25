@@ -4,5 +4,14 @@ flowchart TD
   LOOP --> SYS["systems/* — 순수 시뮬 · Pixi 미참조"]
   SYS --> WORLD[("engine/world — 엔티티 풀")]
   WORLD -->|"스냅샷 + events"| REN["engine/renderer — 유일한 PixiJS 소비자"]
-  SYS -.->|"fire · kill 이벤트"| AUDIO["audio + FX — main.js 가 재생"]
-  BAL["scripts/balance.js — 헤드리스 하네스"] -.->|"renderer 없이 같은 루프"| SYS
+  SYS -->|"fire · kill 이벤트"| AUDIO["audio + FX — main.js 가 재생"]
+  BAL["scripts/balance.js — 헤드리스 하네스"] -.->|"런타임 밖 · renderer 없이 같은 루프"| SYS
+
+  classDef core fill:#e0e7ff,stroke:#4f46e5,color:#1e1b4b,stroke-width:3
+  classDef view fill:#ffffff,stroke:#475569,color:#0f172a
+  classDef store fill:#dcfce7,stroke:#16a34a,color:#052e16
+  classDef tool fill:#f1f5f9,stroke:#94a3b8,color:#334155
+  class SYS,LOOP core
+  class UI,MAIN,REN,AUDIO view
+  class WORLD store
+  class BAL tool
