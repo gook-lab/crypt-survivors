@@ -18,15 +18,15 @@ DATE=$(date +%Y%m%d-%H%M)
 DESK=~/Desktop
 
 # 1. Project memory (memory/ 폴더만 — 대화 history는 100MB+라 제외)
-cd "/Users/kyb-ontact/.claude/projects/-Users-kyb-ontact-sonix-toy-game"
+cd "$HOME/.claude/projects/-Users-kyb-ontact-sonix-toy-game"
 zip -r "$DESK/game-claude-memory-${DATE}.zip" memory/ -q
 
 # 2. Project .claude (rules + commands + settings.local.json)
-cd /Users/kyb-ontact/sonix/toy/game
+cd $HOME/sonix/toy/game
 zip -r "$DESK/game-claude-docs-${DATE}.zip" .claude/ -q
 
 # 3. gstack skills (lean — 빌드 산출물 + node_modules + git 제외)
-cd /Users/kyb-ontact/.claude/skills
+cd $HOME/.claude/skills
 zip -r "$DESK/gstack-skills-${DATE}.zip" gstack/ -q \
   -x "gstack/browse/dist/*" \
   -x "gstack/**/node_modules/*" \
@@ -36,7 +36,7 @@ zip -r "$DESK/gstack-skills-${DATE}.zip" gstack/ -q \
   -x "gstack/**/*.tar.gz"
 
 # 4. Game project source (소스 + public 자산. 빌드 산출물 + 의존성 + git 제외)
-cd /Users/kyb-ontact/sonix/toy
+cd $HOME/sonix/toy
 zip -r "$DESK/game-project-${DATE}.zip" game/ -q \
   -x "game/node_modules/*" \
   -x "game/dist/*" \
