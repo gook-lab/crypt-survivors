@@ -78,6 +78,20 @@ export function createResult(mount) {
         </div>
       </div>
 
+      <div class="result-section hidden" id="result-weekly-section">
+        <div class="result-label" id="result-weekly-label">이번 주 기록</div>
+        <div class="result-weekly-card">
+          <div class="result-weekly-rule" id="result-weekly-rule"></div>
+          <div class="result-weekly-comparison">
+            <div class="result-weekly-metric">
+              <div class="result-stat-label">이번 주 최고</div>
+              <div class="result-stat-value result-weekly-best" id="result-weekly-best">0:00</div>
+            </div>
+          </div>
+          <div class="result-weekly-message" id="result-weekly-message"></div>
+        </div>
+      </div>
+
       <div class="result-section">
         <div class="result-label">주요 무기</div>
         <div class="result-top-weapons" id="result-top-weapons"></div>
@@ -145,6 +159,11 @@ export function createResult(mount) {
   const skillsEl = el.querySelector('#result-skills');
   const achSecEl = el.querySelector('#result-ach-sec');
   const achEl = el.querySelector('#result-ach');
+  const weeklySectionEl = el.querySelector('#result-weekly-section');
+  const weeklyLabelEl = el.querySelector('#result-weekly-label');
+  const weeklyRuleEl = el.querySelector('#result-weekly-rule');
+  const weeklyBestEl = el.querySelector('#result-weekly-best');
+  const weeklyMessageEl = el.querySelector('#result-weekly-message');
 
   let shopCb = null;
   let statsCb = null;
@@ -185,7 +204,7 @@ export function createResult(mount) {
     return cv;
   }
 
-  function show(stats, level, loadout, skillsList, freshAch) {
+  function show(stats, level, loadout, skillsList, freshAch, weeklyChallenge) {
     const t = Math.floor(stats.time);
     timeEl.textContent = Math.floor(t / 60) + ':' + String(t % 60).padStart(2, '0');
     lvlEl.textContent = level;
@@ -595,6 +614,27 @@ export function createResult(mount) {
         tag.textContent = '🏆 ' + a.name;
         achEl.appendChild(tag);
       }
+    }
+
+    // Weekly challenge — if this run was in weekly mode, show the comparison
+    if (weeklyChallenge) {
+      weeklySectionEl.classList.remove('hidden');
+      weeklyRuleEl.textContent = weeklyChallenge.rule.name;
+      const bestTime = Math.floor(weeklyChallenge.bestSurvival);
+      weeklyBestEl.textContent = Math.floor(bestTime / 60) + ':' + String(bestTime % 60).padStart(2, '0');
+      // Compare against previous best, not current best (which was just updated)
+      if (stats.time > weeklyChallenge.prevBestSurvival) {
+        weeklyMessageEl.textContent = '최고 기록을 새로 썼어요';
+        weeklyMessageEl.style.color = '#ffeb3b';
+      } else if (Math.abs(stats.time - weeklyChallenge.prevBestSurvival) < 1) {
+        weeklyMessageEl.textContent = '거의 다 왔어요';
+        weeklyMessageEl.style.color = '#81c784';
+      } else {
+        weeklyMessageEl.textContent = '다시 도전해 볼까요?';
+        weeklyMessageEl.style.color = '#b0bec5';
+      }
+    } else {
+      weeklySectionEl.classList.add('hidden');
     }
 
     el.classList.remove('hidden');

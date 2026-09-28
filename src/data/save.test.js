@@ -46,7 +46,7 @@ describe('save', () => {
     expect(loadSave(fakeStorage())).toEqual({
       gold: 0, goldLifetime: 0, upgrades: {}, unlockedChapters: 3,
       stats: { kills: 0, bosses: 0, crits: 0, damage: 0, runs: 0, maxLevel: 1, longestSurvival: 0, goldLifetime: 0 },
-      achievements: {}, heroLevels: {}, tutorialShown: false, discoveredFusions: {}, hellModeUnlocked: false, hellModeEnabled: false, runHistory: [],
+      achievements: {}, heroLevels: {}, tutorialShown: false, discoveredFusions: {}, hellModeUnlocked: false, hellModeEnabled: false, runHistory: [], weeklyRecords: {},
     });
   });
 
@@ -56,7 +56,7 @@ describe('save', () => {
     expect(loadSave(s)).toEqual({
       gold: 0, goldLifetime: 0, upgrades: {}, unlockedChapters: 3,
       stats: { kills: 0, bosses: 0, crits: 0, damage: 0, runs: 0, maxLevel: 1, longestSurvival: 0, goldLifetime: 0 },
-      achievements: {}, heroLevels: {}, tutorialShown: false, discoveredFusions: {}, hellModeUnlocked: false, hellModeEnabled: false, runHistory: [],
+      achievements: {}, heroLevels: {}, tutorialShown: false, discoveredFusions: {}, hellModeUnlocked: false, hellModeEnabled: false, runHistory: [], weeklyRecords: {},
     });
   });
 
@@ -66,7 +66,7 @@ describe('save', () => {
     expect(loadSave(s)).toEqual({
       gold: 0, goldLifetime: 0, upgrades: {}, unlockedChapters: 3,
       stats: { kills: 0, bosses: 0, crits: 0, damage: 0, runs: 0, maxLevel: 1, longestSurvival: 0, goldLifetime: 0 },
-      achievements: {}, heroLevels: {}, tutorialShown: false, discoveredFusions: {}, hellModeUnlocked: false, hellModeEnabled: false, runHistory: [],
+      achievements: {}, heroLevels: {}, tutorialShown: false, discoveredFusions: {}, hellModeUnlocked: false, hellModeEnabled: false, runHistory: [], weeklyRecords: {},
     });
   });
 
@@ -90,7 +90,7 @@ describe('save', () => {
     expect(loadSave(null)).toEqual({
       gold: 0, goldLifetime: 0, upgrades: {}, unlockedChapters: 3,
       stats: { kills: 0, bosses: 0, crits: 0, damage: 0, runs: 0, maxLevel: 1, longestSurvival: 0, goldLifetime: 0 },
-      achievements: {}, heroLevels: {}, tutorialShown: false, discoveredFusions: {}, hellModeUnlocked: false, hellModeEnabled: false, runHistory: [],
+      achievements: {}, heroLevels: {}, tutorialShown: false, discoveredFusions: {}, hellModeUnlocked: false, hellModeEnabled: false, runHistory: [], weeklyRecords: {},
     });
   });
 

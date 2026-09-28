@@ -14,6 +14,7 @@ export function createMovement(input) {
   let mapRooms = []; // the chosen map's room blueprints — set by setMap()
   let mapZones = []; // zones for the current map — passed through to structuresNear
   let mapClusterSize = 4;
+  let weeklyModifier = null; // weekly challenge modifier (enemy/player speed mult)
   // Deterministic sim clock for movement patterns (weave). Accumulated from the
   // FIXED_DT ticks so the same seed reproduces in the balance harness — never
   // Date.now(). Used by `e.movePattern === 'weave'` for the side-to-side phase.
@@ -60,12 +61,17 @@ export function createMovement(input) {
     if (input.has('right')) dx += 1;
     if (input.has('up')) dy -= 1;
     if (input.has('down')) dy += 1;
+    // Apply weekly challenge player speed modifier
+    let moveSpeed = loadout.moveSpeed;
+    if (weeklyModifier?.modifierName === 'player_speed_mult') {
+      moveSpeed *= weeklyModifier.value;
+    }
     // Ice chapter (Ch.5) — smooth toward the input direction instead of
     // snapping. The previous frame's velocity bleeds into this frame,
     // creating a small slide that the player has to plan around.
     if (player.iceSlide) {
-      const targetVx = dx === 0 && dy === 0 ? 0 : (dx / Math.hypot(dx, dy)) * loadout.moveSpeed;
-      const targetVy = dx === 0 && dy === 0 ? 0 : (dy / Math.hypot(dx, dy)) * loadout.moveSpeed;
+      const targetVx = dx === 0 && dy === 0 ? 0 : (dx / Math.hypot(dx, dy)) * moveSpeed;
+      const targetVy = dx === 0 && dy === 0 ? 0 : (dy / Math.hypot(dx, dy)) * moveSpeed;
       const lerp = 0.08; // lower = slippier; 0.08 ≈ ~150ms to reach target
       player.vx = (player.vx || 0) + (targetVx - (player.vx || 0)) * lerp;
       player.vy = (player.vy || 0) + (targetVy - (player.vy || 0)) * lerp;
@@ -73,8 +79,8 @@ export function createMovement(input) {
       player.y += player.vy * dt;
     } else if (dx !== 0 || dy !== 0) {
       const len = Math.hypot(dx, dy);
-      player.vx = (dx / len) * loadout.moveSpeed;
-      player.vy = (dy / len) * loadout.moveSpeed;
+      player.vx = (dx / len) * moveSpeed;
+      player.vy = (dy / len) * moveSpeed;
       player.x += player.vx * dt;
       player.y += player.vy * dt;
     } else {
@@ -129,9 +135,13 @@ export function createMovement(input) {
         // 0.5 × 1.35), so crowd-control still bites.
         if (e.hasteT > 0) e.hasteT -= dt;
         const haste = e.hasteT > 0 ? 1.35 : 1;
-        const speed = e.staggerT > 0 || e.telegraph > 0
+        let speed = e.staggerT > 0 || e.telegraph > 0
           ? 0
           : e.speed * (e.speedMult ?? 1) * haste * (e.charging > 0 ? 2.6 : 1);
+        // Apply weekly challenge enemy speed modifier
+        if (weeklyModifier?.modifierName === 'enemy_speed_mult' && speed > 0) {
+          speed *= weeklyModifier.value;
+        }
         // Movement pattern fork. Default = straight seek. weave/orbit_strafe
         // change the path but still respect the telegraph/stagger freeze
         // (speed === 0 short-circuits to no motion). Charging overrides the
@@ -336,5 +346,9 @@ export function createMovement(input) {
     }
   }
 
-  return { update, setMap };
+  function setWeeklyModifier(modifier) {
+    weeklyModifier = modifier;
+  }
+
+  return { update, setMap, setWeeklyModifier };
 }

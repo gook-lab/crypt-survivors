@@ -44,6 +44,7 @@ import { createWorld } from './engine/world.js';
 import { createLoop } from './engine/loop.js';
 import { createEvents } from './engine/events.js';
 import { createRng } from './util/rng.js';
+import { getIsoWeek, getRuleForWeek, getWeeklyRecord, updateWeeklyRecord } from './util/weeklyChallenge.js';
 import { createAudio } from './util/audio.js';
 import { createInput } from './input.js';
 import { createProgression } from './progression.js';
@@ -642,6 +643,8 @@ async function main() {
   // actually begins. The chosen arcana folds into loadout.meta + onKill and
   // becomes part of the run; "건너뛰기" passes null, leaving the run plain.
   let pendingCharacter = null;
+  // 주간 도전 여부는 타이틀에서 정하고, 맵 → 영웅 → 아르카나 흐름은 일반 모드와 같이 쓴다
+  let weeklyMode = false;
   function openArcanaSelect(character) {
     pendingCharacter = character;
     state = 'arcanaselect';
@@ -651,7 +654,7 @@ async function main() {
       heroName: character?.name,
     };
     arcanaSelect.show(
-      (arcana) => startRun(pendingCharacter, arcana),
+      (arcana) => startRun(pendingCharacter, arcana, weeklyMode),
       ctx,
       { onBackMap: openMapSelect, onBackHero: openCharSelect },
     );
@@ -659,7 +662,7 @@ async function main() {
 
   // Begin a run with the chosen character: set its starting weapon + sprite,
   // fold in the saved permanent upgrades, then layer the run-arcana on top.
-  function startRun(character, arcana) {
+  function startRun(character, arcana, weeklyChallenge) {
     audio.unlock();
     // Wipe ALL prior-run state before the apply* calls fold their additive
     // contributions on top. Without this, ESC → 종료 → 새 캐릭터 시작 carries
@@ -677,6 +680,7 @@ async function main() {
     nextBloodMoonAt = BLOODMOON_PERIOD;
     bloodMoonEndsAt = -Infinity;
     runEvent.bloodMoon = false;
+    runEvent.weeklyChallenge = null; // clear prior weekly state
     hitstop = 0; hitstopCd = 0;
     comboCount = 0; lastKillT = -Infinity;
     onKillBusy = false;
@@ -701,6 +705,25 @@ async function main() {
     weaponSkyDropFx.reset(); // clear any in-flight AoE FX from last run
     hud.show(); // re-show after a returnToTitle hid it
     if (audio.setMusic) audio.setMusic('ambient'); // start the BGM drone
+    // Weekly challenge — seeded run with modifiers based on ISO week.
+    // Same week → same modifiers for all players.
+    // Modifiers are stored in runEvent and read by consumption points
+    // (movement, pickup, etc) so global config stays unaffected.
+    if (weeklyChallenge) {
+      const isoWeek = getIsoWeek();
+      const rule = getRuleForWeek(isoWeek.year, isoWeek.week);
+      runEvent.weeklyChallenge = { rule, year: isoWeek.year, week: isoWeek.week };
+      // Set the weekly modifier on systems that need it
+      movement.setWeeklyModifier(rule);
+      pickup.setWeeklyModifier(rule);
+      damage.setWeeklyModifier(rule);
+      toast.show('이번 주 도전', rule.name, '도전');
+    } else {
+      // Clear weekly modifiers for normal runs
+      movement.setWeeklyModifier(null);
+      pickup.setWeeklyModifier(null);
+      damage.setWeeklyModifier(null);
+    }
     // snapshot hell-mode toggle for this run (a mid-run settings change
     // won't take effect; spawn.js reads runEvent.hell every frame)
     const _sv = loadSave();
@@ -727,7 +750,10 @@ async function main() {
     state = 'playing';
   }
 
-  title.onStart(openMapSelect);
+  title.onStart((isWeeklyChallenge) => {
+    weeklyMode = !!isWeeklyChallenge;
+    openMapSelect();
+  });
   title.onShop(() => openShop(false));
   // info pages hide the title while open and restore it when closed (the
   // close callback fires on 닫기), so the menu never shows through the page
@@ -969,10 +995,16 @@ async function main() {
         }
         addShake(11);
         break;
-      case 'gold':
-        stats.gold += def.amount;
+      case 'gold': {
+        let goldAmount = def.amount;
+        // Apply weekly challenge gold multiplier
+        if (runEvent.weeklyChallenge?.rule?.modifierName === 'gold_mult') {
+          goldAmount = Math.round(goldAmount * runEvent.weeklyChallenge.rule.value);
+        }
+        stats.gold += goldAmount;
         audio.play('kill');
         break;
+      }
       case 'chest':
         // chest entities can carry a chestTier — 'wood' (mini-boss reward,
         // common-heavy roll) vs the default 'boss' tier (full epic chest)
@@ -1204,10 +1236,26 @@ async function main() {
         renderer.spawnFx('fx_hit', player.x, player.y, { scale: 2.6, life: 0.4 });
         addShake(20);
         audio.play('kill');
+        // Update weekly challenge record if this run was in weekly mode
+        let weeklyRecordInfo = null;
+        if (runEvent.weeklyChallenge) {
+          const sv = loadSave();
+          const prevRecord = getWeeklyRecord(sv, runEvent.weeklyChallenge.year, runEvent.weeklyChallenge.week);
+          const prevBestSurvival = prevRecord.bestSurvival;
+          updateWeeklyRecord(sv, runEvent.weeklyChallenge.year, runEvent.weeklyChallenge.week, stats.time, stats.kills);
+          writeSave(sv);
+          const newRecord = getWeeklyRecord(sv, runEvent.weeklyChallenge.year, runEvent.weeklyChallenge.week);
+          weeklyRecordInfo = {
+            rule: runEvent.weeklyChallenge.rule,
+            prevBestSurvival,
+            bestSurvival: newRecord.bestSurvival,
+          };
+        }
         setTimeout(() => {
           result.show(
             stats, progression.level, loadout,
             skills.unlockedSkills(loadout), freshAch,
+            weeklyRecordInfo,
           );
         }, 720);
         return;
