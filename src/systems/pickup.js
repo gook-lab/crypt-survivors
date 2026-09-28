@@ -37,10 +37,6 @@ export function createPickup() {
           continue;
         }
       } else {
-        // Skip healing drops if weekly modifier blocks them
-        if (weeklyModifier?.modifierName === 'no_healing' && g.kind === 'heal') {
-          continue;
-        }
         const collect = player.radius + g.radius;
         if (sq <= collect * collect) {
           world.kill(g);

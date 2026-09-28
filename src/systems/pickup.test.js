@@ -33,3 +33,20 @@ describe('pickup', () => {
     expect(gem.x).toBe(400);
   });
 });
+
+describe('pickup — weekly challenge', () => {
+  it('xp_mult rule multiplies gem xp, and clearing the rule restores normal xp', () => {
+    const run = (rule) => {
+      const w = createWorld();
+      const player = w.spawn('player', { x: 0, y: 0, radius: 13 });
+      w.spawn('gem', { x: 4, y: 0, xp: 5 }); // below the Lv2 threshold so xp isn't consumed by a level-up
+      const prog = createProgression();
+      const pickup = createPickup();
+      pickup.setWeeklyModifier(rule);
+      pickup.update(0.016, w, player, LOADOUT, prog);
+      return prog.xp;
+    };
+    expect(run({ modifierName: 'xp_mult', value: 1.2 })).toBeCloseTo(6);
+    expect(run(null)).toBe(5);
+  });
+});

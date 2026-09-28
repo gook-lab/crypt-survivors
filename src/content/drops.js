@@ -69,14 +69,18 @@ const DROP_TABLE = [
   { id: 'chicken', weight: 3 },
 ];
 
+const NO_HEAL_TABLE = DROP_TABLE.filter((d) => DROPS[d.id].kind !== 'heal');
+
 // Pick a drop id from the weighted table. `rng` is the seeded generator.
-export function rollDrop(rng) {
+// `noHeal` (weekly rule) rolls from the table without heal drops — still one rng draw.
+export function rollDrop(rng, { noHeal = false } = {}) {
+  const table = noHeal ? NO_HEAL_TABLE : DROP_TABLE;
   let total = 0;
-  for (let i = 0; i < DROP_TABLE.length; i++) total += DROP_TABLE[i].weight;
+  for (let i = 0; i < table.length; i++) total += table[i].weight;
   let r = rng.next() * total;
-  for (let i = 0; i < DROP_TABLE.length; i++) {
-    r -= DROP_TABLE[i].weight;
-    if (r <= 0) return DROP_TABLE[i].id;
+  for (let i = 0; i < table.length; i++) {
+    r -= table[i].weight;
+    if (r <= 0) return table[i].id;
   }
-  return DROP_TABLE[DROP_TABLE.length - 1].id;
+  return table[table.length - 1].id;
 }

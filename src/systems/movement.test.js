@@ -124,3 +124,17 @@ describe('movement — behaviour patterns (2026-05-29)', () => {
     expect(hasted.hasteT).toBeCloseTo(0.9, 5); // timer ticked down by dt
   });
 });
+
+describe('movement — weekly challenge', () => {
+  it('player_speed_mult speeds the player up only while the rule is set', () => {
+    const { input, movement, world, player, loadout } = setup();
+    input.add('right');
+    movement.setWeeklyModifier({ modifierName: 'player_speed_mult', value: 1.15 });
+    movement.update(0.1, world, player, loadout);
+    expect(player.x).toBeCloseTo(11.5);
+    movement.setWeeklyModifier(null);
+    player.x = 0;
+    movement.update(0.1, world, player, loadout);
+    expect(player.x).toBeCloseTo(10);
+  });
+});

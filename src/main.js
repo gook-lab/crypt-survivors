@@ -643,6 +643,8 @@ async function main() {
   // actually begins. The chosen arcana folds into loadout.meta + onKill and
   // becomes part of the run; "건너뛰기" passes null, leaving the run plain.
   let pendingCharacter = null;
+  // 주간 도전 여부는 타이틀에서 정하고, 맵 → 영웅 → 아르카나 흐름은 일반 모드와 같이 쓴다
+  let weeklyMode = false;
   function openArcanaSelect(character) {
     pendingCharacter = character;
     state = 'arcanaselect';
@@ -652,7 +654,7 @@ async function main() {
       heroName: character?.name,
     };
     arcanaSelect.show(
-      (arcana) => startRun(pendingCharacter, arcana),
+      (arcana) => startRun(pendingCharacter, arcana, weeklyMode),
       ctx,
       { onBackMap: openMapSelect, onBackHero: openCharSelect },
     );
@@ -714,11 +716,13 @@ async function main() {
       // Set the weekly modifier on systems that need it
       movement.setWeeklyModifier(rule);
       pickup.setWeeklyModifier(rule);
+      damage.setWeeklyModifier(rule);
       toast.show('이번 주 도전', rule.name, '도전');
     } else {
       // Clear weekly modifiers for normal runs
       movement.setWeeklyModifier(null);
       pickup.setWeeklyModifier(null);
+      damage.setWeeklyModifier(null);
     }
     // snapshot hell-mode toggle for this run (a mid-run settings change
     // won't take effect; spawn.js reads runEvent.hell every frame)
@@ -747,44 +751,9 @@ async function main() {
   }
 
   title.onStart((isWeeklyChallenge) => {
-    if (isWeeklyChallenge) {
-      openMapSelectWeekly();
-    } else {
-      openMapSelect();
-    }
+    weeklyMode = !!isWeeklyChallenge;
+    openMapSelect();
   });
-
-  // Weekly challenge mode variant — passes weeklyChallenge flag through the chain
-  function openMapSelectWeekly() {
-    state = 'mapselect';
-    mapSelect.show((map) => {
-      currentMap = map;
-      renderer.setMap(map);
-      spawn.setMap(map);
-      movement.setMap(map);
-      openCharSelectWeekly();
-    });
-  }
-
-  function openCharSelectWeekly() {
-    state = 'charselect';
-    charSelect.show(openArcanaSelectWeekly, currentMap, openMapSelectWeekly);
-  }
-
-  function openArcanaSelectWeekly(character) {
-    pendingCharacter = character;
-    state = 'arcanaselect';
-    const ctx = {
-      chapter: currentMap?.chapter,
-      mapName: currentMap?.name,
-      heroName: character?.name,
-    };
-    arcanaSelect.show(
-      (arcana) => startRun(pendingCharacter, arcana, true),
-      ctx,
-      { onBackMap: openMapSelectWeekly, onBackHero: openCharSelectWeekly },
-    );
-  }
   title.onShop(() => openShop(false));
   // info pages hide the title while open and restore it when closed (the
   // close callback fires on 닫기), so the menu never shows through the page
@@ -1026,15 +995,16 @@ async function main() {
         }
         addShake(11);
         break;
-      case 'gold':
+      case 'gold': {
         let goldAmount = def.amount;
         // Apply weekly challenge gold multiplier
         if (runEvent.weeklyChallenge?.rule?.modifierName === 'gold_mult') {
-          goldAmount *= runEvent.weeklyChallenge.rule.value;
+          goldAmount = Math.round(goldAmount * runEvent.weeklyChallenge.rule.value);
         }
         stats.gold += goldAmount;
         audio.play('kill');
         break;
+      }
       case 'chest':
         // chest entities can carry a chestTier — 'wood' (mini-boss reward,
         // common-heavy roll) vs the default 'boss' tier (full epic chest)

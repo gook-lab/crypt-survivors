@@ -13,6 +13,7 @@ import { applyStatus } from './status.js';
 const STAGGER_KB = 16; // knockback at/above this briefly staggers the enemy
 
 export function createDamage(rng, loadout) {
+  let weeklyModifier = null; // weekly challenge rule for the current run (null = normal run)
   function gemSprite(xp) {
     if (xp >= 12) return 'pickup_xp_red';
     if (xp >= 4) return 'pickup_xp_green';
@@ -142,10 +143,14 @@ export function createDamage(rng, loadout) {
         events.emit('miniBossKill', { x: target.x, y: target.y });
         void drop;
       } else if (rng && rng.next() < DROP_CHANCE * (1 + (loadout ? loadout.luck : 0))) {
-        spawnDrop(world, rollDrop(rng), target.x, target.y);
+        spawnDrop(world, rollDrop(rng, { noHeal: weeklyModifier?.modifierName === 'no_healing' }), target.x, target.y);
       }
     }
   }
 
-  return { apply };
+  function setWeeklyModifier(modifier) {
+    weeklyModifier = modifier;
+  }
+
+  return { apply, setWeeklyModifier };
 }

@@ -630,7 +630,7 @@ export function createResult(mount) {
         weeklyMessageEl.textContent = '거의 다 왔어요';
         weeklyMessageEl.style.color = '#81c784';
       } else {
-        weeklyMessageEl.textContent = '다시 도전해볼까요';
+        weeklyMessageEl.textContent = '다시 도전해 볼까요?';
         weeklyMessageEl.style.color = '#b0bec5';
       }
     } else {
