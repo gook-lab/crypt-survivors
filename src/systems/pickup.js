@@ -7,6 +7,8 @@
 import { GEM } from '../config.js';
 
 export function createPickup() {
+  let weeklyModifier = null;
+
   function update(dt, world, player, loadout, progression, onCollectDrop) {
     const ents = world.entities;
     const magnetSq = loadout.magnet * loadout.magnet;
@@ -25,11 +27,20 @@ export function createPickup() {
 
       if (isGem) {
         if (sq <= gemCollectSq) {
-          progression.addXp(g.xp * (loadout.xpGainMult ?? 1));
+          let xpGain = g.xp * (loadout.xpGainMult ?? 1);
+          // Apply weekly challenge xp multiplier
+          if (weeklyModifier?.modifierName === 'xp_mult') {
+            xpGain *= weeklyModifier.value;
+          }
+          progression.addXp(xpGain);
           world.kill(g);
           continue;
         }
       } else {
+        // Skip healing drops if weekly modifier blocks them
+        if (weeklyModifier?.modifierName === 'no_healing' && g.kind === 'heal') {
+          continue;
+        }
         const collect = player.radius + g.radius;
         if (sq <= collect * collect) {
           world.kill(g);
@@ -46,5 +57,9 @@ export function createPickup() {
     }
   }
 
-  return { update };
+  function setWeeklyModifier(modifier) {
+    weeklyModifier = modifier;
+  }
+
+  return { update, setWeeklyModifier };
 }

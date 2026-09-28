@@ -705,12 +705,20 @@ async function main() {
     if (audio.setMusic) audio.setMusic('ambient'); // start the BGM drone
     // Weekly challenge — seeded run with modifiers based on ISO week.
     // Same week → same modifiers for all players.
+    // Modifiers are stored in runEvent and read by consumption points
+    // (movement, pickup, etc) so global config stays unaffected.
     if (weeklyChallenge) {
       const isoWeek = getIsoWeek();
       const rule = getRuleForWeek(isoWeek.year, isoWeek.week);
       runEvent.weeklyChallenge = { rule, year: isoWeek.year, week: isoWeek.week };
-      rule.apply(SPAWN, loadout); // Apply the weekly modifier (e.g., enemy speed +20%)
-      toast.show('이번 주 도전', rule.name, '⚠ 도전');
+      // Set the weekly modifier on systems that need it
+      movement.setWeeklyModifier(rule);
+      pickup.setWeeklyModifier(rule);
+      toast.show('이번 주 도전', rule.name, '도전');
+    } else {
+      // Clear weekly modifiers for normal runs
+      movement.setWeeklyModifier(null);
+      pickup.setWeeklyModifier(null);
     }
     // snapshot hell-mode toggle for this run (a mid-run settings change
     // won't take effect; spawn.js reads runEvent.hell every frame)
@@ -1019,7 +1027,12 @@ async function main() {
         addShake(11);
         break;
       case 'gold':
-        stats.gold += def.amount;
+        let goldAmount = def.amount;
+        // Apply weekly challenge gold multiplier
+        if (runEvent.weeklyChallenge?.rule?.modifierName === 'gold_mult') {
+          goldAmount *= runEvent.weeklyChallenge.rule.value;
+        }
+        stats.gold += goldAmount;
         audio.play('kill');
         break;
       case 'chest':
@@ -1257,11 +1270,15 @@ async function main() {
         let weeklyRecordInfo = null;
         if (runEvent.weeklyChallenge) {
           const sv = loadSave();
+          const prevRecord = getWeeklyRecord(sv, runEvent.weeklyChallenge.year, runEvent.weeklyChallenge.week);
+          const prevBestSurvival = prevRecord.bestSurvival;
           updateWeeklyRecord(sv, runEvent.weeklyChallenge.year, runEvent.weeklyChallenge.week, stats.time, stats.kills);
           writeSave(sv);
+          const newRecord = getWeeklyRecord(sv, runEvent.weeklyChallenge.year, runEvent.weeklyChallenge.week);
           weeklyRecordInfo = {
             rule: runEvent.weeklyChallenge.rule,
-            bestSurvival: getWeeklyRecord(sv, runEvent.weeklyChallenge.year, runEvent.weeklyChallenge.week).bestSurvival,
+            prevBestSurvival,
+            bestSurvival: newRecord.bestSurvival,
           };
         }
         setTimeout(() => {

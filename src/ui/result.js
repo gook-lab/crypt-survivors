@@ -619,17 +619,18 @@ export function createResult(mount) {
     // Weekly challenge — if this run was in weekly mode, show the comparison
     if (weeklyChallenge) {
       weeklySectionEl.classList.remove('hidden');
-      weeklyRuleEl.textContent = '규칙: ' + weeklyChallenge.rule.name;
+      weeklyRuleEl.textContent = weeklyChallenge.rule.name;
       const bestTime = Math.floor(weeklyChallenge.bestSurvival);
       weeklyBestEl.textContent = Math.floor(bestTime / 60) + ':' + String(bestTime % 60).padStart(2, '0');
-      if (stats.time > weeklyChallenge.bestSurvival) {
-        weeklyMessageEl.textContent = '최고 기록을 새로 썼어요!';
+      // Compare against previous best, not current best (which was just updated)
+      if (stats.time > weeklyChallenge.prevBestSurvival) {
+        weeklyMessageEl.textContent = '최고 기록을 새로 썼어요';
         weeklyMessageEl.style.color = '#ffeb3b';
-      } else if (Math.abs(stats.time - weeklyChallenge.bestSurvival) < 1) {
-        weeklyMessageEl.textContent = '거의 다 왔어요!';
+      } else if (Math.abs(stats.time - weeklyChallenge.prevBestSurvival) < 1) {
+        weeklyMessageEl.textContent = '거의 다 왔어요';
         weeklyMessageEl.style.color = '#81c784';
       } else {
-        weeklyMessageEl.textContent = '다시 도전해볼까요?';
+        weeklyMessageEl.textContent = '다시 도전해볼까요';
         weeklyMessageEl.style.color = '#b0bec5';
       }
     } else {

@@ -1,8 +1,9 @@
 // Weekly challenge mode — deterministic seeded runs from ISO week number.
 //
-// Every Monday-Sunday span (ISO week) gets a unique seed + 1-2 modifiers
-// (enemy speed ±%, no healing items, etc.). Same week → same seed + same rules
-// for all players. Different week → different seed + different rules.
+// Every Monday-Sunday span (ISO week) gets a unique seed + 1 modifier.
+// Same week → same seed + same rule for all players. Different week → different
+// seed + rule. Modifiers apply via runEvent (not global config mutation), so
+// normal runs after weekly runs stay unaffected.
 
 import { createRng } from './rng.js';
 
@@ -32,45 +33,38 @@ export function getWeeklySeed(year, week) {
 }
 
 // Weekly modifier rules. One modifier is active per week.
-// Each rule returns a function: (config, loadout) => { applies mods inline }
+// Rules are data only; the simulation reads modifierName/value from runEvent
+// and applies them locally at consumption points (movement, pickup, etc).
 const WEEKLY_RULES = [
   {
     id: 'speed_up_enemies',
-    name: '적이 더 빠워요',
-    apply: (config) => {
-      config.ENEMY_SPEED_MULT = (config.ENEMY_SPEED_MULT || 1.0) * 1.2;
-    },
+    name: '이번 주는 적이 더 빨라요',
+    modifierName: 'enemy_speed_mult',
+    value: 1.2, // 20% faster
   },
   {
     id: 'speed_up_player',
-    name: '당신이 더 빨라졌어요',
-    apply: (config) => {
-      config.PLAYER_SPEED_MULT = (config.PLAYER_SPEED_MULT || 1.0) * 1.15;
-    },
+    name: '이번 주는 내 캐릭터가 더 빨라요',
+    modifierName: 'player_speed_mult',
+    value: 1.15, // 15% faster
   },
   {
     id: 'no_healing_items',
-    name: '회복 아이템이 없어요',
-    apply: (config, loadout) => {
-      // Drop healing items from loot pool
-      if (loadout) {
-        loadout.noHealing = true;
-      }
-    },
+    name: '이번 주는 회복 아이템이 없어요',
+    modifierName: 'no_healing',
+    value: true,
   },
   {
     id: 'extra_gold',
-    name: '드롭 골드가 많아요',
-    apply: (config) => {
-      config.GOLD_MULT = (config.GOLD_MULT || 1.0) * 1.3;
-    },
+    name: '이번 주는 드롭 골드가 많아요',
+    modifierName: 'gold_mult',
+    value: 1.3, // 30% more gold
   },
   {
     id: 'extra_xp',
-    name: '경험치를 더 받아요',
-    apply: (config) => {
-      config.XP_MULT = (config.XP_MULT || 1.0) * 1.2;
-    },
+    name: '이번 주는 경험치를 더 받아요',
+    modifierName: 'xp_mult',
+    value: 1.2, // 20% more xp
   },
 ];
 
@@ -83,8 +77,9 @@ export function getRuleForWeek(year, week) {
 }
 
 // Get all rule names for display (ordered by id for consistency).
+// Returns a copy so caller can't mutate the original array.
 export function getAllRules() {
-  return WEEKLY_RULES.sort((a, b) => a.id.localeCompare(b.id));
+  return [...WEEKLY_RULES].sort((a, b) => a.id.localeCompare(b.id));
 }
 
 // Weekly challenge record shape (persisted in save.weeklyRecords).
