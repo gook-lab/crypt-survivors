@@ -44,6 +44,7 @@ import { createWorld } from './engine/world.js';
 import { createLoop } from './engine/loop.js';
 import { createEvents } from './engine/events.js';
 import { createRng } from './util/rng.js';
+import { getIsoWeek, getRuleForWeek, getWeeklyRecord, updateWeeklyRecord } from './util/weeklyChallenge.js';
 import { createAudio } from './util/audio.js';
 import { createInput } from './input.js';
 import { createProgression } from './progression.js';
@@ -659,7 +660,7 @@ async function main() {
 
   // Begin a run with the chosen character: set its starting weapon + sprite,
   // fold in the saved permanent upgrades, then layer the run-arcana on top.
-  function startRun(character, arcana) {
+  function startRun(character, arcana, weeklyChallenge) {
     audio.unlock();
     // Wipe ALL prior-run state before the apply* calls fold their additive
     // contributions on top. Without this, ESC → 종료 → 새 캐릭터 시작 carries
@@ -677,6 +678,7 @@ async function main() {
     nextBloodMoonAt = BLOODMOON_PERIOD;
     bloodMoonEndsAt = -Infinity;
     runEvent.bloodMoon = false;
+    runEvent.weeklyChallenge = null; // clear prior weekly state
     hitstop = 0; hitstopCd = 0;
     comboCount = 0; lastKillT = -Infinity;
     onKillBusy = false;
@@ -701,6 +703,15 @@ async function main() {
     weaponSkyDropFx.reset(); // clear any in-flight AoE FX from last run
     hud.show(); // re-show after a returnToTitle hid it
     if (audio.setMusic) audio.setMusic('ambient'); // start the BGM drone
+    // Weekly challenge — seeded run with modifiers based on ISO week.
+    // Same week → same modifiers for all players.
+    if (weeklyChallenge) {
+      const isoWeek = getIsoWeek();
+      const rule = getRuleForWeek(isoWeek.year, isoWeek.week);
+      runEvent.weeklyChallenge = { rule, year: isoWeek.year, week: isoWeek.week };
+      rule.apply(SPAWN, loadout); // Apply the weekly modifier (e.g., enemy speed +20%)
+      toast.show('이번 주 도전', rule.name, '⚠ 도전');
+    }
     // snapshot hell-mode toggle for this run (a mid-run settings change
     // won't take effect; spawn.js reads runEvent.hell every frame)
     const _sv = loadSave();
@@ -727,7 +738,45 @@ async function main() {
     state = 'playing';
   }
 
-  title.onStart(openMapSelect);
+  title.onStart((isWeeklyChallenge) => {
+    if (isWeeklyChallenge) {
+      openMapSelectWeekly();
+    } else {
+      openMapSelect();
+    }
+  });
+
+  // Weekly challenge mode variant — passes weeklyChallenge flag through the chain
+  function openMapSelectWeekly() {
+    state = 'mapselect';
+    mapSelect.show((map) => {
+      currentMap = map;
+      renderer.setMap(map);
+      spawn.setMap(map);
+      movement.setMap(map);
+      openCharSelectWeekly();
+    });
+  }
+
+  function openCharSelectWeekly() {
+    state = 'charselect';
+    charSelect.show(openArcanaSelectWeekly, currentMap, openMapSelectWeekly);
+  }
+
+  function openArcanaSelectWeekly(character) {
+    pendingCharacter = character;
+    state = 'arcanaselect';
+    const ctx = {
+      chapter: currentMap?.chapter,
+      mapName: currentMap?.name,
+      heroName: character?.name,
+    };
+    arcanaSelect.show(
+      (arcana) => startRun(pendingCharacter, arcana, true),
+      ctx,
+      { onBackMap: openMapSelectWeekly, onBackHero: openCharSelectWeekly },
+    );
+  }
   title.onShop(() => openShop(false));
   // info pages hide the title while open and restore it when closed (the
   // close callback fires on 닫기), so the menu never shows through the page
@@ -1204,10 +1253,22 @@ async function main() {
         renderer.spawnFx('fx_hit', player.x, player.y, { scale: 2.6, life: 0.4 });
         addShake(20);
         audio.play('kill');
+        // Update weekly challenge record if this run was in weekly mode
+        let weeklyRecordInfo = null;
+        if (runEvent.weeklyChallenge) {
+          const sv = loadSave();
+          updateWeeklyRecord(sv, runEvent.weeklyChallenge.year, runEvent.weeklyChallenge.week, stats.time, stats.kills);
+          writeSave(sv);
+          weeklyRecordInfo = {
+            rule: runEvent.weeklyChallenge.rule,
+            bestSurvival: getWeeklyRecord(sv, runEvent.weeklyChallenge.year, runEvent.weeklyChallenge.week).bestSurvival,
+          };
+        }
         setTimeout(() => {
           result.show(
             stats, progression.level, loadout,
             skills.unlockedSkills(loadout), freshAch,
+            weeklyRecordInfo,
           );
         }, 720);
         return;

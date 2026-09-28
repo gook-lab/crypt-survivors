@@ -49,6 +49,7 @@ function fresh() {
     hellModeUnlocked: false, // unlocked after first 10-min survival
     hellModeEnabled: false, // toggled via settings (or charselect after unlock)
     runHistory: [], // last 10 completed runs (most-recent first)
+    weeklyRecords: {}, // week string ("2026-W40") -> { bestSurvival, bestKills }
   };
 }
 
@@ -111,6 +112,7 @@ export function loadSave(storage) {
       hellModeUnlocked: d.hellModeUnlocked === true,
       hellModeEnabled: d.hellModeEnabled === true,
       runHistory: Array.isArray(d.runHistory) ? d.runHistory.slice(0, 10) : [],
+      weeklyRecords: (d.weeklyRecords && typeof d.weeklyRecords === 'object') ? d.weeklyRecords : {},
     };
   } catch {
     return fresh();

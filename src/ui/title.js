@@ -12,6 +12,7 @@ export function createTitle(mount) {
       <h1 class="title-name">CRYPT SURVIVORS</h1>
       <p class="title-sub">던전의 무리를 베고 살아남아라 · 화살표 / WASD 이동</p>
       <button class="title-btn title-btn-go" id="title-start">모험 시작</button>
+      <button class="title-btn" id="title-weekly">주간 도전</button>
       <button class="title-btn" id="title-shop">대장간</button>
 
       <div class="title-sections">
@@ -65,7 +66,11 @@ export function createTitle(mount) {
   const cbs = {};
   el.querySelector('#title-start').addEventListener('click', () => {
     el.classList.add('hidden');
-    if (cbs.start) cbs.start();
+    if (cbs.start) cbs.start(false);
+  });
+  el.querySelector('#title-weekly').addEventListener('click', () => {
+    el.classList.add('hidden');
+    if (cbs.start) cbs.start(true);
   });
   el.querySelector('#title-shop').addEventListener('click', () => {
     if (cbs.shop) cbs.shop();
