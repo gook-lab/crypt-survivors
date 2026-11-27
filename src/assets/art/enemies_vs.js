@@ -4,6 +4,8 @@
 // enemy's velocity. The base key (e.g. 'walker_walk') is aliased to east so
 // non-directional contexts (bestiary portrait, etc.) still show new art.
 
+import { loadImage } from './imageLoader.js';
+
 const DIRECTIONS = ['east', 'west'];
 // enemy slug -> the existing SPRITES key the renderer/ENEMY_SPRITE table looks up.
 // Adding more enemies is a one-line entry here; missing PNGs are silently
@@ -60,16 +62,8 @@ const PNG_URLS = import.meta.glob('../enemies_vs/*/*/frame_*.png', {
   import: 'default',
 });
 
-function loadImage(url) {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.onload = () => resolve(img);
-    img.onerror = () => reject(new Error('failed to load ' + url));
-    img.src = url;
-  });
-}
-
-async function loadFrames(slug, dir) {
+// the 8 walk-frame URLs of one clip, or null when any frame is missing
+function frameUrls(slug, dir) {
   const urls = [];
   for (let i = 0; i < 8; i++) {
     const path = `../enemies_vs/${slug}/${dir}/frame_00${i}.png`;
@@ -77,6 +71,12 @@ async function loadFrames(slug, dir) {
     if (!u) return null;
     urls.push(u);
   }
+  return urls;
+}
+
+async function loadFrames(slug, dir) {
+  const urls = frameUrls(slug, dir);
+  if (!urls) return null;
   const imgs = await Promise.all(urls.map(loadImage));
   const W = imgs[0].naturalWidth;
   const H = imgs[0].naturalHeight;
@@ -119,3 +119,7 @@ window.ENEMIES_VS_LOAD = async function loadEnemiesVS() {
   }
   console.info('[enemies_vs] registered ' + registered + ' clips, promoted ' + promoted + ' base keys');
 };
+
+// every URL the loader above fetches — main.js preloads them in one burst
+window.ENEMIES_VS_LOAD.urls = () =>
+  Object.keys(ENEMIES).flatMap((slug) => DIRECTIONS.flatMap((dir) => frameUrls(slug, dir) || []));

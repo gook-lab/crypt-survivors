@@ -11,6 +11,7 @@ import swampUrl from '../heroes_vs/tiles_vs/swamp.png';
 import volcanoUrl from '../heroes_vs/tiles_vs/volcano.png';
 import iceUrl from '../heroes_vs/tiles_vs/ice.png';
 import voidUrl from '../heroes_vs/tiles_vs/void.png';
+import { loadImage } from './imageLoader.js';
 
 // `mainTarget` = the high-weight existing tile key in maps.js (e.g. 16/20 of crypt floor).
 // `accentTarget` = the rare variant key. Cropped bbox is fixed by PixelLab's tileset15_4x4 layout.
@@ -27,15 +28,6 @@ const BIOMES = {
 // and the all-lower tile (wang_0) is at (32, 16). Both 16×16.
 const UPPER_BBOX = [0, 48, 16, 16];
 const LOWER_BBOX = [32, 16, 16, 16];
-
-function loadImage(url) {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.onload = () => resolve(img);
-    img.onerror = () => reject(new Error('failed to load ' + url));
-    img.src = url;
-  });
-}
 
 function cropFrame(img, bbox) {
   const c = document.createElement('canvas');
@@ -72,3 +64,6 @@ window.TILES_VS_LOAD = async function loadTilesVS() {
   }
   console.info('[tiles_vs] registered ' + n + ' biome tilesets');
 };
+
+// every URL the loader above fetches — main.js preloads them in one burst
+window.TILES_VS_LOAD.urls = () => Object.values(BIOMES).map((def) => def.url);

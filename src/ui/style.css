@@ -3310,6 +3310,45 @@ body {
 /* hell mode indicators — corner badge on the title (visible whenever it's
    unlocked) and a faint red border around the playfield while a run is in
    hell mode. Both are non-blocking + subtle so they don't drown the UI. */
+/* boot gate strip — sits in the title box's bottom padding while the sprite
+   packs load (title.js setProgress / setReady), gone once the game is ready */
+.title-loading {
+  position: absolute;
+  left: 50%;
+  bottom: 9px;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  white-space: nowrap;
+  pointer-events: none;
+}
+.title-loading-bar {
+  position: relative;
+  width: 120px;
+  height: 6px;
+  background: #15121f;
+  box-shadow: 0 0 0 1px #3d3050;
+}
+.title-loading-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 0;
+  background: linear-gradient(90deg, #8a5cf0, var(--gold));
+  transition: width 0.2s linear;
+}
+.title-loading-text {
+  font-size: 12px;
+  color: var(--text-dim);
+  letter-spacing: 1px;
+}
+.title-loading-held .title-loading-text {
+  color: var(--gold);
+}
+@media (prefers-reduced-motion: reduce) {
+  .title-loading-fill { transition: none; }
+}
+
 .title-hell-badge {
   position: absolute;
   top: 14px;

@@ -8,6 +8,8 @@
 // edges — perfect for the VS-style "균일 베이스" approach we landed on
 // after the Wang sheet's 16px grid pattern proved too zig-zag-loud.
 
+import { loadImage } from './imageLoader.js';
+
 // Vite resolves `/tilesets/*` from the project's public/ directory.
 const TILE_VARIANTS = {
   tile_nat_crypt_a2: '/tilesets/crypt_a2.png', // organic stone noise
@@ -21,15 +23,6 @@ const TILE_VARIANTS = {
   tile_void_nebula: '/tilesets/void_nebula.png',     // nebula (variety)
   tile_void_rune: '/tilesets/void_rune.png',         // rune inlay (band)
 };
-
-function loadImage(url) {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.onload = () => resolve(img);
-    img.onerror = () => reject(new Error('failed to load ' + url));
-    img.src = url;
-  });
-}
 
 function downsampleTo16(img) {
   const c = document.createElement('canvas');
@@ -55,3 +48,6 @@ window.TILES_VS_EXTRA_LOAD = async function loadTilesVSExtra() {
   }
   console.info('[tiles_vs_extra] registered ' + n + ' uniform stone variants');
 };
+
+// every URL the loader above fetches — main.js preloads them in one burst
+window.TILES_VS_EXTRA_LOAD.urls = () => Object.values(TILE_VARIANTS);
