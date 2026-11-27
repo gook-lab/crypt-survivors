@@ -3,6 +3,8 @@
 // animations generated via PixelLab animate_object — those override the
 // static render with a frame cycle at ANIM_FPS[slug] (or default 10fps).
 
+import { loadImage } from './imageLoader.js';
+
 // Glob both single-frame and animated folders. Vite resolves URLs eagerly so
 // the loader can iterate frame_00{0..7} without runtime fetching.
 const PNG_URLS = import.meta.glob('../projectiles_vs/*/frame_*.png', {
@@ -106,15 +108,6 @@ const PROJECTILES = {
   spell_poison_orb:     'proj_spell_poison_orb',
 };
 
-function loadImage(url) {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.onload = () => resolve(img);
-    img.onerror = () => reject(new Error('failed to load ' + url));
-    img.src = url;
-  });
-}
-
 // fps per slug for weapons with multi-frame animations (animate_object output).
 // Slugs not listed default to 10fps when N>1 frames are present, or 0 (static)
 // when only frame_000 exists.
@@ -131,14 +124,22 @@ const ANIM_FPS = {
   barbed_net:         6,
 };
 
+// sequential frame_00X.png URLs of one slug (stops at the first gap)
+function frameUrls(slug) {
+  const urls = [];
+  for (let i = 0; i < 16; i++) {
+    const u = PNG_URLS[`../projectiles_vs/${slug}/frame_00${i}.png`];
+    if (!u) break;
+    urls.push(u);
+  }
+  return urls;
+}
+
 // Load all sequential frame_00X.png entries for a slug. Returns the canvases
 // in order; the registration step picks fps based on count.
 async function loadProjectile(slug) {
   const canvases = [];
-  for (let i = 0; i < 16; i++) {
-    const p = `../projectiles_vs/${slug}/frame_00${i}.png`;
-    const u = PNG_URLS[p];
-    if (!u) break;
+  for (const u of frameUrls(slug)) {
     const img = await loadImage(u);
     const c = document.createElement('canvas');
     c.width = img.naturalWidth;
@@ -172,3 +173,6 @@ window.PROJECTILES_VS_LOAD = async function loadProjectilesVS() {
     `[projectiles_vs] registered ${n} VS-style projectiles (${animated} animated)`,
   );
 };
+
+// every URL the loader above fetches — main.js preloads them in one burst
+window.PROJECTILES_VS_LOAD.urls = () => Object.keys(PROJECTILES).flatMap(frameUrls);

@@ -3,6 +3,8 @@
 // east/west variants (effects don't face a direction). The base sprite key
 // (fx_explosion, fx_slash, ...) is overridden so existing call sites just work.
 
+import { loadImage } from './imageLoader.js';
+
 const PNG_URLS = import.meta.glob('../fx_vs/*/frame_*.png', {
   eager: true,
   query: '?url',
@@ -31,16 +33,8 @@ const EFFECTS = {
   class_mage:     { key: 'fx_class_mage',     frames: 4, fps: 12 },
 };
 
-function loadImage(url) {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.onload = () => resolve(img);
-    img.onerror = () => reject(new Error('failed to load ' + url));
-    img.src = url;
-  });
-}
-
-async function loadFx(slug, frameCount) {
+// the frame URLs of one effect, or null when any frame is missing
+function frameUrls(slug, frameCount) {
   const urls = [];
   for (let i = 0; i < frameCount; i++) {
     const path = `../fx_vs/${slug}/frame_00${i}.png`;
@@ -48,6 +42,12 @@ async function loadFx(slug, frameCount) {
     if (!u) return null;
     urls.push(u);
   }
+  return urls;
+}
+
+async function loadFx(slug, frameCount) {
+  const urls = frameUrls(slug, frameCount);
+  if (!urls) return null;
   const imgs = await Promise.all(urls.map(loadImage));
   const W = imgs[0].naturalWidth;
   const H = imgs[0].naturalHeight;
@@ -76,3 +76,7 @@ window.FX_VS_LOAD = async function loadFxVS() {
   }
   console.info('[fx_vs] registered ' + n + ' VS-style effects');
 };
+
+// every URL the loader above fetches — main.js preloads them in one burst
+window.FX_VS_LOAD.urls = () =>
+  Object.entries(EFFECTS).flatMap(([slug, def]) => frameUrls(slug, def.frames) || []);

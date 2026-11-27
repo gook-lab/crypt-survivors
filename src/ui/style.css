@@ -33,6 +33,10 @@ body {
 
 #game {
   position: relative;
+  /* VIEW size (config.js) — set here too so the stage has its real size
+     before the renderer's canvas exists (the title shows first) */
+  width: 1280px;
+  height: 720px;
 }
 
 #game canvas {
@@ -3310,6 +3314,106 @@ body {
 /* hell mode indicators — corner badge on the title (visible whenever it's
    unlocked) and a faint red border around the playfield while a run is in
    hell mode. Both are non-blocking + subtle so they don't drown the UI. */
+/* key-art title — the menu panel sits on the left so the hero in the key
+   art (right of centre) stays visible; a shade darkens the menu side */
+.title {
+  justify-content: flex-start;
+  overflow: hidden;
+}
+.title-box {
+  width: 548px;
+  margin-left: 72px;
+  padding-left: 40px;
+  padding-right: 40px;
+}
+.title-name {
+  font-size: 58px;
+  line-height: 1.04;
+}
+.title-key {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 60% 50%;
+  z-index: 0;
+  opacity: 0;
+  transition: opacity 0.6s ease-out;
+}
+.title-has-key .title-key {
+  opacity: 1;
+  animation: title-key-drift 36s ease-in-out infinite alternate;
+  transform-origin: 62% 50%;
+}
+@keyframes title-key-drift {
+  from { transform: scale(1); }
+  to { transform: scale(1.05); }
+}
+.title-shade {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(90deg, rgba(9, 7, 16, 0.86) 0%, rgba(9, 7, 16, 0.6) 38%, rgba(9, 7, 16, 0.1) 66%, rgba(9, 7, 16, 0.3) 100%),
+    radial-gradient(ellipse at 62% 50%, transparent 45%, rgba(5, 4, 10, 0.55) 100%);
+}
+/* stars and the bat belong to the night-sky pixel scene, not the crypt floor */
+.title-has-key .title-twinkle,
+.title-has-key .title-bat {
+  display: none;
+}
+/* the stage is scaled to fit, so phone-width rules meant for unscaled
+   layouts would stack the title rows taller than the stage */
+@media (max-width: 640px) {
+  .title .title-btn-row { flex-direction: row; gap: 12px; }
+  .title .title-btn-sm { width: 104px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .title-key { transition: none; }
+  .title-has-key .title-key { animation: none; }
+}
+
+/* boot gate strip — sits in the title box's bottom padding while the sprite
+   packs load (title.js setProgress / setReady), gone once the game is ready */
+.title-loading {
+  position: absolute;
+  left: 50%;
+  bottom: 9px;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  white-space: nowrap;
+  pointer-events: none;
+}
+.title-loading-bar {
+  position: relative;
+  width: 120px;
+  height: 6px;
+  background: #15121f;
+  box-shadow: 0 0 0 1px #3d3050;
+}
+.title-loading-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 0;
+  background: linear-gradient(90deg, #8a5cf0, var(--gold));
+  transition: width 0.2s linear;
+}
+.title-loading-text {
+  font-size: 12px;
+  color: var(--text-dim);
+  letter-spacing: 1px;
+}
+.title-loading-held .title-loading-text {
+  color: var(--gold);
+}
+@media (prefers-reduced-motion: reduce) {
+  .title-loading-fill { transition: none; }
+}
+
 .title-hell-badge {
   position: absolute;
   top: 14px;

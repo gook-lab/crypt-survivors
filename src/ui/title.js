@@ -63,36 +63,83 @@ export function createTitle(mount) {
     el.insertBefore(art, el.firstChild);
   }
 
+  // Key art (docs/art/key-art.png → public/title/key-art.webp) over the
+  // pixel scene. The scene paints instantly from the bundled sprites; the
+  // key art fades in on top once it arrives, and a shade keeps the menu
+  // side dark for contrast.
+  const keyArt = new Image();
+  keyArt.className = 'title-key';
+  keyArt.alt = '';
+  keyArt.decoding = 'async';
+  keyArt.addEventListener('load', () => el.classList.add('title-has-key'));
+  keyArt.src = '/title/key-art.webp';
+  const shade = document.createElement('div');
+  shade.className = 'title-shade';
+  el.insertBefore(shade, el.querySelector('.title-box'));
+  el.insertBefore(keyArt, shade);
+
+  // Boot gate — the title shows while the sprite packs are still loading.
+  // A click before then is held (the latest one wins) and replayed once
+  // main.js calls setReady(), so no screen ever opens on half-loaded art.
+  const loading = document.createElement('div');
+  loading.className = 'title-loading';
+  loading.setAttribute('role', 'status');
+  loading.innerHTML = `
+    <div class="title-loading-bar"><span class="title-loading-fill"></span></div>
+    <p class="title-loading-text">그림을 불러오고 있어요</p>
+  `;
+  el.querySelector('.title-box').appendChild(loading);
+  const loadingFill = loading.querySelector('.title-loading-fill');
+  const loadingText = loading.querySelector('.title-loading-text');
+  let ready = false;
+  let held = null;
+  let pct = 0;
+  function paintLoading() {
+    loadingFill.style.width = pct + '%';
+    loadingText.textContent = held
+      ? `준비되면 바로 열어요 · ${pct}%`
+      : `그림을 불러오고 있어요 · ${pct}%`;
+  }
+  function gate(action) {
+    if (ready) {
+      action();
+      return;
+    }
+    held = action;
+    loading.classList.add('title-loading-held');
+    paintLoading();
+  }
+
   const cbs = {};
-  el.querySelector('#title-start').addEventListener('click', () => {
+  el.querySelector('#title-start').addEventListener('click', () => gate(() => {
     el.classList.add('hidden');
     if (cbs.start) cbs.start(false);
-  });
-  el.querySelector('#title-weekly').addEventListener('click', () => {
+  }));
+  el.querySelector('#title-weekly').addEventListener('click', () => gate(() => {
     el.classList.add('hidden');
     if (cbs.start) cbs.start(true);
-  });
-  el.querySelector('#title-shop').addEventListener('click', () => {
+  }));
+  el.querySelector('#title-shop').addEventListener('click', () => gate(() => {
     if (cbs.shop) cbs.shop();
-  });
-  el.querySelector('#title-ach').addEventListener('click', () => {
+  }));
+  el.querySelector('#title-ach').addEventListener('click', () => gate(() => {
     if (cbs.ach) cbs.ach();
-  });
-  el.querySelector('#title-arsenal').addEventListener('click', () => {
+  }));
+  el.querySelector('#title-arsenal').addEventListener('click', () => gate(() => {
     if (cbs.arsenal) cbs.arsenal();
-  });
-  el.querySelector('#title-bestiary').addEventListener('click', () => {
+  }));
+  el.querySelector('#title-bestiary').addEventListener('click', () => gate(() => {
     if (cbs.bestiary) cbs.bestiary();
-  });
-  el.querySelector('#title-status').addEventListener('click', () => {
+  }));
+  el.querySelector('#title-status').addEventListener('click', () => gate(() => {
     if (cbs.status) cbs.status();
-  });
-  el.querySelector('#title-spirits').addEventListener('click', () => {
+  }));
+  el.querySelector('#title-spirits').addEventListener('click', () => gate(() => {
     if (cbs.spirits) cbs.spirits();
-  });
-  el.querySelector('#title-settings').addEventListener('click', () => {
+  }));
+  el.querySelector('#title-settings').addEventListener('click', () => gate(() => {
     if (cbs.settings) cbs.settings();
-  });
+  }));
 
   // Hell-mode corner badge — visible only after hellModeUnlocked. Clickable
   // shortcut: toggles the run-time hellModeEnabled save flag with a flash.
@@ -117,12 +164,12 @@ export function createTitle(mount) {
     el.appendChild(badge);
   }
   refreshHellBadge();
-  el.querySelector('#title-stats').addEventListener('click', () => {
+  el.querySelector('#title-stats').addEventListener('click', () => gate(() => {
     if (cbs.stats) cbs.stats();
-  });
-  el.querySelector('#title-history').addEventListener('click', () => {
+  }));
+  el.querySelector('#title-history').addEventListener('click', () => gate(() => {
     if (cbs.history) cbs.history();
-  });
+  }));
 
   return {
     onStart: (cb) => { cbs.start = cb; },
@@ -137,5 +184,17 @@ export function createTitle(mount) {
     onHistory: (cb) => { cbs.history = cb; },
     show: () => el.classList.remove('hidden'),
     hide: () => el.classList.add('hidden'),
+    el,
+    setProgress(done, total) {
+      pct = total > 0 ? Math.floor((done / total) * 100) : 100;
+      paintLoading();
+    },
+    setReady() {
+      ready = true;
+      loading.remove();
+      const action = held;
+      held = null;
+      if (action) action();
+    },
   };
 }

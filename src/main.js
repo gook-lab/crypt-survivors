@@ -39,6 +39,7 @@ import './assets/art/enemies_vs.js';
 import './assets/art/fx_vs.js';
 import './assets/art/pickups_vs.js';
 import './assets/art/projectiles_vs.js';
+import { preloadImages, releaseImages } from './assets/art/imageLoader.js';
 import { createRenderer } from './engine/renderer.js';
 import { createWorld } from './engine/world.js';
 import { createLoop } from './engine/loop.js';
@@ -109,15 +110,32 @@ async function main() {
   fitScreen();
   window.addEventListener('resize', fitScreen);
 
+  // The title goes up first — it only needs the ASCII packs already in this
+  // bundle — and takes over from the index.html boot loader. Its buttons hold
+  // a click until setReady() at the end of main(), so everything below (the
+  // renderer, every other screen, the run) still starts on fully loaded art.
+  const title = createTitle(mount);
+  document.documentElement.classList.add('booted');
+
   // PixelLab tile/enemy/fx PNGs decode asynchronously — wait for them
   // before the renderer caches any textures. Hero sprites no longer go
   // through this path; heroAssets.js handles them via pngTexture on demand.
-  if (typeof window.TILES_VS_LOAD === 'function') await window.TILES_VS_LOAD();
-  if (typeof window.TILES_VS_EXTRA_LOAD === 'function') await window.TILES_VS_EXTRA_LOAD();
-  if (typeof window.ENEMIES_VS_LOAD === 'function') await window.ENEMIES_VS_LOAD();
-  if (typeof window.FX_VS_LOAD === 'function') await window.FX_VS_LOAD();
-  if (typeof window.PICKUPS_VS_LOAD === 'function') await window.PICKUPS_VS_LOAD();
-  if (typeof window.PROJECTILES_VS_LOAD === 'function') await window.PROJECTILES_VS_LOAD();
+  // All pack URLs are requested at once (progress on the title); the packs
+  // then register in their original order, which decides shared keys.
+  const artPacks = [
+    window.TILES_VS_LOAD,
+    window.TILES_VS_EXTRA_LOAD,
+    window.ENEMIES_VS_LOAD,
+    window.FX_VS_LOAD,
+    window.PICKUPS_VS_LOAD,
+    window.PROJECTILES_VS_LOAD,
+  ].filter((load) => typeof load === 'function');
+  await preloadImages(
+    artPacks.flatMap((load) => (load.urls ? load.urls() : [])),
+    (done, total) => title.setProgress(done, total),
+  );
+  for (const load of artPacks) await load();
+  releaseImages();
 
   const renderer = await createRenderer(mount);
   if (typeof window !== 'undefined' && /[?&]debug=1\b/.test(window.location.search)) {
@@ -178,7 +196,9 @@ async function main() {
   const hud = createHud(mount);
   const levelUp = createLevelUp(mount);
   const result = createResult(mount);
-  const title = createTitle(mount);
+  // keep the original overlay stacking: what was built after the title
+  // (canvas, hud, levelUp, result) moves back in front of it
+  while (title.el.nextSibling) mount.insertBefore(title.el.nextSibling, title.el);
   const mapSelect = createMapSelect(mount);
   const charSelect = createCharSelect(mount);
   const arcanaSelect = createArcanaSelect(mount, rng);
@@ -1419,6 +1439,12 @@ async function main() {
     update,
     render,
   });
+
+  title.setReady();
+  window.__bootReady = true;
 }
 
-main();
+main().catch((err) => {
+  console.error(err);
+  if (typeof window.__bootFail === 'function') window.__bootFail();
+});

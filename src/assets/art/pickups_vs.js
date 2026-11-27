@@ -3,6 +3,8 @@
 // but only 1 frame each. Renderer treats single-frame entries as static
 // sprites (no animation playback).
 
+import { loadImage } from './imageLoader.js';
+
 const PNG_URLS = import.meta.glob('../pickups_vs/*/frame_000.png', {
   eager: true,
   query: '?url',
@@ -25,15 +27,6 @@ const PICKUPS = {
   rune:         'pickup_rune',
   scroll:       'pickup_scroll',
 };
-
-function loadImage(url) {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.onload = () => resolve(img);
-    img.onerror = () => reject(new Error('failed to load ' + url));
-    img.src = url;
-  });
-}
 
 async function loadPickup(slug) {
   const path = `../pickups_vs/${slug}/frame_000.png`;
@@ -60,3 +53,9 @@ window.PICKUPS_VS_LOAD = async function loadPickupsVS() {
   }
   console.info('[pickups_vs] registered ' + n + ' VS-style pickups');
 };
+
+// every URL the loader above fetches — main.js preloads them in one burst
+window.PICKUPS_VS_LOAD.urls = () =>
+  Object.keys(PICKUPS)
+    .map((slug) => PNG_URLS[`../pickups_vs/${slug}/frame_000.png`])
+    .filter(Boolean);

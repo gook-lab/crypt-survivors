@@ -7,9 +7,105 @@
       content="width=device-width, initial-scale=1.0, viewport-fit=cover"
     />
     <title>Crypt Survivors</title>
+    <meta name="description" content="던전의 무리를 베고 살아남는 브라우저 탄막 생존 게임이에요." />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Crypt Survivors" />
+    <meta property="og:description" content="던전의 무리를 베고 살아남는 브라우저 탄막 생존 게임이에요." />
+    <meta property="og:url" content="https://crypt-survivors-delta.vercel.app/" />
+    <meta property="og:image" content="https://crypt-survivors-delta.vercel.app/og-image.jpg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <!-- Boot loader — plain HTML/CSS so it paints before the game bundle
+         arrives. main.js adds .booted once the title is up; a failed bundle
+         (or a main() that throws) adds .boot-failed instead. -->
+    <style>
+      #boot-loader {
+        position: fixed;
+        inset: 0;
+        z-index: 1000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 16px;
+        background: radial-gradient(ellipse at 50% 40%, #241d36 0%, #0d0a14 70%);
+        color: #e8e0f4;
+        font-family: 'Courier New', monospace;
+        text-align: center;
+      }
+      .booted #boot-loader { display: none; }
+      .boot-failed #boot-loader { display: flex; }
+      .bl-tag { margin: 0 0 6px; font-size: 12px; letter-spacing: 0.35em; color: #b8aed0; }
+      .bl-name {
+        font-family: Georgia, 'Times New Roman', serif;
+        margin: 0 0 22px;
+        font-size: clamp(26px, 7vw, 48px);
+        letter-spacing: 0.08em;
+        color: #f0c14b;
+        text-shadow: 3px 3px 0 #000, 0 0 18px rgba(240, 193, 75, 0.35);
+      }
+      .bl-bar {
+        position: relative;
+        width: min(280px, 70vw);
+        height: 10px;
+        margin: 0 auto 12px;
+        border: 2px solid #000;
+        box-shadow: 0 0 0 2px #3d3050;
+        background: #15121f;
+        overflow: hidden;
+      }
+      .bl-bar span {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        width: 35%;
+        background: linear-gradient(90deg, #8a5cf0, #f0c14b);
+        animation: bl-slide 1.2s ease-in-out infinite;
+      }
+      @keyframes bl-slide {
+        from { left: -35%; }
+        to { left: 100%; }
+      }
+      .bl-msg { margin: 0; font-size: 14px; color: #cfc8e0; }
+      .bl-slow, .bl-err { margin: 14px 0 0; font-size: 14px; color: #f0c14b; }
+      .bl-slow { visibility: hidden; animation: bl-show 0s 15s forwards; }
+      @keyframes bl-show { to { visibility: visible; } }
+      .bl-err { display: none; }
+      .boot-failed .bl-err { display: block; }
+      .boot-failed .bl-slow, .boot-failed .bl-bar, .boot-failed .bl-msg { display: none; }
+      #boot-loader a { color: #f0c14b; text-underline-offset: 3px; }
+      @media (prefers-reduced-motion: reduce) {
+        .bl-bar span { animation: none; left: 0; width: 100%; opacity: 0.5; }
+      }
+    </style>
+    <script>
+      // a script / stylesheet that fails to load (or a throwing main()) flips
+      // the loader to its retry state
+      window.__bootFail = function () {
+        document.documentElement.classList.add('boot-failed');
+      };
+      window.addEventListener(
+        'error',
+        function (e) {
+          var t = e.target;
+          if (t && (t.tagName === 'SCRIPT' || t.tagName === 'LINK')) window.__bootFail();
+        },
+        true,
+      );
+    </script>
     <link rel="stylesheet" href="/src/ui/style.css" />
   </head>
   <body>
+    <div id="boot-loader" role="status" aria-live="polite">
+      <div>
+        <p class="bl-tag">A BULLET-HEAVEN</p>
+        <h1 class="bl-name">CRYPT SURVIVORS</h1>
+        <div class="bl-bar"><span></span></div>
+        <p class="bl-msg">던전 문을 열고 있어요</p>
+        <p class="bl-slow">망이 느린 것 같아요 · <a href="">다시 불러오기</a></p>
+        <p class="bl-err">게임을 불러오지 못했어요 · <a href="">다시 불러오기</a></p>
+      </div>
+    </div>
     <div id="game"></div>
     <script type="module" src="/src/main.js"></script>
   </body>
