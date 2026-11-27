@@ -12,7 +12,7 @@ import { weaponAssetUrl } from '../util/weaponAssets.js';
 // hero id → 한글 라벨 (signature 섹션의 영웅 표시용)
 const HERO_KO = {
   mage: '마법사', knight: '기사', warrior: '전사', huntress: '사냥꾼',
-  porta: '포르타', gennaro: '제나로', pasqualina: '파스쿠알리나',
+  porta: '폭풍술사', gennaro: '단검사', pasqualina: '룬술사',
 };
 
 const ICON_BOX = 48; // target canvas size — sized to fit .page-icon CSS cap
