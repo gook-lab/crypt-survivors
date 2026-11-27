@@ -1048,7 +1048,7 @@ export const WEAPONS = {
     color: 0x90b078, sprite: 'proj_hunters_blade', icon: 'icon_knives',
   },
 
-  // ── Gennaro Belpaese — dual dagger fan ───────────────────────────────
+  // ── 단검사 (id gennaro) — dual dagger fan ────────────────────────────
   dagger_fan: {
     id: 'dagger_fan', tier: 'basic', name: '단검 부채', kind: 'projectile', pattern: 'fan',
     maxLevel: 5, dmgPerLevel: 0.08, cooldown: 0.65, damage: 12,
@@ -1064,9 +1064,9 @@ export const WEAPONS = {
     impact: 'fx_impact_pierce', color: 0xf2e6c0, sprite: 'proj_dagger_legendary', icon: 'icon_knives',
   },
 
-  // ── Pasqualina Belpaese — bouncing runetracer ────────────────────────
+  // ── 룬술사 (id pasqualina) — bouncing rune ──────────────────────────
   runetracer: {
-    id: 'runetracer', tier: 'basic', name: '룬 트레이서', kind: 'projectile', pattern: 'fan',
+    id: 'runetracer', tier: 'basic', name: '튕기는 룬', kind: 'projectile', pattern: 'fan',
     maxLevel: 5, dmgPerLevel: 0.08, cooldown: 1.3, damage: 18,
     projectiles: 1, pierce: 999, spread: 0, speed: 360, radius: 7, life: 4.0,
     knockback: 5, tags: ['arcane'],
@@ -1082,7 +1082,7 @@ export const WEAPONS = {
     impact: 'fx_impact_arcane', color: 0xc894ff, sprite: 'proj_rune_void', icon: 'icon_arcane_missile',
   },
 
-  // ── Porta Ladonna — chain lightning ring ─────────────────────────────
+  // ── 폭풍술사 (id porta) — chain lightning ring ──────────────────────────
   tesla_ring: {
     id: 'tesla_ring', tier: 'basic', name: '뇌격의 반지', kind: 'projectile', pattern: 'chain',
     maxLevel: 5, dmgPerLevel: 0.08, cooldown: 1.0, damage: 16,

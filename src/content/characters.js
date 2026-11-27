@@ -67,7 +67,7 @@ export const CHARACTERS = [
     ],
   },
   {
-    id: 'pasqualina', unlockChapter: 3, name: '파스콸리나 벨파에제', role: '룬의 추적자 · 반사형',
+    id: 'pasqualina', unlockChapter: 3, name: '룬술사', role: '룬의 추적자 · 반사형',
     sprite: 'pasqualina_walk', starter: 'runetracer', exclusive: 'nox_runica',
     blurb: '룬을 추적하는 자 · 벽을 튕기는 마법', perk: '체력 100 · 투사체 속도 +20%',
     bonus: (m) => { m.damage += 0.05; m.cooldown += 0.05; },
@@ -81,7 +81,7 @@ export const CHARACTERS = [
     ],
   },
   {
-    id: 'gennaro', unlockChapter: 2, name: '제나로 벨파에제', role: '단검의 명수 · 다중 투사형',
+    id: 'gennaro', unlockChapter: 2, name: '단검사', role: '단검의 명수 · 다중 투사형',
     sprite: 'gennaro_walk', starter: 'dagger_fan', exclusive: 'dagger_storm',
     blurb: '단검의 폭풍 · 일제 투사', perk: '체력 120 · 투사체 +1',
     bonus: (m) => { m.maxHp += 20; m.projectiles += 1; },
@@ -95,7 +95,7 @@ export const CHARACTERS = [
     ],
   },
   {
-    id: 'porta', unlockChapter: 2, name: '포르타 라도나', role: '폭풍의 술사 · 체인형',
+    id: 'porta', unlockChapter: 2, name: '폭풍술사', role: '폭풍의 술사 · 체인형',
     sprite: 'porta_walk', starter: 'tesla_ring', exclusive: 'storm_crown',
     blurb: '번개를 묶는 자 · 자동 체인 라이트닝', perk: '체력 100 · 공격범위 +30% · 쿨다운 -5%',
     bonus: (m) => { m.projSize += 0.3; m.cooldown += 0.05; },

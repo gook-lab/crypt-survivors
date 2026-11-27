@@ -119,8 +119,8 @@ SPRITE_BASE_ANGLES에 `'sprite_key': -Math.PI / 2`를 추가하면 됩니다 —
 | 나이트 | holy_beam (수직 광주 3 + 솔라 플레어) | beam |
 | 워리어 | earth_crack (자기중심 AoE + 마그마 분출) | self |
 | 헌트리스 | arrow_rain (작은 화살 12발) | arrows |
-| 포르타 | tesla_field (전기 기둥 5, 시안 리컬러) | beam |
-| 젠나로 | blade_volley (단검비 16발, 황동+크림슨) | arrows |
+| 폭풍술사(porta) | tesla_field (전기 기둥 5, 시안 리컬러) | beam |
+| 단검사(gennaro) | blade_volley (단검비 16발, 황동+크림슨) | arrows |
 
 ---
 
