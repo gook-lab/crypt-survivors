@@ -63,6 +63,21 @@ export function createTitle(mount) {
     el.insertBefore(art, el.firstChild);
   }
 
+  // Key art (docs/art/key-art.png → public/title/key-art.webp) over the
+  // pixel scene. The scene paints instantly from the bundled sprites; the
+  // key art fades in on top once it arrives, and a shade keeps the menu
+  // side dark for contrast.
+  const keyArt = new Image();
+  keyArt.className = 'title-key';
+  keyArt.alt = '';
+  keyArt.decoding = 'async';
+  keyArt.addEventListener('load', () => el.classList.add('title-has-key'));
+  keyArt.src = '/title/key-art.webp';
+  const shade = document.createElement('div');
+  shade.className = 'title-shade';
+  el.insertBefore(shade, el.querySelector('.title-box'));
+  el.insertBefore(keyArt, shade);
+
   // Boot gate — the title shows while the sprite packs are still loading.
   // A click before then is held (the latest one wins) and replayed once
   // main.js calls setReady(), so no screen ever opens on half-loaded art.
