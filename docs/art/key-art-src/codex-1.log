@@ -1,7 +1,7 @@
 Reading prompt from stdin...
 OpenAI Codex v0.169.0
 --------
-workdir: /Users/kyb-ontact/sonix/toy/game
+workdir: ~/sonix/toy/game
 model: gpt-6.2-sol
 provider: openai
 approval: never
@@ -25,7 +25,7 @@ I’ll use the imagegen skill with both screenshots as references, then verify t
 hook: PreToolUse
 hook: PreToolUse Completed
 exec
-/bin/zsh -lc "cat '/Users/kyb-ontact/Library/Application Support/orca/codex-accounts/c5879fae-7410-4a36-b244-dd73d116cb06/home/skills/.system/imagegen/SKILL.md'" in /Users/kyb-ontact/sonix/toy/game
+/bin/zsh -lc "cat '~/Library/Application Support/orca/codex-accounts/<account>/home/skills/.system/imagegen/SKILL.md'" in ~/sonix/toy/game
  succeeded in 0ms:
 ---
 name: "imagegen"
@@ -352,9 +352,9 @@ hook: PostToolUse Completed
 hook: PreToolUse
 hook: PreToolUse Completed
 exec
-/bin/zsh -lc "mkdir -p docs/art && cp -n '/Users/kyb-ontact/Library/Application Support/orca/codex-accounts/c5879fae-7410-4a36-b244-dd73d116cb06/home/generated_images/01a21a61-c189-7802-846b-3c96ac161c9a/exec-363b1d04-c192-4a75-97e6-adc5c34e9ad1.png' docs/art/key-art.png && cmp '/Users/kyb-ontact/Library/Application Support/orca/codex-accounts/c5879fae-7410-4a36-b244-dd73d116cb06/home/generated_images/01a21a61-c189-7802-846b-3c96ac161c9a/exec-363b1d04-c192-4a75-97e6-adc5c34e9ad1.png' docs/art/key-art.png && sips -g format -g pixelWidth -g pixelHeight docs/art/key-art.png" in /Users/kyb-ontact/sonix/toy/game
+/bin/zsh -lc "mkdir -p docs/art && cp -n '~/Library/Application Support/orca/codex-accounts/<account>/home/generated_images/01a21a61-c189-7802-846b-3c96ac161c9a/exec-363b1d04-c192-4a75-97e6-adc5c34e9ad1.png' docs/art/key-art.png && cmp '~/Library/Application Support/orca/codex-accounts/<account>/home/generated_images/01a21a61-c189-7802-846b-3c96ac161c9a/exec-363b1d04-c192-4a75-97e6-adc5c34e9ad1.png' docs/art/key-art.png && sips -g format -g pixelWidth -g pixelHeight docs/art/key-art.png" in ~/sonix/toy/game
  succeeded in 44ms:
-/Users/kyb-ontact/sonix/toy/game/docs/art/key-art.png
+~/sonix/toy/game/docs/art/key-art.png
   format: png
   pixelWidth: 1536
   pixelHeight: 1024
@@ -362,9 +362,9 @@ exec
 hook: PostToolUse
 hook: PostToolUse Completed
 codex
-Created one landscape key-art image for Crypt Survivors and saved it to [docs/art/key-art.png](/Users/kyb-ontact/sonix/toy/game/docs/art/key-art.png). Verified it is a 1536 × 1024 PNG.
+Created one landscape key-art image for Crypt Survivors and saved it to [docs/art/key-art.png](~/sonix/toy/game/docs/art/key-art.png). Verified it is a 1536 × 1024 PNG.
 hook: Stop
 hook: Stop Completed
 tokens used
 20,228
-Created one landscape key-art image for Crypt Survivors and saved it to [docs/art/key-art.png](/Users/kyb-ontact/sonix/toy/game/docs/art/key-art.png). Verified it is a 1536 × 1024 PNG.
+Created one landscape key-art image for Crypt Survivors and saved it to [docs/art/key-art.png](~/sonix/toy/game/docs/art/key-art.png). Verified it is a 1536 × 1024 PNG.
